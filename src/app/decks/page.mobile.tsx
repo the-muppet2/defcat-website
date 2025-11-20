@@ -1,11 +1,13 @@
 // app/decks/page.mobile.tsx
 'use client'
 
-import { useDecks } from '@/lib/hooks/useDecks'
+import { useMemo } from 'react'
+import { useDecksInfinite } from '@/lib/hooks/useDecks'
 import { MobileDeckList } from '@/components/mobile/MobileDeckList'
 
 export default function MobileDecksPage() {
-  const { data: decks = [], isLoading, error } = useDecks()
+  const { data, isLoading, error } = useDecksInfinite()
+  const decks = useMemo(() => data?.pages?.flatMap(page => page.decks) ?? [], [data])
 
   return (
     <MobileDeckList 

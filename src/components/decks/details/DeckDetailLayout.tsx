@@ -9,11 +9,11 @@ import { RoastButton } from '@/components/decks/RoastButton'
 import { DeckHeader } from './DeckHeader'
 import { DeckTabs } from './DeckTabs'
 import { DeckSidebar } from './DeckSidebar'
-import type { DeckWithCards, Deck } from '@/types/supabase'
+import type { DeckWithCards, Deck, DecklistCardWithCard } from '@/types'
 
 interface DeckDetailLayoutProps {
   deck: Deck
-  cards: DeckWithCards[]
+  cards: DecklistCardWithCard[]
 }
 
 export function DeckDetailLayout({ deck, cards }: DeckDetailLayoutProps) {
@@ -42,7 +42,7 @@ export function DeckDetailLayout({ deck, cards }: DeckDetailLayoutProps) {
             </Link>
           </Button>
           <div className="flex items-center gap-2">
-            {deck.public_url && <RoastButton moxfieldUrl={deck.public_url} variant="default" />}
+            {deck.moxfield_url && <RoastButton moxfieldUrl={deck.moxfield_url} variant="default" />}
             <Button variant="outline" onClick={handleShare} className="gap-2">
               {copied ? (
                 <>

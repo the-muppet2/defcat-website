@@ -50,6 +50,7 @@ export function Header({
   const [showLogoutModal, setShowLogoutModal] = useState(false)
   const [showBadge, setShowBadge] = useState(true)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
   const pathname = usePathname()
   const { goBack, hasHistory } = useNavigationHistory()
   const {
@@ -57,6 +58,11 @@ export function Header({
     remainingSubmissions,
     isLoading: submissionLoading,
   } = useSubmissionEligibility()
+
+  // Track client-side mount to prevent hydration mismatch with navigation history
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   useEffect(() => {
     if (userRole === 'developer') {
@@ -93,7 +99,7 @@ export function Header({
         <div className="px-8 md:px-16 lg:px-24 flex h-16 items-center justify-between">
           {/* Logo and Back Button */}
           <div className="flex items-center gap-2 flex-shrink-0">
-            {hasHistory() && (
+            {mounted && hasHistory() && (
               <button
                 onClick={() => goBack('/decks')}
                 className="hover-tinted rounded-lg p-2 transition-all"

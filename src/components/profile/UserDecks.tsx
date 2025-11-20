@@ -33,7 +33,7 @@ export function UserDecks({ moxfieldUsername }: UserDecksProps) {
       try {
         const { data, error: fetchError } = await supabase
           .from('moxfield_decks')
-          .select('id, name, format, view_count, like_count, comment_count, mainboard_count, last_updated_at, public_url')
+          .select('id, name, format, view_count, like_count, comment_count, mainboard_count, last_updated_at, moxfield_url')
           .eq('author_username', moxfieldUsername)
           .neq('author_username', 'DefCatMtg')
           .order('last_updated_at', { ascending: false })
@@ -132,9 +132,9 @@ export function UserDecks({ moxfieldUsername }: UserDecksProps) {
                   </div>
                 )}
 
-                {deck.public_url && (
+                {deck.moxfield_url && (
                   <a
-                    href={deck.public_url}
+                    href={deck.moxfield_url}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1 text-sm text-[var(--mana-color)] hover:brightness-110 transition-all"

@@ -1,4 +1,6 @@
 /** biome-ignore-all lint/a11y/useButtonType: <explanation> */
+/** biome-ignore-all lint/correctness/noConstantCondition: <explanation> */
+/** biome-ignore-all lint/style/noNonNullAssertion: <explanation> */
 /** biome-ignore-all lint/a11y/noLabelWithoutControl: <explanation> */
 'use client'
 
@@ -6,14 +8,14 @@ import { ChevronDown, ChevronUp, ExternalLink, Filter, X, Shuffle } from 'lucide
 import { memo, useMemo, useState } from 'react'
 import { ManaSymbols } from '@/components/decks/ManaSymbols'
 import { RoastButton } from '@/components/decks/RoastButton'
-import { useDecks } from '@/lib/hooks/useDecks'
+import { useDecksInfinite } from '@/lib/hooks/useDecks'
 import { cn } from '@/lib/utils'
 import { ColorIdentity } from '@/types/colors'
 import { bracketOptions } from '@/types/core'
-import type { Deck } from '@/types/core'
+import type { EnhancedDeck } from '@/types'
 
 // Memoized deck row component
-const DeckRow = memo(function DeckRow({ deck }: { deck: Deck }) {
+const DeckRow = memo(function DeckRow({ deck }: { deck: EnhancedDeck }) {
   return (
     <tr className="border-b border-tinted hover:bg-accent-tinted transition-all">
       <td className="py-4 px-4">
@@ -21,7 +23,7 @@ const DeckRow = memo(function DeckRow({ deck }: { deck: Deck }) {
           href={`/decks/${deck.id}`}
           className="block hover:text-[var(--mana-color)] transition-colors"
         >
-          <div className="font-medium">{deck.name}</div>
+          <div className="font-medium">{deck.deck_title}</div>
           <div className="text-xs text-muted-foreground line-clamp-1 mt-1">{deck.description}</div>
         </a>
       </td>
@@ -32,7 +34,7 @@ const DeckRow = memo(function DeckRow({ deck }: { deck: Deck }) {
               key={idx}
               className="text-xs px-2 py-1 rounded bg-accent-tinted border border-tinted"
             >
-              {cmd}
+              {typeof cmd === 'string' ? cmd : cmd.cards?.name || 'Unknown'}
             </span>
           ))}
         </div>
@@ -67,7 +69,8 @@ const DeckRow = memo(function DeckRow({ deck }: { deck: Deck }) {
 })
 
 export default function DesktopDecksPage() {
-  const { data: decks = [], isLoading: loading, error } = useDecks()
+  const { data, isLoading: loading, error } = useDecksInfinite()
+  const decks = useMemo(() => data?.pages?.flatMap(page => page.decks) ?? [], [data])
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedColors, setSelectedColors] = useState<string[]>([])
   const [invertColors, setInvertColors] = useState(false)
@@ -84,8 +87,8 @@ export default function DesktopDecksPage() {
       const query = searchQuery.toLowerCase()
       filtered = filtered.filter(
         (deck) =>
-          deck.name.toLowerCase().includes(query) ||
-          deck.commanders?.some((cmd) => cmd.toLowerCase().includes(query)) ||
+          deck.deck_title!.toLowerCase().includes(query) ||
+          deck.commanders?.some((cmd) => String(cmd).toLowerCase().includes(query)) ||
           (deck.description || null)?.toLowerCase().includes(query)
       )
     }
@@ -125,12 +128,13 @@ export default function DesktopDecksPage() {
 
     // Bracket filter
     if (selectedBracket) {
-      filtered = filtered.filter((deck) => deck.bracket === selectedBracket)
+      filtered = filtered.filter((deck) => deck.bracket === Number(selectedBracket))
     }
 
     filtered.sort((a, b) => {
-      let aVal: any = a[sortBy]
-      let bVal: any = b[sortBy]
+      const sortKey = sortBy === 'name' ? 'deck_title' : sortBy
+      let aVal: any = a[sortKey as keyof typeof a]
+      let bVal: any = b[sortKey as keyof typeof b]
 
       if (sortBy === 'updated_at') {
         aVal = new Date(aVal || 0).getTime()

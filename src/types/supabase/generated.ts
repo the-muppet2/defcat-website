@@ -1,5 +1,3 @@
-import type { RawMoxData } from "../moxfield"
-
 export type Json =
   | string
   | number
@@ -320,6 +318,13 @@ export type Database = {
             foreignKeyName: "decklist_cards_moxfield_deck_id_fkey"
             columns: ["moxfield_deck_id"]
             isOneToOne: false
+            referencedRelation: "decks_enhanced"
+            referencedColumns: ["moxfield_id"]
+          },
+          {
+            foreignKeyName: "decklist_cards_moxfield_deck_id_fkey"
+            columns: ["moxfield_deck_id"]
+            isOneToOne: false
             referencedRelation: "decks_parsed"
             referencedColumns: ["moxfield_id"]
           },
@@ -338,6 +343,42 @@ export type Database = {
             referencedColumns: ["moxfield_id"]
           },
         ]
+      }
+      doc_chunks: {
+        Row: {
+          category: string
+          content: string
+          created_at: string | null
+          embedding: string | null
+          filename: string
+          heading: string | null
+          id: string
+          token_count: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          category: string
+          content: string
+          created_at?: string | null
+          embedding?: string | null
+          filename: string
+          heading?: string | null
+          id?: string
+          token_count?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          content?: string
+          created_at?: string | null
+          embedding?: string | null
+          filename?: string
+          heading?: string | null
+          id?: string
+          token_count?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       edgecases: {
         Row: {
@@ -382,7 +423,7 @@ export type Database = {
           name: string
           public_id: string | null
           public_url: string | null
-          raw_data: RawMoxData | null
+          raw_data: Json | null
           sideboard_count: number | null
           view_count: number | null
           visibility: string | null
@@ -709,7 +750,15 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_credits_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
@@ -785,6 +834,39 @@ export type Database = {
           public_url?: string | null
           total_price?: never
           view_count?: number | null
+        }
+        Relationships: []
+      }
+      decks_enhanced: {
+        Row: {
+          author_display_name: string | null
+          auto_bracket: number | null
+          bracket: number | null
+          cards_fetched_at: string | null
+          color_identity: Json | null
+          color_string: string | null
+          comment_count: number | null
+          created_at: string | null
+          deck_title: string | null
+          description: string | null
+          event_date: string | null
+          fetched_at: string | null
+          format: string | null
+          has_primer: boolean | null
+          id: number | null
+          is_legal: boolean | null
+          is_shared: boolean | null
+          like_count: number | null
+          mainboard_count: number | null
+          moxfield_id: string | null
+          moxfield_url: string | null
+          player_username: string | null
+          public_id: string | null
+          sideboard_count: number | null
+          total_cards: number | null
+          updated_at: string | null
+          view_count: number | null
+          visibility: string | null
         }
         Relationships: []
       }
@@ -907,6 +989,20 @@ export type Database = {
           roast_credits: number
         }[]
       }
+      hybrid_search: {
+        Args: {
+          match_count?: number
+          query_embedding: string
+          query_text: string
+        }
+        Returns: {
+          content: string
+          filename: string
+          heading: string
+          id: string
+          score: number
+        }[]
+      }
       import_deck_from_jsonb: {
         Args: { deck_jsonb: Json; deck_moxfield_id: string }
         Returns: string
@@ -1004,6 +1100,21 @@ export type Database = {
           p_user_id: string
         }
         Returns: boolean
+      }
+      search_docs: {
+        Args: {
+          match_count?: number
+          match_threshold?: number
+          query_embedding: string
+        }
+        Returns: {
+          category: string
+          content: string
+          filename: string
+          heading: string
+          id: string
+          similarity: number
+        }[]
       }
       set_tier_benefit: {
         Args: { p_amount: number; p_credit_type_id: string; p_tier_id: string }

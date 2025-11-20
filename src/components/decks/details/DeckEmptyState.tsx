@@ -18,10 +18,10 @@ export function DeckEmptyState({ deck, moxfieldIcon }: DeckEmptyStateProps) {
       <p className="text-muted-foreground mb-6">
         The full card list hasn't been loaded yet.
       </p>
-      {deck.public_url && (
+      {deck.moxfield_url && (
         <Button asChild size="lg">
           <a
-            href={deck.public_url}
+            href={deck.moxfield_url}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2"

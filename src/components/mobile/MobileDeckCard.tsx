@@ -6,10 +6,10 @@ import Link from 'next/link'
 import { memo } from 'react'
 import { ManaSymbols } from '@/components/decks/ManaSymbols'
 import { cn } from '@/lib/utils'
-import type { Deck } from '@/types/core'
+import type { EnhancedDeck } from '@/types'
 
 interface MobileDeckCardProps {
-  deck: Deck
+  deck: EnhancedDeck
   className?: string
 }
 
@@ -22,7 +22,7 @@ export const MobileDeckCard = memo(function MobileDeckCard({
     day: 'numeric',
   })
 
-  const commanderImageUrl = deck.commander_art_url || '/images/placeholder-commander.jpg'
+  const commanderImageUrl = deck.commanders || '/images/placeholder-commander.jpg'
 
   return (
     <div
@@ -53,7 +53,7 @@ export const MobileDeckCard = memo(function MobileDeckCard({
           {deck.color_identity && deck.color_identity.length > 0 && (
             <div className="absolute top-2 right-2">
               <div className="glass-tinted-strong p-1.5 rounded-lg">
-                <ManaSymbols mana={deck.color_identity} size="xs" shadow />
+                <ManaSymbols mana={deck.color_identity} size="sm" shadow />
               </div>
             </div>
           )}
@@ -72,13 +72,15 @@ export const MobileDeckCard = memo(function MobileDeckCard({
         <div className="p-4">
           {/* Deck Name */}
           <h3 className="font-bold text-lg line-clamp-2 mb-1.5 leading-tight">
-            {deck.name}
+            {deck.deck_title}
           </h3>
 
           {/* Commander Name */}
           {deck.commanders && deck.commanders.length > 0 && (
             <p className="text-sm text-tinted font-semibold line-clamp-1 mb-2.5">
-              {deck.commanders.join(' & ')}
+              {deck.commanders.map(cmd => 
+                typeof cmd === 'string' ? cmd : cmd.cards?.name || ''
+              ).join(' & ')}
             </p>
           )}
 

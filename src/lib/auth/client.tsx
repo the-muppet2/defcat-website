@@ -79,9 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .select(`
           patreon_tier,
           role,
-          user_credits!user_id (
-            credits
-          )
+          user_credits (credits)
         `)
         .eq('id', user.id)
         .single<{

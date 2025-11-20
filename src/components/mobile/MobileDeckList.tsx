@@ -5,10 +5,10 @@ import { Filter, Search } from 'lucide-react'
 import { memo, useMemo, useState } from 'react'
 import { MobileDeckCard } from './MobileDeckCard'
 import { MobileFilterSheet } from './MobileFilterSheet'
-import type { Deck } from '@/types/core'
+import type { EnhancedDeck } from '@/types'
 
 interface MobileDeckListProps {
-  decks: Deck[]
+  decks: EnhancedDeck[]
   isLoading?: boolean
   error?: Error | null
 }
@@ -32,8 +32,10 @@ export const MobileDeckList = memo(function MobileDeckList({
       const query = searchQuery.toLowerCase()
       filtered = filtered.filter(
         (deck) =>
-          deck.name.toLowerCase().includes(query) ||
-          deck.commanders?.some((cmd) => cmd.toLowerCase().includes(query)) ||
+          deck.deck_title?.toLowerCase().includes(query) ||
+          deck.commanders?.some((cmd) => 
+            (typeof cmd === 'string' ? cmd : cmd.cards?.name || '').toLowerCase().includes(query)
+          ) ||
           (deck.description || null)?.toLowerCase().includes(query)
       )
     }
@@ -67,7 +69,7 @@ export const MobileDeckList = memo(function MobileDeckList({
 
     // Bracket filter
     if (selectedBracket) {
-      filtered = filtered.filter((deck) => deck.bracket === selectedBracket)
+      filtered = filtered.filter((deck) => deck.bracket === Number(selectedBracket))
     }
 
     return filtered
@@ -91,7 +93,7 @@ export const MobileDeckList = memo(function MobileDeckList({
   }
 
   const hasActiveFilters =
-    searchQuery || selectedColors.length > 0 || selectedBracket
+    !!searchQuery || selectedColors.length > 0 || !!selectedBracket
 
   if (isLoading) {
     return (
@@ -130,6 +132,7 @@ export const MobileDeckList = memo(function MobileDeckList({
           <div className="flex items-center gap-3">
             {/* Filter Button */}
             <button
+              type="button"
               onClick={() => setShowFilters(true)}
               className="flex-shrink-0 p-2.5 rounded-xl btn-tinted transition-smooth active:scale-98 relative touch-target elevation-1"
             >
@@ -158,6 +161,7 @@ export const MobileDeckList = memo(function MobileDeckList({
               <span className="text-xs text-muted-foreground whitespace-nowrap">Active:</span>
               {selectedColors.length > 0 && (
                 <button
+                  type="button"
                   onClick={() => setSelectedColors([])}
                   className="badge-tinted px-2 py-1 rounded-full text-xs whitespace-nowrap flex items-center gap-1"
                 >
@@ -167,6 +171,7 @@ export const MobileDeckList = memo(function MobileDeckList({
               )}
               {selectedBracket && (
                 <button
+                  type="button"
                   onClick={() => setSelectedBracket('')}
                   className="badge-tinted px-2 py-1 rounded-full text-xs whitespace-nowrap flex items-center gap-1"
                 >
@@ -175,6 +180,7 @@ export const MobileDeckList = memo(function MobileDeckList({
                 </button>
               )}
               <button
+                type="button"
                 onClick={clearFilters}
                 className="text-xs text-tinted hover:brightness-110 font-medium whitespace-nowrap ml-auto"
               >
@@ -199,6 +205,7 @@ export const MobileDeckList = memo(function MobileDeckList({
             </p>
             {hasActiveFilters && (
               <button
+              type="button"
                 onClick={clearFilters}
                 className="text-sm text-tinted font-medium hover:brightness-110 transition-all"
               >

@@ -8,9 +8,8 @@ import { RotatingAds } from '@/components/home/RotatingAds'
 import { SocialMediaLinks } from '@/components/home/SocialMediaLinks'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { useDecks } from '@/lib/hooks/useDecks'
 import { createClient } from '@/lib/supabase/client'
-import { ColorIdentity } from '@/types/colors'
+import { getDecks } from '@/lib/data/deck-helpers'
 
 export default function ExampleHomePage() {
   const [searchQuery, setSearchQuery] = useState('')

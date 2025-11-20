@@ -5,10 +5,10 @@ import { useState, useRef, useEffect } from 'react'
 import { List, Grid3x3, BarChart3 } from 'lucide-react'
 import Image from 'next/image'
 import { cn } from '@/lib/utils'
-import type { DecklistCardWithCard, Deck } from '@/types/supabase'
+import type { DecklistCardWithCard, EnhancedDeck } from '@/types'
 
 interface MobileDeckTabsProps {
-  deck: Deck & Partial<any>
+  deck: EnhancedDeck & Partial<any>
   cards: DecklistCardWithCard[]
   selectedType: string | null
   onTypeSelect: (type: string) => void
@@ -97,6 +97,7 @@ export function MobileDeckTabs({
           {tabs.map(({ id, icon: Icon, label }) => (
             <button
               key={id}
+              type="button"
               onClick={() => setActiveTab(id)}
               className={cn(
                 'flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg font-semibold text-sm transition-all relative',
@@ -111,9 +112,9 @@ export function MobileDeckTabs({
           ))}
         </div>
 
-        {deck.public_url && (
+        {deck.moxfield_url && (
           <a
-            href={deck.public_url}
+            href={deck.moxfield_url}
             target="_blank"
             rel="noopener noreferrer"
             className="ml-3 hover:scale-105 transition-transform active:scale-95"
@@ -157,9 +158,9 @@ export function MobileDeckTabs({
         {cards.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-center">
             <p className="text-muted-foreground mb-4">No cards in this deck yet</p>
-            {deck.public_url && (
+            {deck.moxfield_url && (
               <a
-                href={deck.public_url}
+                href={deck.moxfield_url}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn-tinted-primary px-6 py-3 rounded-xl font-semibold inline-flex items-center gap-2"

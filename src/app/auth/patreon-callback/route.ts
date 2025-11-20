@@ -51,7 +51,6 @@ export async function GET(request: Request) {
       return NextResponse.redirect(`${origin}/auth/login?error=no_email`)
     }
 
-    const isSiteOwner = email.toLowerCase() === 'jaynatale@defcat.net'
     const adminClient = createAdminClient()
 
     let userId: string
@@ -68,7 +67,6 @@ export async function GET(request: Request) {
     if (createError) {
       logger.info('User already exists, checking profiles table')
 
-      // Try profiles table first (more reliable than listUsers)
       const { data: profile, error: profileError } = await adminClient
         .from('profiles')
         .select('id')
@@ -83,7 +81,6 @@ export async function GET(request: Request) {
       }
 
       if (!profile) {
-        // User exists in auth but not in profiles - recover using generateLink
         logger.warn('User exists in auth but not in profiles - attempting recovery')
         
         const { data: linkData, error: linkError } = await adminClient.auth.admin.generateLink({
@@ -110,25 +107,20 @@ export async function GET(request: Request) {
       return NextResponse.redirect(`${origin}/auth/login?error=user_creation_failed`)
     }
 
-    // Check if profile already exists to preserve role
-    const { data: existingProfile } = await adminClient
+   const { data: existingProfile } = await adminClient
       .from('profiles')
       .select('role')
       .eq('id', userId)
       .maybeSingle()
 
-    let userRole = existingProfile?.role || 'user'
-    if (isSiteOwner && userRole === 'user') {
-      userRole = 'admin'
-      logger.info('Site owner detected - granting admin access', { userId })
-    }
-
+    const userRole = existingProfile?.role || 'user'
+    
     // Update/create profile
     const { error: upsertError } = await adminClient.from('profiles').upsert({
       id: userId,
       email,
-      patreon_id: isSiteOwner ? null : patreonId,
-      patreon_tier: isSiteOwner ? 'ArchMage' : tier,
+      patreon_id: patreonId,
+      patreon_tier: tier,
       role: userRole,
       updated_at: new Date().toISOString(),
     })
@@ -140,7 +132,6 @@ export async function GET(request: Request) {
       )
     }
 
-    // Set a password for the user
     const userPassword = `patreon_${userId}_${Date.now()}_${Math.random().toString(36)}`
 
     const { error: passwordError } = await adminClient.auth.admin.updateUserById(userId, {

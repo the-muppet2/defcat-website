@@ -1,6 +1,6 @@
 import { Database } from './supabase/generated'
 
-export type Deck = Database['public']['Tables']['moxfield_decks']['Row']
+export type Deck = Database['public']['Views']['decks_enhanced']['Row']
 export type DeckInsert = Database['public']['Tables']['moxfield_decks']['Insert']
 export type DeckUpdate = Database['public']['Tables']['moxfield_decks']['Update']
 
@@ -144,4 +144,57 @@ export interface ApiError {
   message: string
   code: string
   details?: unknown
+}
+
+/**
+ * Lightweight deck type with flattened metadata from raw_data JSONB.
+ * This type is backed by the decks_enhanced database view for optimal query performance.
+ * Does NOT include card arrays or raw_data - use EnhancedDeck or helper functions when cards are needed.
+ *
+ * Includes:
+ * - All base deck fields (id, moxfield_id, name, format, etc.)
+ * - Flattened properties: color_identity, description, moxfield_url, bracket, has_primer, etc.
+ * - Parsed name components: event_date, player_username, deck_title
+ * - Computed properties: color_string, total_cards
+ * - Author info: author_display_name (from Moxfield createdByUser)
+ *
+ * @example
+ * ```typescript
+ * const deck: DeckEnhanced = await supabase
+ *   .from('decks_enhanced')
+ *   .select('*')
+ *   .eq('moxfield_id', id)
+ *   .single()
+ *
+ * console.log(deck.color_identity) // ["W", "U", "B", "G"]
+ * console.log(deck.moxfield_url) // "https://www.moxfield.com/decks/abc123"
+ * console.log(deck.total_cards) // 100
+ * console.log(deck.event_date) // "07/29"
+ * console.log(deck.player_username) // "Belaras"
+ * console.log(deck.deck_title) // "Alex Custom Deck"
+ * ```
+ */
+export type DeckEnhanced = Database['public']['Views']['decks_enhanced']['Row'] & {
+  color_identity: string[] // Override Json type with proper array type
+}
+
+/**
+ * Full deck type with all metadata AND card arrays for detail pages.
+ * Extends DeckEnhanced with optional card lists.
+ * Use getDeckWithCards() helper function to fetch this data.
+ *
+ * @example
+ * ```typescript
+ * const deck: EnhancedDeck = await getDeckWithCards(id)
+ * console.log(deck.commanders?.[0].cards?.name) // "Atraxa, Praetors' Voice"
+ * console.log(deck.mainboard?.length) // 99
+ * console.log(deck.color_identity) // ["W", "U", "B", "G"]
+ * console.log(deck.moxfield_url) // "https://www.moxfield.com/decks/abc123"
+ * ```
+ */
+export type EnhancedDeck = DeckEnhanced & {
+  commanders?: DecklistCardWithCard[]
+  mainboard?: DecklistCardWithCard[]
+  sideboard?: DecklistCardWithCard[]
+  maybeboard?: DecklistCardWithCard[]
 }

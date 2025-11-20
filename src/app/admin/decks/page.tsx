@@ -6,8 +6,6 @@
 import { Plus } from 'lucide-react'
 import Link from 'next/link'
 import { DecksList } from '@/components/admin/DecksList'
-import { ImportAllDecksButton } from '@/components/admin/ImportAllDecksButton'
-import { UpdateAllDecksButton } from '@/components/admin/UpdateAllDecksButton'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { requireAdmin } from '@/lib/auth/server'
@@ -59,8 +57,6 @@ export default async function AdminDecksPage() {
             <Button asChild variant="outline">
               <Link href="/admin">Back to Dashboard</Link>
             </Button>
-            <ImportAllDecksButton />
-            <UpdateAllDecksButton />
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>

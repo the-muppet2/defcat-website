@@ -4,17 +4,14 @@
 
 @layer base {
   :root {
-    /* Base slate-gray color system with proper contrast */
     --background: 210 17% 85%; /* #F4F6F8 - Light gray background */
     --foreground: 222.2 84% 4.9%; /* Dark text */
     
-    /* Distinct elevation layers with proper hierarchy */
     --card: 0 0% 95%; /* #FFFFFF - White cards on gray bg */
     --card-foreground: 222.2 84% 4.9%;
     --popover: 0 0% 100%; /* White popovers */
     --popover-foreground: 222.2 84% 4.9%;
     
-    /* Varied accent colors */
     --primary: 222.2 47.4% 10%; /* Dark primary */
     --primary-foreground: 210 40% 90%;
     --secondary: 214 14% 70%; /* #E8EAED - Distinct secondary */
@@ -30,7 +27,6 @@
     --ring: 222.2 84% 4.9%;
     --radius: 0.5rem;
     
-    /* Enhanced glass effects */
     --glass-bg: linear-gradient(
       135deg,
       rgba(255, 255, 255, 0.7),
@@ -153,9 +149,9 @@
     --chart-5: 340 75% 55%;
 
     /* Gradient colors for text headers */
-    --gradient-start: var(--mana-color);
-    --gradient-mid: var(--mana-color);
-    --gradient-end: var(--mana-color);
+    --gradient-start: var(--mana-color) / 0.4;
+    --gradient-mid: var(--mana-color) / 0.8;
+    --gradient-end: var(--mana-color) / 0.6;
   }
 
   .mana-colorless {
@@ -234,17 +230,16 @@
   body {
     @apply bg-background text-foreground;
   }
-  /* Apply mana color to all Lucide icons */
+
   svg.lucide:not(.no-mana-color) {
     color: var(--mana-color);
   }
 }
 
 .ms {
-  font-size: 14px !important;
+  font-size: 14px;
 }
 
-/* Glass card styles */
 .glass {
   background: var(--glass-bg);
   backdrop-filter: blur(var(--glass-blur));
@@ -257,8 +252,8 @@
 .glass:hover {
   background: linear-gradient(
     135deg,
-    rgba(255, 255, 255, 0.75),
-    rgba(255, 255, 255, 0.55)
+    var(--glass-bg) / 0.4,
+    var(--manargb) / 0.2,
   );
   border-color: rgba(255, 255, 255, 0.6);
   box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.12);
@@ -344,15 +339,12 @@
   animation: glow 2s ease-in-out infinite;
 }
 
-/* Utility classes for transitions */
 .transition-tinted {
-  transition: background-color 0.3s ease, border-color 0.3s ease,
-              box-shadow 0.3s ease, color 0.3s ease;
+  transition: background-color 0.3s ease, 
+  border-color 0.3s ease,
+  box-shadow 0.3s ease, color 0.3s ease;
 }
 
-/* ===========================
-   Base Tinted Backgrounds
-   =========================== */
 .tinted-bg {
   background: var(--bg-tinted);
 }
@@ -362,51 +354,10 @@
   border: 1px solid var(--border-tinted);
 }
 
-.tinted-accent {
-  background: var(--accent-tinted);
+.tinted-border {
+  border-color: var(--border-tinted);
 }
 
-/* ===========================
-   Tinted Glass Effects
-   =========================== */
-.glass-tinted {
-  background: linear-gradient(
-    135deg,
-    rgba(var(--manargb), 0.08),
-    rgba(var(--manargb), 0.04)
-  );
-  backdrop-filter: blur(16px) saturate(1.2);
-  -webkit-backdrop-filter: blur(16px) saturate(1.2);
-  border: 1px solid rgba(var(--manargb), 0.2);
-  box-shadow: 0 8px 32px rgba(var(--manargb), 0.1);
-}
-
-.glass-tinted-subtle {
-  background: linear-gradient(
-    135deg,
-    rgba(var(--manargb), 0.04),
-    rgba(var(--manargb), 0.02)
-  );
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(var(--manargb), 0.12);
-}
-
-.glass-tinted-strong {
-  background: linear-gradient(
-    135deg,
-    rgba(var(--manargb), 0.15),
-    rgba(var(--manargb), 0.08)
-  );
-  backdrop-filter: blur(20px) saturate(1.4);
-  -webkit-backdrop-filter: blur(20px) saturate(1.4);
-  border: 1px solid rgba(var(--manargb), 0.3);
-  box-shadow: 0 12px 48px rgba(var(--manargb), 0.15);
-}
-
-/* ===========================
-   Tinted Borders
-   =========================== */
 .border-tinted {
   border-color: rgba(var(--manargb), 0.25);
 }
@@ -419,9 +370,6 @@
   border-color: rgba(var(--manargb), 0.15);
 }
 
-/* ===========================
-   Tinted Shadows
-   =========================== */
 .shadow-tinted {
   box-shadow: 0 4px 16px 0 rgba(var(--manargb), 0.15);
 }
@@ -439,9 +387,6 @@
               0 8px 32px rgba(var(--manargb), 0.15);
 }
 
-/* ===========================
-   Tinted Text Colors
-   =========================== */
 .text-tinted {
   color: var(--mana-color);
 }
@@ -456,9 +401,6 @@
   filter: brightness(1.2) saturate(1.2);
 }
 
-/* ===========================
-   Tinted Gradients
-   =========================== */
 .gradient-tinted {
   background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
 }
@@ -577,7 +519,7 @@
 .btn-tinted-outline {
   background: transparent;
   color: var(--mana-color);
-  border: 2px solid var(--mana-color);
+  border: 2px solid var(--mana-tint-light);
   transition: all 0.3s ease;
 }
 
@@ -625,9 +567,6 @@
   font-weight: 600;
 }
 
-/* ===========================
-   Overlay Effects
-   =========================== */
 .overlay-tinted {
   position: relative;
 }
@@ -645,9 +584,6 @@
   border-radius: inherit;
 }
 
-/* ===========================
-   Animation Classes
-   =========================== */
 .pulse-tinted {
   animation: pulse-tinted 2s infinite;
 }
@@ -689,9 +625,6 @@
   }
 }
 
-/* ===========================
-   Mana-specific Enhancements
-   =========================== */
 .mana-glow {
   box-shadow: 0 0 30px rgba(var(--manargb), 0.3),
               0 0 60px rgba(var(--manargb), 0.15);
@@ -714,16 +647,14 @@
   background: linear-gradient(45deg, var(--gradient-start), var(--gradient-end));
 }
 
-/* Mana-colored focus rings */
 input:focus,
 textarea:focus,
 select:focus,
 button:focus-visible {
   outline: 2px solid var(--mana-color);
-  outline-offset: 2px;
+  outline-offset: 2px;s
 }
 
-/* Mana-colored links */
 a {
   color: var(--mana-color);
   transition: all 0.2s ease;
@@ -734,34 +665,32 @@ a:hover {
   text-decoration-color: var(--mana-color);
 }
 
-/* Improved contrast for disabled states */
 :disabled,
 [disabled] {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-/* Better visual hierarchy with proper elevation */
 .elevation-0 { box-shadow: none; }
 .elevation-1 {
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1),
               0 1px 3px rgba(var(--manargb), 0.05);
 }
 .elevation-2 {
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1),
-              0 2px 6px rgba(var(--manargb), 0.08);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2),
+              0 2px 6px rgba(var(--manargb), 0.1);
 }
 .elevation-3 {
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.12),
-              0 4px 12px rgba(var(--manargb), 0.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.25),
+              0 4px 12px rgba(var(--manargb), 0.15);
 }
 .elevation-4 {
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12),
-              0 8px 24px rgba(var(--manargb), 0.12);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.35),
+              0 8px 24px rgba(var(--manargb), 0.2);
 }
 .elevation-5 {
-  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.15),
-              0 16px 48px rgba(var(--manargb), 0.15);
+  box-shadow: 0 16px 32px rgba(0, 0, 0, 0.45),
+              0 16px 48px rgba(var(--manargb), 0.3);
 }
 
 /* ===========================
@@ -791,9 +720,6 @@ a:hover {
   }
 }
 
-/* ===========================
-   Dark Mode Adjustments
-   =========================== */
 .dark .glass-tinted {
   background: linear-gradient(
     135deg,

@@ -38,24 +38,17 @@ export function DeckProvider({ children }: { children: ReactNode }) {
       setError(null)
       const { data, error } = await supabase
         .from('moxfield_decks')
-        .select('moxfield_id, public_url, name, raw_data, format, view_count, like_count, comment_count, created_at, last_updated_at')
+        .select('*')
         .order('view_count', { ascending: false })
 
       if (error) throw error
 
       const mappedDecks = (data || []).map((deck) => ({
+        ...deck,
         id: deck.moxfield_id,
-        moxfield_id: deck.moxfield_id,
-        moxfield_url: deck.public_url,
-        name: deck.name,
         commanders: deck.raw_data?.commanders?.map((c: any) => c.name).filter(Boolean) || [],
-        color_identity: deck.raw_data?.colorIdentity || [],
-        format: deck.format,
+        color_identity: deck.raw_data?.colorIdentity || deck.color_identity || [],
         description: deck.raw_data?.description || null,
-        view_count: deck.view_count,
-        like_count: deck.like_count,
-        comment_count: deck.comment_count,
-        created_at: deck.created_at,
         updated_at: deck.last_updated_at,
       }))
 
@@ -70,12 +63,12 @@ export function DeckProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     fetchDecks()
-  }, [fetchDecks])
+  }, [])
 
   // Memoize the context value to prevent unnecessary re-renders
   const value = useMemo(
     () => ({ decks, loading, error, refetch: fetchDecks }),
-    [decks, loading, error, fetchDecks]
+    [decks, loading, error]
   )
 
   return <DeckContext.Provider value={value}>{children}</DeckContext.Provider>

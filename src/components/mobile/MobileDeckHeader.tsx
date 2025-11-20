@@ -3,7 +3,7 @@
 
 import { memo } from 'react'
 import { MobileBackButton } from '@/components/layout/BackButton'
-import type { DecklistCardWithCard, Deck, DeckInfo } from '@/types/supabase'
+import type { DecklistCardWithCard, Deck, DeckInfo } from '@/types'
 
 interface MobileDeckHeaderProps {
   deck: Deck & Partial<DeckInfo>
@@ -70,7 +70,7 @@ export const MobileDeckHeader = memo(function MobileDeckHeader({
               {deck.event_date_std}
             </p>
           )}
-          {deck.author_username && (
+          {deck.username && (
             <p className="text-tinted text-lg font-bold mb-2">
               {deck.author_username}
             </p>

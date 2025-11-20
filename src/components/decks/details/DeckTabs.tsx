@@ -84,9 +84,9 @@ export function DeckTabs({ deck, cards, selectedType, onTypeSelect }: DeckTabsPr
             </div>
 
             <div className="flex items-center gap-2">
-              {deck.public_url && (
+              {deck.moxfield_url && (
                 <a
-                  href={deck.public_url}
+                  href={deck.moxfield_url}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:scale-105 transition-transform"

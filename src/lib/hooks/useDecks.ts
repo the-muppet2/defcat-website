@@ -2,54 +2,16 @@
  * React Query Hooks for Deck Data
  * Replaces the old DeckProvider context with React Query for better caching and performance
  */
+/** biome-ignore-all lint/suspicious/noExplicitAny: <explanation> */
 
 'use client'
 
 import { useQuery, useInfiniteQuery } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
-import type { Deck, DeckCard } from '@/types/core'
+import type { EnhancedDeck, DeckCard } from '@/types/core'
 
 const DECKS_PER_PAGE = 50
 
-/**
- * Hook to fetch all decks (legacy - use useDecksInfinite for better performance)
- * Includes automatic caching and refetching
- */
-export function useDecks() {
-  return useQuery({
-    queryKey: ['decks'],
-    queryFn: async (): Promise<Deck[]> => {
-      const supabase = createClient()
-      const { data, error } = await supabase
-        .from('moxfield_decks')
-        .select('moxfield_id, public_url, name, raw_data, view_count, like_count, last_updated_at')
-
-      if (error) throw error
-
-      const decks = data || []
-
-      return decks.map(
-        (deck): Deck => ({
-          id: deck.moxfield_id,
-          moxfield_id: deck.moxfield_id,
-          moxfield_url: deck.public_url,
-          name: deck.name,
-          commanders: deck.raw_data?.commanders?.map((c: any) => c.name).filter(Boolean) || [],
-          color_identity: deck.raw_data?.colorIdentity || [],
-          format: null,
-          description: deck.raw_data?.description || null,
-          view_count: deck.view_count,
-          like_count: deck.like_count,
-          comment_count: null,
-          created_at: null,
-          updated_at: deck.last_updated_at,
-        })
-      )
-    },
-    staleTime: Infinity, // Never refetch - data updates weekly
-    gcTime: 1000 * 60 * 60 * 24 * 7, // 7 days
-  })
-}
 
 /**
  * Hook to fetch decks with infinite scroll pagination
@@ -58,7 +20,7 @@ export function useDecks() {
 export function useDecksInfinite() {
   return useInfiniteQuery({
     queryKey: ['decks-infinite'],
-    queryFn: async ({ pageParam = 0 }): Promise<{ decks: Deck[]; nextPage: number | null; total: number }> => {
+    queryFn: async ({ pageParam = 0 }): Promise<{ decks: EnhancedDeck[]; nextPage: number | null; total: number }> => {
       const supabase = createClient()
 
       const from = pageParam * DECKS_PER_PAGE
@@ -66,28 +28,34 @@ export function useDecksInfinite() {
 
       const { data, error, count } = await supabase
         .from('moxfield_decks')
-        .select('moxfield_id, public_url, name, raw_data, view_count, like_count, last_updated_at', { count: 'exact' })
+        .select('moxfield_id, moxfield_url, name, raw_data, view_count, like_count, last_updated_at', { count: 'exact' })
         .range(from, to)
         .order('view_count', { ascending: false })
 
       if (error) throw error
 
       const decks = (data || []).map(
-        (deck): Deck => ({
+        (deck): EnhancedDeck => ({
           id: deck.moxfield_id,
           moxfield_id: deck.moxfield_id,
-          moxfield_url: deck.public_url,
+          moxfield_url: deck.moxfield_url,
           name: deck.name,
           commanders: deck.raw_data?.commanders?.map((c: any) => c.name).filter(Boolean) || [],
           color_identity: deck.raw_data?.colorIdentity || [],
+          color_string: null,
           format: null,
           description: deck.raw_data?.description || null,
           view_count: deck.view_count,
           like_count: deck.like_count,
           comment_count: null,
+          author_display_name: null,
+          auto_bracket: null,
+          bracket: null,
+          cards_fetched_at: null,
           created_at: null,
           updated_at: deck.last_updated_at,
-        })
+          visibility: null,
+        } as unknown as EnhancedDeck)
       )
 
       const hasMore = (pageParam + 1) * DECKS_PER_PAGE < (count || 0)
@@ -112,13 +80,13 @@ export function useDecksInfinite() {
 export function useDeckInfo(id: string) {
   return useQuery({
     queryKey: ['deckInfo', id],
-    queryFn: async (): Promise<Deck | null> => {
+    queryFn: async (): Promise<EnhancedDeck | null> => {
       if (!id) return null
 
       const supabase = createClient()
       const { data, error } = await supabase
         .from('moxfield_decks')
-        .select('moxfield_id, public_url, name, raw_data, format, view_count, like_count, comment_count, created_at, last_updated_at')
+        .select('moxfield_id, moxfield_url, name, raw_data, format, view_count, like_count, comment_count, created_at, last_updated_at')
         .eq('moxfield_id', id)
         .single()
 
@@ -127,8 +95,7 @@ export function useDeckInfo(id: string) {
       return {
         id: data.moxfield_id,
         moxfield_id: data.moxfield_id,
-        moxfield_url: data.public_url,
-        name: data.name,
+        moxfield_url: data.moxfield_url,
         commanders: data.raw_data?.commanders?.map((c: any) => c.name).filter(Boolean) || [],
         color_identity: data.raw_data?.colorIdentity || [],
         format: data.format,
@@ -138,7 +105,7 @@ export function useDeckInfo(id: string) {
         comment_count: data.comment_count,
         created_at: data.created_at,
         updated_at: data.last_updated_at,
-      }
+      } as EnhancedDeck
     },
     enabled: !!id,
     staleTime: Infinity,
