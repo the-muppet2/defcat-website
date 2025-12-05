@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic'
 function getSupabaseClient() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY! // Use service role to bypass RLS
+    process.env.SUPABASE_SERVICE_ROLE_KEY! 
   )
 }
 
@@ -55,7 +55,6 @@ export async function DELETE(
       )
     }
 
-    // Delete config item using service role (bypasses RLS)
     const { error } = await supabase.from('site_config').delete().eq('key', key)
 
     if (error) {
