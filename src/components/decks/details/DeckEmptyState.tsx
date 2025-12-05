@@ -1,14 +1,13 @@
 // components/decks/detail/DeckEmptyState.tsx
 import { ExternalLink } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import type { Deck, DeckInfo } from '@/types/supabase'
+import type { Deck, DeckInfo } from '@/types/core'
 
 interface DeckEmptyStateProps {
   deck: Deck & Partial<DeckInfo>
-  moxfieldIcon: string
 }
 
-export function DeckEmptyState({ deck, moxfieldIcon }: DeckEmptyStateProps) {
+export function DeckEmptyState({ deck }: DeckEmptyStateProps) {
   return (
     <div className="py-16 text-center">
       <div className="mb-4">
@@ -26,7 +25,6 @@ export function DeckEmptyState({ deck, moxfieldIcon }: DeckEmptyStateProps) {
             rel="noopener noreferrer"
             className="flex items-center gap-2"
           >
-            <img src={moxfieldIcon} alt="Moxfield" width={20} height={20} className="rounded" />
             View on Moxfield
             <ExternalLink className="h-4 w-4" />
           </a>

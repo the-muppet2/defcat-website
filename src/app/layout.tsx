@@ -43,7 +43,7 @@ export default function RootLayout({
             <HeaderWrapper />
           </div>
           <main className="flex-1 relative">{children}</main>
-          <div className="border-t border-white/10 mt-auto">
+          <div className="border-t border-white/10 mt-2">
             <Footer />
           </div>
         </Providers>

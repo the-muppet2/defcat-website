@@ -48,7 +48,7 @@ export function RoastButton({ moxfieldUrl, variant = 'default', className, deckO
         <Link href={roastUrl}>
           <Flame className="h-5 w-5" />
           <span>Roast</span>
-          <span className="text-sm opacity-70">({roastCredits})</span>
+          <span className="text-sm ">({roastCredits})</span>
         </Link>
       </Button>
     )
@@ -61,7 +61,7 @@ export function RoastButton({ moxfieldUrl, variant = 'default', className, deckO
       {variant === 'compact' && (
         <>
           <span className="ml-2">Roast</span>
-          <span className="ml-1 text-xs opacity-70">({roastCredits})</span>
+          <span className="ml-1 text-xs ">({roastCredits})</span>
         </>
       )}
     </>

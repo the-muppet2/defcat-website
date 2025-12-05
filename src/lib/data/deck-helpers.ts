@@ -6,7 +6,26 @@ import type {
 } from '@/types/core'
 
 /**
- * Fetch lightweight deck metadata using the decks_enhanced view.
+ * Extract commander names from Moxfield raw_data.commanders
+ * Handles both array and object formats
+ */
+function extractCommanders(rawData: Record<string, unknown> | null): string[] {
+  if (!rawData?.commanders) return []
+
+  const commanders = rawData.commanders
+  if (Array.isArray(commanders)) {
+    return commanders.map((c: { card?: { name?: string }; name?: string }) => c?.card?.name || c?.name || '').filter(Boolean)
+  }
+  if (typeof commanders === 'object' && commanders !== null) {
+    return Object.values(commanders as Record<string, { card?: { name?: string }; name?: string }>)
+      .map((c) => c?.card?.name || c?.name || '')
+      .filter(Boolean)
+  }
+  return []
+}
+
+/**
+ * Fetch lightweight deck metadata from moxfield_decks table.
  * This is optimal for listing pages and search results.
  * Does NOT include card arrays.
  *
@@ -20,7 +39,7 @@ export async function getDeckMetadata(
   const supabase = await createClient()
 
   const { data, error } = await supabase
-    .from('decks_enhanced')
+    .from('moxfield_decks')
     .select('*')
     .eq('moxfield_id', moxfieldId)
     .single()
@@ -33,7 +52,42 @@ export async function getDeckMetadata(
     throw new Error(`Deck not found: ${moxfieldId}`)
   }
 
-  return data as DeckEnhanced
+  const rawData = data.raw_data as Record<string, unknown> | null
+
+  return {
+    id: data.id,
+    moxfield_id: data.moxfield_id,
+    name: data.name,
+    format: data.format,
+    public_id: data.public_id,
+    public_url: data.public_url,
+    moxfield_url: data.public_url,
+    visibility: data.visibility,
+    mainboard_count: data.mainboard_count,
+    sideboard_count: data.sideboard_count,
+    commanders_count: data.commanders_count,
+    like_count: data.like_count,
+    view_count: data.view_count,
+    comment_count: data.comment_count,
+    is_legal: data.is_legal,
+    created_at: data.created_at,
+    fetched_at: data.fetched_at,
+    cards_fetched_at: data.cards_fetched_at,
+    last_updated_at: data.last_updated_at,
+    author_display_name: (rawData?.createdByUser as { displayName?: string })?.displayName || data.author_name,
+    color_identity: Array.isArray(rawData?.colorIdentity) ? rawData.colorIdentity : [],
+    description: typeof rawData?.description === 'string' ? rawData.description : null,
+    bracket: typeof rawData?.bracket === 'number' ? rawData.bracket : null,
+    auto_bracket: typeof rawData?.autoBracket === 'number' ? rawData.autoBracket : null,
+    has_primer: typeof rawData?.hasPrimer === 'boolean' ? rawData.hasPrimer : false,
+    is_shared: typeof rawData?.isShared === 'boolean' ? rawData.isShared : false,
+    bookmark_count: typeof rawData?.bookmarkCount === 'number' ? rawData.bookmarkCount : 0,
+    commanders: extractCommanders(rawData),
+    main_card_id: typeof rawData?.mainCardId === 'string' ? rawData.mainCardId : null,
+    color_string: Array.isArray(rawData?.colorIdentity) ? (rawData.colorIdentity as string[]).join('') : '',
+    deck_title: data.name,
+    player_username: data.author_username,
+  } as DeckEnhanced
 }
 
 /**
@@ -216,7 +270,7 @@ export async function getDecks(options?: {
 }): Promise<DeckEnhanced[]> {
   const supabase = await createClient()
 
-  let query = supabase.from('decks_enhanced').select('*')
+  let query = supabase.from('moxfield_decks').select('*')
 
   if (options?.limit) {
     query = query.limit(options.limit)
@@ -238,5 +292,43 @@ export async function getDecks(options?: {
     throw new Error(`Failed to fetch decks: ${error.message}`)
   }
 
-  return (data || []) as DeckEnhanced[]
+  // Transform moxfield_decks rows to DeckEnhanced format
+  return (data || []).map((deck) => {
+    const rawData = deck.raw_data as Record<string, unknown> | null
+
+    return {
+      id: deck.id,
+      moxfield_id: deck.moxfield_id,
+      name: deck.name,
+      format: deck.format,
+      public_id: deck.public_id,
+      public_url: deck.public_url,
+      moxfield_url: deck.public_url,
+      visibility: deck.visibility,
+      mainboard_count: deck.mainboard_count,
+      sideboard_count: deck.sideboard_count,
+      commanders_count: deck.commanders_count,
+      like_count: deck.like_count,
+      view_count: deck.view_count,
+      comment_count: deck.comment_count,
+      is_legal: deck.is_legal,
+      created_at: deck.created_at,
+      fetched_at: deck.fetched_at,
+      cards_fetched_at: deck.cards_fetched_at,
+      last_updated_at: deck.last_updated_at,
+      author_display_name: (rawData?.createdByUser as { displayName?: string })?.displayName || deck.author_name,
+      color_identity: Array.isArray(rawData?.colorIdentity) ? rawData.colorIdentity : [],
+      description: typeof rawData?.description === 'string' ? rawData.description : null,
+      bracket: typeof rawData?.bracket === 'number' ? rawData.bracket : null,
+      auto_bracket: typeof rawData?.autoBracket === 'number' ? rawData.autoBracket : null,
+      has_primer: typeof rawData?.hasPrimer === 'boolean' ? rawData.hasPrimer : false,
+      is_shared: typeof rawData?.isShared === 'boolean' ? rawData.isShared : false,
+      bookmark_count: typeof rawData?.bookmarkCount === 'number' ? rawData.bookmarkCount : 0,
+      commanders: extractCommanders(rawData),
+      main_card_id: typeof rawData?.mainCardId === 'string' ? rawData.mainCardId : null,
+      color_string: Array.isArray(rawData?.colorIdentity) ? (rawData.colorIdentity as string[]).join('') : '',
+      deck_title: deck.name,
+      player_username: deck.author_username,
+    } as DeckEnhanced
+  })
 }

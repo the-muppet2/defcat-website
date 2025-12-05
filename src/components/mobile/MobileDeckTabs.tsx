@@ -1,9 +1,8 @@
 // components/mobile/MobileDeckTabs.tsx
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
-import { List, Grid3x3, BarChart3 } from 'lucide-react'
-import Image from 'next/image'
+import { useState, useRef } from 'react'
+import { List, Grid3x3, BarChart3, ExternalLink } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { DecklistCardWithCard, EnhancedDeck } from '@/types'
 
@@ -20,8 +19,8 @@ interface MobileDeckTabsProps {
 export function MobileDeckTabs({
   deck,
   cards,
-  selectedType,
-  onTypeSelect,
+  selectedType: _selectedType,
+  onTypeSelect: _onTypeSelect,
   listView,
   visualView,
   statsView,
@@ -29,24 +28,7 @@ export function MobileDeckTabs({
   const [activeTab, setActiveTab] = useState<'list' | 'visual' | 'stats'>('list')
   const [touchStart, setTouchStart] = useState(0)
   const [touchEnd, setTouchEnd] = useState(0)
-  const [isDark, setIsDark] = useState(false)
   const contentRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    const checkDarkMode = () => {
-      setIsDark(document.documentElement.classList.contains('dark'))
-    }
-
-    checkDarkMode()
-
-    const observer = new MutationObserver(checkDarkMode)
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ['class'],
-    })
-
-    return () => observer.disconnect()
-  }, [])
 
   const handleTouchStart = (e: React.TouchEvent) => {
     setTouchStart(e.touches[0].clientX)
@@ -85,29 +67,25 @@ export function MobileDeckTabs({
     { id: 'stats' as const, icon: BarChart3, label: 'Stats' },
   ]
 
-  const moxfieldIcon = isDark
-    ? 'https://assets.moxfield.net/assets/images/logo-text.svg'
-    : 'https://assets.moxfield.net/assets/images/logo-text-color.svg'
-
   return (
     <div className="card-tinted-glass rounded-2xl overflow-hidden shadow-tinted-lg">
       {/* Tab Navigation */}
-      <div className="flex items-center justify-between bg-accent-tinted/30 border-b border-tinted px-4 py-2">
-        <div className="flex items-center gap-1 flex-1">
+      <div className="flex items-center justify-between bg-accent-tinted/30 border-b border-tinted px-2 sm:px-4 py-2">
+        <div className="flex items-center gap-0.5 sm:gap-1 flex-1">
           {tabs.map(({ id, icon: Icon, label }) => (
             <button
               key={id}
               type="button"
               onClick={() => setActiveTab(id)}
               className={cn(
-                'flex-1 flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg font-semibold text-sm transition-all relative',
+                'flex-1 flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-3 py-2.5 rounded-lg font-semibold text-xs sm:text-sm transition-all relative',
                 activeTab === id
                   ? 'text-tinted bg-accent-tinted/50 shadow-tinted'
                   : 'text-muted-foreground active:bg-accent/50'
               )}
             >
-              <Icon className="h-4 w-4" />
-              <span className="hidden xs:inline">{label}</span>
+              <Icon className="h-4 w-4 shrink-0" />
+              <span>{label}</span>
             </button>
           ))}
         </div>
@@ -117,17 +95,11 @@ export function MobileDeckTabs({
             href={deck.moxfield_url}
             target="_blank"
             rel="noopener noreferrer"
-            className="ml-3 hover:scale-105 transition-transform active:scale-95"
+            className="ml-2 sm:ml-3 flex items-center gap-1 px-2 py-1.5 rounded-lg bg-accent text-foreground text-xs font-medium transition-all active:scale-95 shrink-0"
             title="View on Moxfield"
           >
-            <Image
-              src={moxfieldIcon}
-              alt="Moxfield"
-              width={80}
-              height={20}
-              className="h-6 w-auto"
-              unoptimized
-            />
+            Moxfield
+            <ExternalLink className="h-3 w-3" />
           </a>
         )}
       </div>
@@ -165,15 +137,8 @@ export function MobileDeckTabs({
                 rel="noopener noreferrer"
                 className="btn-tinted-primary px-6 py-3 rounded-xl font-semibold inline-flex items-center gap-2"
               >
-                <Image
-                  src={moxfieldIcon}
-                  alt="Moxfield"
-                  width={80}
-                  height={20}
-                  className="h-5 w-auto brightness-0 invert"
-                  unoptimized
-                />
                 View on Moxfield
+                <ExternalLink className="h-4 w-4" />
               </a>
             )}
           </div>

@@ -21,7 +21,7 @@ export default async function AdminDecksPage() {
   // Fetch all decks with minimal data
   const { data: rawDecks, error } = await supabase
     .from('moxfield_decks')
-    .select('id, moxfield_id, name, raw_data, created_at, view_count')
+    .select('id, moxfield_id, public_id, name, raw_data, created_at, view_count')
     .order('created_at', { ascending: false })
 
   if (error) {
@@ -30,14 +30,28 @@ export default async function AdminDecksPage() {
 
   // Transform the data to extract commanders and color_identity from raw_data
   const decks = rawDecks?.map((deck) => {
-    const commanders = deck.raw_data?.commanders?.map((c: any) => c.name).filter(Boolean)
-    const colorIdentity = deck.raw_data?.colorIdentity
+    const rawData = deck.raw_data as Record<string, unknown> | null
+    const commandersData = rawData?.commanders
+
+    let commanders: string[] = []
+    if (commandersData) {
+      if (Array.isArray(commandersData)) {
+        commanders = commandersData.map((c: { name?: string; card?: { name?: string } }) => c?.card?.name || c?.name || '').filter(Boolean)
+      } else if (typeof commandersData === 'object') {
+        commanders = Object.values(commandersData as Record<string, { card?: { name?: string }; name?: string }>)
+          .map((c) => c?.card?.name || c?.name || '')
+          .filter(Boolean)
+      }
+    }
+
+    const colorIdentity = rawData?.colorIdentity as string[] | undefined
 
     return {
       id: deck.id,
       moxfield_id: deck.moxfield_id || '',
+      public_id: deck.public_id || '',
       name: deck.name || 'Untitled Deck',
-      commanders: commanders && commanders.length > 0 ? commanders : null,
+      commanders: commanders.length > 0 ? commanders : null,
       color_identity: colorIdentity && colorIdentity.length > 0 ? colorIdentity : null,
       created_at: deck.created_at || new Date().toISOString(),
       view_count: deck.view_count,

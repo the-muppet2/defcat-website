@@ -4,7 +4,7 @@
 import { useState, useEffect, useRef, memo, useCallback } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { TypeFilterBar } from './TypeFilterBar'
-import type { DecklistCardWithCard } from '@/types/supabase'
+import type { DecklistCardWithCard } from '@/types'
 
 interface DeckVisualViewProps {
   cards: DecklistCardWithCard[]
@@ -16,10 +16,16 @@ interface VirtualCardProps {
   dc: DecklistCardWithCard
   isFlipped: boolean
   onToggleFlip: (cardName: string) => void
+  onHover: (cardName: string | null, rect: DOMRect | null) => void
 }
 
-const VirtualCard = memo(function VirtualCard({ dc, isFlipped, onToggleFlip }: VirtualCardProps) {
-  const isDFC = dc.cards?.type_line?.includes('//')
+const DFC = ['transform', 'modal_dfc', 'reversible_card', 'double_faced_token', 'art_series']
+
+const VirtualCard = memo(function VirtualCard({ dc, isFlipped, onToggleFlip, onHover }: VirtualCardProps) {
+  const cardRef = useRef<HTMLDivElement>(null)
+  const isDFC = (dc.cards?.layout && DFC.includes(dc.cards.layout)) || 
+  (dc.cards?.type_line?.includes('//') && !['adventure', 'split', 'flip'].includes(dc.cards?.layout || ''))
+  const isBattle = dc.cards?.type_line?.toLowerCase().includes('battle')
   const cardName = dc.cards?.name || ''
 
   const frontImageUrl =
@@ -27,26 +33,61 @@ const VirtualCard = memo(function VirtualCard({ dc, isFlipped, onToggleFlip }: V
     (dc.cards?.scryfall_id
       ? `https://cards.scryfall.io/normal/front/${dc.cards.scryfall_id[0]}/${dc.cards.scryfall_id[1]}/${dc.cards.scryfall_id}.jpg`
       : null)
-
   const backImageUrl = dc.cards?.scryfall_id
     ? `https://cards.scryfall.io/normal/back/${dc.cards.scryfall_id[0]}/${dc.cards.scryfall_id[1]}/${dc.cards.scryfall_id}.jpg`
     : null
 
   if (!frontImageUrl) return null
 
+  // For battles: animate Z rotation (90 -> 0) during the Y flip
+  // Front starts at 90deg, back is at 0deg
+  // Include translate to shift position as part of the transform
+  const getFlipTransform = () => {
+    if (isBattle) {
+      return isFlipped
+        ? 'rotateY(-180deg) rotateZ(0deg) translate(0px, 0px)'
+        : 'rotateY(0deg) rotateZ(90deg) translate(-90px, -50px)'
+    }
+    return isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)'
+  }
+
+  // Battle cards always need extra vertical space to accommodate the landscape orientation
+  // Keep padding constant so it doesn't cause jumps during flip
+  const battlePadding = isBattle ? { paddingTop: '20%', paddingBottom: '20%' } : {}
+
+  const handleMouseEnter = () => {
+    if (cardRef.current) {
+      onHover(cardName, cardRef.current.getBoundingClientRect())
+    }
+  }
+
+  const handleMouseLeave = () => {
+    onHover(null, null)
+  }
+
   return (
-    <div className="relative group" style={{ perspective: '1000px' }}>
+    <div
+      ref={cardRef}
+      className="relative group"
+      style={{
+        perspective: '1000px',
+        ...battlePadding,
+      }}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
       <div
-        className="relative rounded-lg border-2 border-border hover:border-primary shadow-lg transition-all duration-600"
+        className="relative rounded-lg border-2 border-border hover:border-primary shadow-lg"
         style={{
           transformStyle: 'preserve-3d',
-          transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
-          transition: 'transform 0.6s',
+          transform: getFlipTransform(),
+          transition: 'transform 0.7s cubic-bezier(0.4, 0.0, 0.2, 1)',
+          transformOrigin: 'center center',
         }}
       >
         {/* Front Face */}
         <div
-          className="relative w-full"
+          className="relative w-full flex items-center justify-center"
           style={{
             backfaceVisibility: 'hidden',
             WebkitBackfaceVisibility: 'hidden',
@@ -57,7 +98,7 @@ const VirtualCard = memo(function VirtualCard({ dc, isFlipped, onToggleFlip }: V
             alt={dc.cards?.name || ''}
             className="w-full h-auto rounded-lg"
           />
-          {dc.quantity > 1 && (
+          {dc.quantity! > 1 && (
             <div className="absolute top-2 right-2 bg-primary text-primary-foreground font-bold text-sm rounded-full w-8 h-8 flex items-center justify-center shadow-lg">
               {dc.quantity}
             </div>
@@ -67,7 +108,7 @@ const VirtualCard = memo(function VirtualCard({ dc, isFlipped, onToggleFlip }: V
         {/* Back Face */}
         {isDFC && backImageUrl && (
           <div
-            className="absolute top-0 left-0 w-full h-full"
+            className="absolute top-0 left-0 w-full h-full flex items-center justify-center"
             style={{
               backfaceVisibility: 'hidden',
               WebkitBackfaceVisibility: 'hidden',
@@ -79,28 +120,32 @@ const VirtualCard = memo(function VirtualCard({ dc, isFlipped, onToggleFlip }: V
               alt={`${dc.cards?.name || ''} (back)`}
               className="w-full h-auto rounded-lg"
             />
-            {dc.quantity > 1 && (
+            {dc.quantity! > 1 && (
               <div className="absolute top-2 right-2 bg-primary text-primary-foreground font-bold text-sm rounded-full w-8 h-8 flex items-center justify-center shadow-lg">
                 {dc.quantity}
               </div>
             )}
           </div>
         )}
-      </div>
 
-      {/* DFC Flip Button */}
-      {isDFC && (
-        <button
-          onClick={() => onToggleFlip(cardName)}
-          className="absolute top-2 left-2 bg-black/70 backdrop-blur-sm rounded-full w-7 h-7 flex items-center justify-center shadow-lg hover:bg-black/90 transition-colors cursor-pointer z-20"
-          title={isFlipped ? 'Show front face' : 'Show back face'}
-        >
-          <i
-            className="ms ms-ability-duels-dfc text-white"
-            style={{ fontSize: '16px' }}
-          />
-        </button>
-      )}
+        {/* DFC Flip Button - inside the transform container so it stays on the card */}
+        {isDFC && (
+          <button
+            onClick={() => onToggleFlip(cardName)}
+            className="absolute bg-black/70 backdrop-blur-sm rounded-full w-7 h-7 flex items-center justify-center shadow-lg hover:bg-black/90 transition-colors cursor-pointer z-20"
+            style={{
+              top: '8px',
+              left: '8px',
+            }}
+            title={isFlipped ? 'Show front face' : 'Show back face'}
+          >
+            <i
+              className="ms ms-ability-duels-dfc text-white"
+              style={{ fontSize: '16px' }}
+            />
+          </button>
+        )}
+      </div>
     </div>
   )
 })
@@ -108,6 +153,7 @@ const VirtualCard = memo(function VirtualCard({ dc, isFlipped, onToggleFlip }: V
 export function DeckVisualView({ cards, selectedType, onTypeSelect }: DeckVisualViewProps) {
   const [flippedCards, setFlippedCards] = useState<Set<string>>(new Set())
   const [columns, setColumns] = useState(4)
+  const [hoveredCard, setHoveredCard] = useState<{ name: string; rect: DOMRect; card: DecklistCardWithCard } | null>(null)
   const visualGridRef = useRef<HTMLDivElement>(null)
 
   const toggleCardFlip = useCallback((cardName: string) => {
@@ -204,21 +250,12 @@ export function DeckVisualView({ cards, selectedType, onTypeSelect }: DeckVisual
                   }}
                 >
                   {row.map((dc, idx) => {
-                    const isDFC = dc.cards?.type_line?.includes('//')
+                    const isDFC = (dc.cards?.layout && DFC.includes(dc.cards.layout)) ||
+                      (dc.cards?.type_line?.includes('//') && !['adventure', 'split', 'flip'].includes(dc.cards?.layout || ''))
                     const cardName = dc.cards?.name || ''
-                    const typeLine = dc.cards?.type_line || ''
-
-                    // Auto-flip based on filter for DFCs
-                    let autoFlip = false
-                    if (isDFC && selectedType) {
-                      const [frontType, backType] = typeLine.split('//').map((t) => t.trim())
-                      if (backType.includes(selectedType) && !frontType.includes(selectedType)) {
-                        autoFlip = true
-                      }
-                    }
 
                     const manuallyFlipped = flippedCards.has(cardName)
-                    const isFlipped = autoFlip ? !manuallyFlipped : manuallyFlipped
+                    const isFlipped = isDFC ? !manuallyFlipped : manuallyFlipped
 
                     return (
                       <VirtualCard
@@ -226,6 +263,13 @@ export function DeckVisualView({ cards, selectedType, onTypeSelect }: DeckVisual
                         dc={dc}
                         isFlipped={isFlipped}
                         onToggleFlip={toggleCardFlip}
+                        onHover={(name, rect) => {
+                          if (name && rect) {
+                            setHoveredCard({ name, rect, card: dc })
+                          } else {
+                            setHoveredCard(null)
+                          }
+                        }}
                       />
                     )
                   })}
@@ -235,6 +279,36 @@ export function DeckVisualView({ cards, selectedType, onTypeSelect }: DeckVisual
           })}
         </div>
       </div>
+
+      {/* Hover preview - positioned below commander images like list view */}
+      {hoveredCard && (() => {
+        const commanderEl = document.getElementById('commander-images')
+        if (!commanderEl) return null
+        const rect = commanderEl.getBoundingClientRect()
+        const containerCenter = rect.left + rect.width / 2
+        return (
+          <div
+            className="fixed pointer-events-none z-[9999] -translate-x-1/2"
+            style={{
+              top: rect.bottom + 16,
+              left: containerCenter,
+            }}
+          >
+            <div className="bg-card border-2 border-primary rounded-xl overflow-hidden shadow-2xl w-[180px] lg:w-[200px]">
+              <img
+                src={
+                  hoveredCard.card.cards?.cached_image_url ||
+                  (hoveredCard.card.cards?.scryfall_id
+                    ? `https://cards.scryfall.io/normal/front/${hoveredCard.card.cards.scryfall_id[0]}/${hoveredCard.card.cards.scryfall_id[1]}/${hoveredCard.card.cards.scryfall_id}.jpg`
+                    : '')
+                }
+                alt={hoveredCard.card.cards?.name || ''}
+                className="w-full h-auto"
+              />
+            </div>
+          </div>
+        )
+      })()}
     </>
   )
 }

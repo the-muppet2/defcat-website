@@ -142,9 +142,9 @@ export function CommanderSelector({ value, onChange, maxCommanders = 2 }: Comman
                   <CommandEmpty>No legendary creatures found</CommandEmpty>
                 ) : (
                   <CommandGroup>
-                    {searchResults.map((commander) => (
+                    {searchResults.map((commander, index) => (
                       <CommandItem
-                        key={commander.scryfall_id}
+                        key={commander.scryfall_id || `commander-${index}`}
                         value={commander.name}
                         onSelect={() => addCommander(commander)}
                       >

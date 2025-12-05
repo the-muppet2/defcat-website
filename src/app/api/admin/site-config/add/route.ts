@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic'
 function getSupabaseClient() {
   return createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY! // Use service role to bypass RLS
+    process.env.SUPABASE_SERVICE_ROLE_KEY! 
   )
 }
 
@@ -61,7 +61,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Insert new config item using service role (bypasses RLS)
     const { data, error } = await supabase
       .from('site_config')
       .insert({

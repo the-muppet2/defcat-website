@@ -1,10 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+
 import { GiWizardStaff, GiMountedKnight, GiBeard, GiFarmer, GiMustache, GiPublicSpeaker, GiSunPriest, GiVoodooDoll, GiBatMask, GiWizardFace } from "react-icons/gi";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { GlowingEffect } from '@/components/ui/glowEffect'
+
+
 import type { PatreonTier } from '@/types/core'
 import type { IconType } from 'react-icons'
 import { useAuth } from '@/lib/auth/client'
@@ -37,8 +37,6 @@ const TIER_CONFIG: Record<PatreonTier, {
   textColor: string
   glowColor: string
   borderGradient: string
-  description: string
-  price: string
 }> = {
   Citizen: {
     label: 'Citizen',
@@ -47,8 +45,6 @@ const TIER_CONFIG: Record<PatreonTier, {
     textColor: 'text-white',
     glowColor: 'shadow-slate-500/50',
     borderGradient: 'border-slate-400/50',
-    description: 'Basic access to the deck database',
-    price: '$2/month',
   },
   Knight: {
     label: 'Knight',
@@ -57,8 +53,6 @@ const TIER_CONFIG: Record<PatreonTier, {
     textColor: 'text-white',
     glowColor: 'shadow-blue-500/60',
     borderGradient: 'border-blue-400/50',
-    description: 'Enhanced features and priority support',
-    price: '$10/month',
   },
   Emissary: {
     label: 'Emissary',
@@ -67,8 +61,6 @@ const TIER_CONFIG: Record<PatreonTier, {
     textColor: 'text-white',
     glowColor: 'shadow-purple-500/60',
     borderGradient: 'border-purple-400/50',
-    description: 'Advanced deck analysis and filtering',
-    price: '$30/month',
   },
   Duke: {
     label: 'Duke',
@@ -77,8 +69,6 @@ const TIER_CONFIG: Record<PatreonTier, {
     textColor: 'text-white',
     glowColor: 'shadow-amber-500/70',
     borderGradient: 'border-amber-400/50',
-    description: 'Premium content and exclusive decks',
-    price: '$50/month',
   },
   Wizard: {
     label: 'Wizard',
@@ -87,8 +77,6 @@ const TIER_CONFIG: Record<PatreonTier, {
     textColor: 'text-white',
     glowColor: 'shadow-violet-500/80',
     borderGradient: 'border-violet-400/60',
-    description: 'Full database access with advanced tools',
-    price: '$165/month',
   },
   ArchMage: {
     label: 'ArchMage',
@@ -97,32 +85,18 @@ const TIER_CONFIG: Record<PatreonTier, {
     textColor: 'text-white',
     glowColor: 'shadow-rose-500/90',
     borderGradient: 'border-rose-400/70',
-    description: 'Ultimate tier with all features unlocked',
-    price: '$250/month',
   },
 }
 
-// Store icon overrides (in real app, this would be in localStorage or database)
-const iconOverrides: Record<PatreonTier, string> = {} as any
 
 export function TierBadge({
   tier,
   showIcon = true,
-  showTooltip = true,
   className = '',
 }: TierBadgeProps) {
   const { isDeveloper } = useAuth()
   const config = TIER_CONFIG[tier]
-  const [currentIconKey, setCurrentIconKey] = useState(
-    iconOverrides[tier] || config.defaultIcon
-  )
-  const Icon = AVAILABLE_ICONS[currentIconKey]
-
-  const handleIconChange = (iconKey: string) => {
-    setCurrentIconKey(iconKey)
-    iconOverrides[tier] = iconKey
-    console.log(`Changed ${tier} icon to ${iconKey}`)
-  }
+  const Icon = AVAILABLE_ICONS[config.defaultIcon]
 
   const badgeContent = (
     <div
@@ -150,74 +124,11 @@ export function TierBadge({
         ${isDeveloper ? 'cursor-pointer' : ''}
         ${className}
       `}
-    >
-      {/* WUBRG Glowing Effect - only for developers */}
-      {isDeveloper && (
-        <GlowingEffect
-          disabled={false}
-          blur={8}
-          spread={60}
-          proximity={100}
-          borderWidth={3}
-          movementDuration={1.5}
-        />
-      )}
-      
-      {showIcon && <Icon className="h-8 w-8 drop-shadow-lg relative z-10" />}
-      <span className="drop-shadow-md text-xs uppercase tracking-wider relative z-10">{config.label}</span>
-      {isDeveloper && (
-        <div className="absolute top-1 right-1 bg-black/20 rounded-full p-0.5 z-10">
-          <div className="text-[8px] font-mono">DEV</div>
-        </div>
-      )}
+      >
+      {showIcon && <Icon className="h-6 w-6 drop-shadow" />}
+      <span>{config.label}</span>
     </div>
   )
-
-  if (isDeveloper) {
-    return (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          {showTooltip ? (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>{badgeContent}</TooltipTrigger>
-                <TooltipContent className="bg-gradient-to-br from-slate-900 to-slate-800 border-slate-700">
-                  <div className="space-y-1">
-                    <p className="font-bold text-white">{config.label} Tier</p>
-                    <p className="text-sm text-slate-300">{config.description}</p>
-                    <p className="text-xs text-amber-400 font-semibold">{config.price}</p>
-                    <p className="text-xs text-green-400 font-semibold mt-2">Click to change icon</p>
-                  </div>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          ) : (
-            badgeContent
-          )}
-        </DropdownMenuTrigger>
-        <DropdownMenuContent className="grid grid-cols-4 gap-2 p-2 w-64">
-          {Object.entries(AVAILABLE_ICONS).map(([key, IconComponent]) => (
-            <DropdownMenuItem
-              key={key}
-              onClick={() => handleIconChange(key)}
-              className={`
-                flex items-center justify-center p-3 cursor-pointer rounded-lg
-                hover:bg-slate-100 dark:hover:bg-slate-800
-                transition-all duration-200
-                ${currentIconKey === key ? 'bg-slate-200 dark:bg-slate-700 ring-2 ring-blue-500' : ''}
-              `}
-            >
-              <IconComponent className="h-6 w-6" />
-            </DropdownMenuItem>
-          ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
-    )
-  }
-
-  if (!showTooltip) {
-    return badgeContent
-  }
 
   return (
     <TooltipProvider>
@@ -226,8 +137,6 @@ export function TierBadge({
         <TooltipContent className="bg-gradient-to-br from-slate-900 to-slate-800 border-slate-700">
           <div className="space-y-1">
             <p className="font-bold text-white">{config.label} Tier</p>
-            <p className="text-sm text-slate-300">{config.description}</p>
-            <p className="text-xs text-amber-400 font-semibold">{config.price}</p>
           </div>
         </TooltipContent>
       </Tooltip>
@@ -237,7 +146,7 @@ export function TierBadge({
 
 export function TierBadgeCompact({ tier }: { tier: PatreonTier }) {
   const config = TIER_CONFIG[tier]
-  const iconKey = iconOverrides[tier] || config.defaultIcon
+  const iconKey = tier || config.defaultIcon
   const Icon = AVAILABLE_ICONS[iconKey]
 
   return (

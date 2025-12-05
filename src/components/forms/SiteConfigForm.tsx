@@ -236,8 +236,7 @@ export function SiteConfigForm() {
     }
   }
 
-  const _getConfigValue = (key: string) => {
-    return config.find((item) => item.key === key)?.value || ''
+  const getConfigValue = (key: string) => {
   }
 
   const getConfigItem = (key: string) => {
@@ -299,18 +298,12 @@ export function SiteConfigForm() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Debug info */}
-      <div className="p-4 bg-muted rounded-lg text-xs">
-        <p>
-          <strong>Debug:</strong> Loaded {config.length} config items
+    <div className="space-y-6" data-component="site-config-form">
+      <div>
+        <h2 className="text-2xl font-bold">Site Configuration</h2>
+        <p className="text-muted-foreground">
+          Manage site-wide configuration settings. Be cautious when modifying these values.
         </p>
-        <p>Loading: {loading ? 'true' : 'false'}</p>
-        {config.length > 0 && (
-          <p>
-            First item: {config[0].key} = "{config[0].value}"
-          </p>
-        )}
       </div>
 
       {error && (

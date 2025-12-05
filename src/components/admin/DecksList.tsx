@@ -9,8 +9,9 @@ import { GlowingEffect } from '@/components/ui/glowEffect'
 import { Input } from '@/components/ui/input'
 
 interface Deck {
-  id: string
+  id: number
   moxfield_id: string
+  public_id: string
   name: string
   commanders: string[] | null
   color_identity: string[] | null

@@ -114,7 +114,6 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'Invalid request body' }, { status: 400 })
     }
 
-    // Apply all updates using service role (bypasses RLS)
     const results = []
     for (const update of updates) {
       const { data, error } = await supabase

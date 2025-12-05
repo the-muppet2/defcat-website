@@ -1,7 +1,7 @@
 // components/decks/detail/DeckStatsView.tsx
 import { TypeFilterBar } from './TypeFilterBar'
-import { ManaCurve, TypeDistribution } from '@/components/decks'
-import type { DecklistCardWithCard } from '@/types/supabase'
+import { ManaCurve, TypeDistribution, ColorDistribution } from '@/components/decks'
+import type { DecklistCardWithCard } from '@/types/core'
 
 interface DeckStatsViewProps {
   cards: DecklistCardWithCard[]
@@ -27,10 +27,19 @@ export function DeckStatsView({ cards, selectedType, onTypeSelect }: DeckStatsVi
           <ManaCurve cards={filteredCards} />
         </div>
 
-        {/* Type Distribution */}
-        <div>
-          <h3 className="text-xl font-bold text-foreground mb-4">Type Distribution</h3>
-          <TypeDistribution deckCards={filteredCards} />
+        {/* Color & Type Distribution - Side by Side */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <h3 className="text-xl font-bold text-foreground mb-4">Color Distribution</h3>
+            <ColorDistribution
+              cards={cards.map((card) => ({ ...card, quantity: card.quantity ?? 0 }))}
+              selectedType={selectedType}
+            />
+          </div>
+          <div>
+            <h3 className="text-xl font-bold text-foreground mb-4">Type Distribution</h3>
+            <TypeDistribution deckCards={filteredCards} />
+          </div>
         </div>
       </div>
     </>

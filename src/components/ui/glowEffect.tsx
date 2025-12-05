@@ -23,7 +23,7 @@ const GlowingEffect = memo(
     blur = 1,
     inactiveZone = 0.1,
     proximity = 44,  // Reduced from default
-    spread = 45, 
+    spread = 45,
     variant = "default",
     glow = false,
     className = "will-change: transition-opacity",
@@ -79,10 +79,10 @@ const GlowingEffect = memo(
 
           const currentAngle =
             parseFloat(element.style.getPropertyValue("--start")) || 0;
-          
+
           const targetAngle =
             (180 * Math.atan2(mouseY - center[1], mouseX - center[0])) /
-              Math.PI +
+            Math.PI +
             90;
 
           const angleDiff = ((targetAngle - currentAngle + 180) % 360) - 180;
@@ -121,7 +121,7 @@ const GlowingEffect = memo(
     }, [handleMove, disabled]);
 
     return (
-      <>
+      <div className="absolute inset-0 rounded-[inherit] pointer-events-none">
         <div
           className={cn(
             "pointer-events-none absolute -inset-px hidden rounded-[inherit] border opacity-0 transition-opacity transform-gpu transform-y(0)",
@@ -151,7 +151,7 @@ const GlowingEffect = memo(
                 )`,
             } as React.CSSProperties
           }
-          
+
           className={cn(
             "pointer-events-none absolute inset-0 rounded-[inherit] opacity-100 transition-opacity",
             glow && "opacity-100",
@@ -174,7 +174,7 @@ const GlowingEffect = memo(
             )}
           />
         </div>
-      </>
+      </div>
     );
   }
 );

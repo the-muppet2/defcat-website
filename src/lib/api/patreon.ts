@@ -6,6 +6,25 @@
 import type { PatreonTier } from '@/types/core'
 import { logger } from '@/lib/observability/logger'
 
+interface PatreonSocialConnections {
+  discord?: {
+    user_id: string
+    url?: string
+  } | null
+  twitter?: {
+    user_id: string
+    url?: string
+  } | null
+  youtube?: {
+    user_id: string
+    url?: string
+  } | null
+  twitch?: {
+    user_id: string
+    url?: string
+  } | null
+}
+
 interface PatreonMember {
   data: {
     id: string
@@ -13,6 +32,7 @@ interface PatreonMember {
       email: string
       full_name: string
       patron_status: string | null
+      social_connections?: PatreonSocialConnections
     }
     relationships: {
       memberships: {
@@ -34,22 +54,28 @@ interface PatreonMember {
  * Determine user's tier based on Patreon pledge amount
  */
 export function determineTier(pledgeAmountCents: number): PatreonTier {
-  if (pledgeAmountCents >= 25000) return 'ArchMage' // $250
-  if (pledgeAmountCents >= 16500) return 'Wizard' // $165
-  if (pledgeAmountCents >= 5000) return 'Duke' // $50
-  if (pledgeAmountCents >= 3000) return 'Emissary' // $30
-  if (pledgeAmountCents >= 1000) return 'Knight' // $10
-  return 'Citizen' // $2
+  if (pledgeAmountCents >= 25000) return 'ArchMage'
+  if (pledgeAmountCents >= 16500) return 'Wizard'
+  if (pledgeAmountCents >= 5000) return 'Duke'
+  if (pledgeAmountCents >= 3000) return 'Emissary'
+  if (pledgeAmountCents >= 1000) return 'Knight'
+  return 'Citizen'
+}
+
+export interface PatreonMembershipResult {
+  tier: PatreonTier
+  patreonId: string
+  discordId: string | null
 }
 
 /**
- * Fetch user's Patreon membership data
+ * Fetch user's Patreon membership data including social connections
  */
 export async function fetchPatreonMembership(
   accessToken: string
-): Promise<{ tier: PatreonTier; patreonId: string }> {
+): Promise<PatreonMembershipResult> {
   const response = await fetch(
-    'https://www.patreon.com/api/oauth2/v2/identity?include=memberships&fields[user]=email,full_name&fields[member]=currently_entitled_amount_cents,patron_status',
+    'https://www.patreon.com/api/oauth2/v2/identity?include=memberships&fields[user]=email,full_name,social_connections&fields[member]=currently_entitled_amount_cents,patron_status',
     {
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -68,9 +94,14 @@ export async function fetchPatreonMembership(
   }
 
   const data: PatreonMember = await response.json()
+
+  // Extract Discord ID from social connections
+  const discordId = data.data.attributes.social_connections?.discord?.user_id || null
+
   logger.debug('Patreon membership data retrieved', {
     patreonId: data.data.id,
     patronStatus: data.included?.[0]?.attributes.patron_status,
+    hasDiscordLinked: !!discordId,
   })
 
   // Extract user ID
@@ -88,7 +119,7 @@ export async function fetchPatreonMembership(
   const pledgeAmountCents = activeMembership?.attributes.currently_entitled_amount_cents || 0
   const tier = determineTier(pledgeAmountCents)
 
-  return { tier, patreonId }
+  return { tier, patreonId, discordId }
 }
 
 /**

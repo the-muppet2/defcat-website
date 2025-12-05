@@ -58,7 +58,7 @@ interface FlattenedDeck {
   name: string
   format: string
   visibility: string
-  public_url: string
+  moxfield_url: string
   public_id: string
   created_at_utc: string
   last_updated_at_utc: string
@@ -105,7 +105,7 @@ function flattenDeck(deckEntry: { createdAtUtc: string; deck: MoxfieldDeck }): F
     name: deck.name,
     format: deck.format,
     visibility: deck.visibility,
-    public_url: deck.publicUrl,
+    moxfield_url: deck.publicUrl,
     public_id: deck.publicId,
     created_at_utc: deck.createdAtUtc,
     last_updated_at_utc: deck.lastUpdatedAtUtc,

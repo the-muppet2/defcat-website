@@ -1,24 +1,13 @@
+'use client'
 // components/deck/ColorDistribution.tsx
 /** biome-ignore-all lint/a11y/noStaticElementInteractions: <explanation> */
-'use client'
 
 // biome-ignore assist/source/organizeImports: <explanation>
 import { useState } from 'react'
+import type { DeckCard } from '@/types/core'
 import { ColorIdentity } from '@/types/colors'
 import { cn } from '@/lib/utils'
 
-interface DeckCard {
-  quantity: number
-  board: string
-  cards: {
-    name: string
-    mana_cost: string | null | undefined
-    type_line: string | null
-    cmc: number | null
-    image_url: string | null
-    scryfall_id: string | null
-  } | null
-}
 
 export function ColorDistribution({
   cards,
@@ -140,7 +129,7 @@ export function ColorDistribution({
           <span className="font-medium">{totalCards}</span>
         </div>
 
-        <div className="space-y-1.5">
+        <div style={{ columns: sortedCombos.length > 6 ? 2 : 1, columnGap: '0.5rem' }}>
           {sortedCombos.map(([combo, count]) => {
             const percentage = ((count / totalCards) * 100).toFixed(1)
             const isHovered = hoveredCombo === combo
@@ -148,7 +137,8 @@ export function ColorDistribution({
             return (
               <div
                 key={combo}
-                className="relative group"
+                className="relative group mb-1.5"
+                style={{ breakInside: 'avoid' }}
                 onMouseEnter={() => setHoveredCombo(combo)}
                 onMouseLeave={() => setHoveredCombo(null)}
               >
@@ -171,7 +161,9 @@ export function ColorDistribution({
                         ))}
                       </div>
                     )}
-                    <span className="font-large">{ColorIdentity.getLabel(combo)}</span>
+                    <span className="font-large">
+                      {combo.length >= 3 ? combo.split('').join('/') : ColorIdentity.getLabel(combo)}
+                    </span>
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="font-bold tabular-nums text-sm">{count}</span>

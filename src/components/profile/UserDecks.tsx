@@ -1,55 +1,194 @@
 'use client'
 
-import { ExternalLink, Loader2 } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import Link from 'next/link'
+import { Check, Eye, EyeOff, Loader2, Pencil, X } from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { ManaSymbols } from '@/components/decks/ManaSymbols'
 import { createClient } from '@/lib/supabase/client'
 import type { Database } from '@/types/supabase/generated'
 
-type MoxfieldDeck = Database['public']['Tables']['moxfield_decks']['Row']
+type EnhancedDeck = Database['public']['Views']['decks_enhanced']['Row']
+
+interface DeckSettings {
+  user_hidden: boolean
+  user_title: string | null
+  user_description: string | null
+}
 
 interface UserDecksProps {
   moxfieldUsername: string | null
 }
 
 export function UserDecks({ moxfieldUsername }: UserDecksProps) {
-  const [decks, setDecks] = useState<MoxfieldDeck[]>([])
+  const [decks, setDecks] = useState<EnhancedDeck[]>([])
+  const [deckSettings, setDeckSettings] = useState<Record<number, DeckSettings>>({})
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [editingDeck, setEditingDeck] = useState<number | null>(null)
+  const [editTitle, setEditTitle] = useState('')
+  const [editDescription, setEditDescription] = useState('')
+  const [saving, setSaving] = useState<number | null>(null)
   const supabase = createClient()
 
-  useEffect(() => {
-    async function fetchUserDecks() {
-      if (!moxfieldUsername) {
-        setIsLoading(false)
-        return
-      }
-
-      try {
-        const { data, error: fetchError } = await supabase
-          .from('moxfield_decks')
-          .select('id, name, format, view_count, like_count, comment_count, mainboard_count, last_updated_at, moxfield_url')
-          .eq('author_username', moxfieldUsername)
-          .neq('author_username', 'DefCatMtg')
-          .order('last_updated_at', { ascending: false })
-
-        if (fetchError) throw fetchError
-
-        setDecks(data || [])
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load decks')
-      } finally {
-        setIsLoading(false)
-      }
+  const fetchUserDecks = useCallback(async () => {
+    if (!moxfieldUsername) {
+      setIsLoading(false)
+      return
     }
 
-    fetchUserDecks()
+    try {
+      // Query decks_enhanced view first to get player_username matching, then join with moxfield_decks for user settings
+      const { data: enhancedData, error: enhancedError } = await supabase
+        .from('decks_enhanced')
+        .select('id, name, format, view_count, like_count, comment_count, mainboard_count, last_updated_at, public_id, moxfield_id, player_username, deck_title, commanders, color_string, description')
+        .ilike('player_username', moxfieldUsername)
+        .order('last_updated_at', { ascending: false })
+
+      if (enhancedError) throw enhancedError
+
+      // Get user settings from moxfield_decks for these deck IDs
+      const deckIds = (enhancedData || []).map(d => d.id).filter((id): id is number => id !== null)
+
+      let settingsMap: Record<number, { user_hidden: boolean | null; user_title: string | null; user_description: string | null }> = {}
+
+      if (deckIds.length > 0) {
+        const { data: settingsData } = await supabase
+          .from('moxfield_decks')
+          .select('id, user_hidden, user_title, user_description')
+          .in('id', deckIds)
+
+        for (const s of settingsData || []) {
+          settingsMap[s.id] = {
+            user_hidden: s.user_hidden,
+            user_title: s.user_title,
+            user_description: s.user_description,
+          }
+        }
+      }
+
+      // Merge enhanced data with settings
+      const transformedDecks: EnhancedDeck[] = []
+      const settings: Record<number, DeckSettings> = {}
+
+      for (const deck of enhancedData || []) {
+        const deckId = deck.id!
+        const deckSetting = settingsMap[deckId]
+
+        // Apply user overrides to deck title/description
+        const displayTitle = deckSetting?.user_title || deck.deck_title || deck.name
+        const displayDescription = deckSetting?.user_description || deck.description
+
+        transformedDecks.push({
+          ...deck,
+          deck_title: displayTitle,
+          description: displayDescription,
+        } as EnhancedDeck)
+
+        settings[deckId] = {
+          user_hidden: deckSetting?.user_hidden ?? false,
+          user_title: deckSetting?.user_title ?? null,
+          user_description: deckSetting?.user_description ?? null,
+        }
+      }
+
+      setDecks(transformedDecks)
+      setDeckSettings(settings)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to load decks')
+    } finally {
+      setIsLoading(false)
+    }
   }, [moxfieldUsername, supabase])
+
+  useEffect(() => {
+    fetchUserDecks()
+  }, [fetchUserDecks])
+
+  const toggleVisibility = async (deckId: number) => {
+    const currentSettings = deckSettings[deckId]
+    if (!currentSettings) return
+
+    setSaving(deckId)
+    try {
+      const response = await fetch(`/api/decks/${deckId}/settings`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user_hidden: !currentSettings.user_hidden }),
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'Failed to update visibility')
+      }
+
+      setDeckSettings(prev => ({
+        ...prev,
+        [deckId]: { ...prev[deckId], user_hidden: !currentSettings.user_hidden }
+      }))
+    } catch (err) {
+      console.error('Failed to toggle visibility:', err)
+    } finally {
+      setSaving(null)
+    }
+  }
+
+  const startEditing = (deckId: number, deck: EnhancedDeck) => {
+    const settings = deckSettings[deckId]
+    setEditingDeck(deckId)
+    setEditTitle(settings?.user_title || '')
+    setEditDescription(settings?.user_description || '')
+  }
+
+  const cancelEditing = () => {
+    setEditingDeck(null)
+    setEditTitle('')
+    setEditDescription('')
+  }
+
+  const saveEdits = async (deckId: number) => {
+    setSaving(deckId)
+    try {
+      const response = await fetch(`/api/decks/${deckId}/settings`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_title: editTitle || null,
+          user_description: editDescription || null,
+        }),
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.error || 'Failed to save changes')
+      }
+
+      setDeckSettings(prev => ({
+        ...prev,
+        [deckId]: {
+          ...prev[deckId],
+          user_title: editTitle || null,
+          user_description: editDescription || null,
+        }
+      }))
+
+      // Refresh decks to get updated display
+      await fetchUserDecks()
+      setEditingDeck(null)
+    } catch (err) {
+      console.error('Failed to save edits:', err)
+    } finally {
+      setSaving(null)
+    }
+  }
 
   if (!moxfieldUsername) {
     return (
@@ -83,70 +222,168 @@ export function UserDecks({ moxfieldUsername }: UserDecksProps) {
     )
   }
 
+  const cost = true
+
   return (
     <div className="space-y-2">
       <p className="text-sm text-muted-foreground mb-4">
         Found {decks.length} deck{decks.length !== 1 ? 's' : ''}
       </p>
       <Accordion type="single" collapsible className="w-full">
-        {decks.map((deck) => (
-          <AccordionItem key={deck.id} value={`deck-${deck.id}`}>
-            <AccordionTrigger className="hover:no-underline">
-              <div className="flex items-center justify-between w-full pr-4">
-                <span className="font-medium">{deck.name}</span>
-                <span className="text-xs text-muted-foreground">
-                  {deck.format || 'Unknown Format'}
-                </span>
-              </div>
-            </AccordionTrigger>
-            <AccordionContent>
-              <div className="space-y-3 pt-2">
-                <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div>
-                    <span className="text-muted-foreground">Views:</span>
-                    <span className="ml-2 font-medium">
-                      {deck.view_count?.toLocaleString() || 0}
+        {decks.map((deck) => {
+          const settings = deckSettings[deck.id!]
+          const isHidden = settings?.user_hidden ?? false
+          const isEditing = editingDeck === deck.id
+          const isSaving = saving === deck.id
+
+          return (
+            <AccordionItem key={deck.id} value={`deck-${deck.id}`} className={isHidden ? 'opacity-60' : ''}>
+              <AccordionTrigger className="hover:no-underline">
+                <div className="flex items-center justify-between w-full pr-4">
+                  <div className="flex items-center gap-2">
+                    {isHidden && <EyeOff className="h-4 w-4 text-muted-foreground" />}
+                    <span className="font-medium">{deck.deck_title || deck.name}</span>
+                  </div>
+                  {deck.color_string && (
+                    <span className="text-xs text-muted-foreground font-mono">
+                      {deck.color_string.split('').map((symbol, idx) => (
+                        <ManaSymbols key={`${symbol}-${idx}`} mana={symbol} cost={cost} className="h-4 w-4 inline-block align-text-bottom gap-1" />
+                      ))}
                     </span>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Likes:</span>
-                    <span className="ml-2 font-medium">
-                      {deck.like_count?.toLocaleString() || 0}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Comments:</span>
-                    <span className="ml-2 font-medium">
-                      {deck.comment_count?.toLocaleString() || 0}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Mainboard:</span>
-                    <span className="ml-2 font-medium">{deck.mainboard_count || 0} cards</span>
-                  </div>
+                  )}
                 </div>
+              </AccordionTrigger>
+              <AccordionContent>
+                <div className="space-y-4 pt-2">
+                  {/* Commander info */}
+                  {deck.commanders && (deck.commanders as string[]).length > 0 && (
+                    <div className="text-sm">
+                      <span className="text-muted-foreground">Commander:</span>
+                      <span className="ml-2 font-medium">
+                        {(deck.commanders as string[]).join(' / ')}
+                      </span>
+                    </div>
+                  )}
 
-                {deck.last_updated_at && (
-                  <div className="text-xs text-muted-foreground">
-                    Last updated: {new Date(deck.last_updated_at).toLocaleDateString()}
+                  {/* Stats grid */}
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <span className="text-muted-foreground">Views:</span>
+                      <span className="ml-2 font-medium">
+                        {deck.view_count?.toLocaleString() || 0}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Likes:</span>
+                      <span className="ml-2 font-medium">
+                        {deck.like_count?.toLocaleString() || 0}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Comments:</span>
+                      <span className="ml-2 font-medium">
+                        {deck.comment_count?.toLocaleString() || 0}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Cards:</span>
+                      <span className="ml-2 font-medium">{deck.mainboard_count || 0}</span>
+                    </div>
                   </div>
-                )}
 
-                {deck.moxfield_url && (
-                  <a
-                    href={deck.moxfield_url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-sm text-[var(--mana-color)] hover:brightness-110 transition-all"
-                  >
-                    View on Moxfield
-                    <ExternalLink className="h-3 w-3" />
-                  </a>
-                )}
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-        ))}
+                  {deck.last_updated_at && (
+                    <div className="text-xs text-muted-foreground">
+                      Last updated: {new Date(deck.last_updated_at).toLocaleDateString()}
+                    </div>
+                  )}
+
+                  {/* Edit form */}
+                  {isEditing ? (
+                    <div className="space-y-3 p-3 bg-muted/50 rounded-lg">
+                      <div>
+                        <label className="text-xs text-muted-foreground mb-1 block">Custom Title</label>
+                        <Input
+                          value={editTitle}
+                          onChange={(e) => setEditTitle(e.target.value)}
+                          placeholder="Leave empty to use default"
+                          className="text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs text-muted-foreground mb-1 block">Custom Description</label>
+                        <Textarea
+                          value={editDescription}
+                          onChange={(e) => setEditDescription(e.target.value)}
+                          placeholder="Add a description for your deck..."
+                          rows={3}
+                          className="text-sm resize-none"
+                        />
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          onClick={() => saveEdits(deck.id!)}
+                          disabled={isSaving}
+                        >
+                          {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                          <span className="ml-1">Save</span>
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={cancelEditing}
+                          disabled={isSaving}
+                        >
+                          <X className="h-4 w-4" />
+                          <span className="ml-1">Cancel</span>
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    /* Action buttons */
+                    <div className="flex flex-wrap gap-2 pt-2">
+                      <Link href={`/decks/${deck.moxfield_id}`}>
+                        <Button size="sm" variant="default">
+                          View Deck
+                        </Button>
+                      </Link>
+
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => startEditing(deck.id!, deck)}
+                      >
+                        <Pencil className="h-4 w-4 mr-1" />
+                        Edit
+                      </Button>
+
+                      <Button
+                        size="sm"
+                        variant={isHidden ? 'secondary' : 'outline'}
+                        onClick={() => toggleVisibility(deck.id!)}
+                        disabled={isSaving}
+                      >
+                        {isSaving ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : isHidden ? (
+                          <>
+                            <Eye className="h-4 w-4 mr-1" />
+                            Show
+                          </>
+                        ) : (
+                          <>
+                            <EyeOff className="h-4 w-4 mr-1" />
+                            Hide
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          )
+        })}
       </Accordion>
     </div>
   )

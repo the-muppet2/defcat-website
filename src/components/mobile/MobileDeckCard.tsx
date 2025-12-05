@@ -22,7 +22,26 @@ export const MobileDeckCard = memo(function MobileDeckCard({
     day: 'numeric',
   })
 
-  const commanderImageUrl = deck.commanders || '/images/placeholder-commander.jpg'
+  // Get commander image URL from the first commander
+  const getCommanderImageUrl = () => {
+    if (!deck.commanders || deck.commanders.length === 0) {
+      return '/images/placeholder-commander.jpg'
+    }
+    const firstCommander = deck.commanders[0]
+    if (typeof firstCommander === 'string') {
+      return '/images/placeholder-commander.jpg'
+    }
+    const card = firstCommander.cards
+    if (card?.cached_image_url) {
+      return card.cached_image_url
+    }
+    if (card?.scryfall_id) {
+      return `https://cards.scryfall.io/art_crop/front/${card.scryfall_id[0]}/${card.scryfall_id[1]}/${card.scryfall_id}.jpg`
+    }
+    return '/images/placeholder-commander.jpg'
+  }
+
+  const commanderImageUrl = getCommanderImageUrl()
 
   return (
     <div

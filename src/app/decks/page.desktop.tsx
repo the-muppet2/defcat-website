@@ -4,7 +4,7 @@
 /** biome-ignore-all lint/a11y/noLabelWithoutControl: <explanation> */
 'use client'
 
-import { ChevronDown, ChevronUp, ExternalLink, Filter, X, Shuffle } from 'lucide-react'
+import { ChevronDown, ChevronUp, ExternalLink, Filter, X, Shuffle, Loader2 } from 'lucide-react'
 import { memo, useMemo, useState } from 'react'
 import { ManaSymbols } from '@/components/decks/ManaSymbols'
 import { RoastButton } from '@/components/decks/RoastButton'
@@ -20,7 +20,7 @@ const DeckRow = memo(function DeckRow({ deck }: { deck: EnhancedDeck }) {
     <tr className="border-b border-tinted hover:bg-accent-tinted transition-all">
       <td className="py-4 px-4">
         <a
-          href={`/decks/${deck.id}`}
+          href={`/decks/${deck.moxfield_id}`}
           className="block hover:text-[var(--mana-color)] transition-colors"
         >
           <div className="font-medium">{deck.deck_title}</div>
@@ -69,8 +69,9 @@ const DeckRow = memo(function DeckRow({ deck }: { deck: EnhancedDeck }) {
 })
 
 export default function DesktopDecksPage() {
-  const { data, isLoading: loading, error } = useDecksInfinite()
+  const { data, isLoading: loading, error, fetchNextPage, hasNextPage, isFetchingNextPage } = useDecksInfinite()
   const decks = useMemo(() => data?.pages?.flatMap(page => page.decks) ?? [], [data])
+  const totalDecks = data?.pages?.[0]?.total ?? 0
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedColors, setSelectedColors] = useState<string[]>([])
   const [invertColors, setInvertColors] = useState(false)
@@ -263,10 +264,10 @@ export default function DesktopDecksPage() {
                     type="button"
                     onClick={() => toggleColor(letter)}
                     className={cn(
-                      'flex items-center gap-3 p-2 rounded-lg transition-all duration-200',
+                      'flex items-center gap-3 p-2 rounded-lg transition-all duration-200 w-full',
                       selectedColors.includes(letter)
-                        ? 'bg-accent-tinted ring-2 scale-100'
-                        : 'hover:bg-accent-tinted/50 scale-95 opacity-70 hover:opacity-100'
+                        ? 'bg-accent-tinted ring-2'
+                        : 'hover:bg-accent-tinted/50 hover:opacity-100'
                     )}
                     style={
                       selectedColors.includes(letter)
@@ -295,7 +296,7 @@ export default function DesktopDecksPage() {
                   <button
                     type="button"
                     onClick={() => toggleColor('WUBRG')}
-                    className="flex items-center gap-3 p-2 rounded-[6px] transition-all duration-200 w-full bg-card scale-100"
+                    className="flex items-center gap-3 p-2 rounded-[6px] transition-all duration-200 w-full bg-card"
                   >
                     <div className="flex gap-0.5">
                       {['W', 'U', 'B', 'R', 'G'].map((letter) => {
@@ -316,7 +317,7 @@ export default function DesktopDecksPage() {
                 <button
                   type="button"
                   onClick={() => toggleColor('WUBRG')}
-                  className="flex items-center gap-3 p-2 rounded-lg transition-all duration-200 hover:bg-accent-tinted/50 scale-95 opacity-70 hover:opacity-100"
+                  className="flex items-center gap-3 p-2 rounded-lg transition-all duration-200 hover:bg-accent-tinted/50  hover:opacity-100 w-full"
                 >
                   <div className="flex gap-0.5">
                     {['W', 'U', 'B', 'R', 'G'].map((letter) => {
@@ -348,10 +349,10 @@ export default function DesktopDecksPage() {
                   type="button"
                   onClick={() => setSelectedBracket(selectedBracket === bracket.value ? '' : bracket.value)}
                   className={cn(
-                    'flex flex-col items-start gap-1 p-3 rounded-lg transition-all duration-200 text-left',
+                    'flex flex-col items-start gap-1 p-3 rounded-lg transition-all duration-200 text-left w-full',
                     selectedBracket === bracket.value
-                      ? 'bg-[var(--mana-color)]/10 ring-2 ring-[var(--mana-color)] scale-100'
-                      : 'bg-accent-tinted/50 hover:bg-accent-tinted scale-95 opacity-70 hover:opacity-100'
+                      ? 'bg-[var(--mana-color)]/10 ring-2 ring-[var(--mana-color)]'
+                      : 'bg-accent-tinted/50 hover:bg-accent-tinted  hover:opacity-100'
                   )}
                 >
                   <span className="font-medium text-sm">{bracket.label}</span>
@@ -398,21 +399,28 @@ export default function DesktopDecksPage() {
               <h1 className="text-2xl font-bold">Decklist Database</h1>
             </div>
             <div className="text-sm text-muted-foreground">
-              {filteredDecks.length} / {decks.length} decks
+              {filteredDecks.length} / {totalDecks} decks
             </div>
           </div>
         </header>
 
         {/* Table with tinted styling */}
-        <div className="p-6">
+        <div className="p-6 flex flex-col h-[calc(100vh-80px)]">
           {loading ? (
             <div className="text-center text-muted-foreground py-20">Loading decks...</div>
           ) : error ? (
             <div className="text-center text-destructive py-20">Error loading decks</div>
           ) : (
-            <div className="relative rounded-2xl border p-2 md:rounded-3xl md:p-3 overflow-x-auto">
+            <div className="relative rounded-2xl border p-2 md:rounded-3xl md:p-3 flex-1 flex flex-col overflow-hidden">
+              <div className="overflow-auto flex-1" onScroll={(e) => {
+                const target = e.target as HTMLDivElement
+                const bottom = target.scrollHeight - target.scrollTop <= target.clientHeight + 100
+                if (bottom && hasNextPage && !isFetchingNextPage) {
+                  fetchNextPage()
+                }
+              }}>
                 <table className="w-full min-w-[800px]">
-                  <thead>
+                  <thead className="sticky top-0 bg-card z-10">
                     <tr className="border-b border-tinted">
                       <th className="text-left py-3 px-4 text-sm font-semibold text-muted-foreground">
                         <button
@@ -514,11 +522,25 @@ export default function DesktopDecksPage() {
                   </thead>
                   <tbody>
                     {filteredDecks.map((deck) => (
-                      <DeckRow key={deck.id} deck={deck} />
+                      <DeckRow key={deck.moxfield_id} deck={deck} />
                     ))}
                   </tbody>
                 </table>
+
+                {/* Loading indicator inside scrollable area */}
+                <div className="py-4 flex justify-center">
+                  {isFetchingNextPage && (
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                      <span>Loading more decks...</span>
+                    </div>
+                  )}
+                  {!hasNextPage && decks.length > 0 && (
+                    <span className="text-muted-foreground text-sm">All {totalDecks} decks loaded</span>
+                  )}
+                </div>
               </div>
+            </div>
           )}
         </div>
       </main>

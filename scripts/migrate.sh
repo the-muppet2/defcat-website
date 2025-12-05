@@ -23,7 +23,7 @@ apply_migrations() {
   load_env
 
   echo "Running database migration..."
-  supabase db push -p "$POSTGRES_PASSWORD"
+  supabase db push --include-all -p "$POSTGRES_PASSWORD"
 
 
   if [ $? -eq 0 ]; then

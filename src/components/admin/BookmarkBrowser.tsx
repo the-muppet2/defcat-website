@@ -27,7 +27,7 @@ type DeckItem = {
 }
 
 export function DeckURLSelector({
-  bookmarkId = 'xpGzQ',
+  bookmarkId: _bookmarkId = 'xpGzQ',
   onSelect,
 }: {
   bookmarkId?: string

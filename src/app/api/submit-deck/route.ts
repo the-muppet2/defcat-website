@@ -126,18 +126,15 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const isDraft = body.isDraft === true
 
-    // Check if user is admin/moderator/developer (they bypass tier requirements)
-    const isPrivileged = ['admin', 'moderator', 'developer'].includes(profile.role)
-
     // Check tier requirements (skip for drafts and privileged users)
-    if (!isDraft && !isPrivileged) {
+    if (!isDraft) {
       const eligibleTiers = ['Duke', 'Wizard', 'ArchMage']
       if (!eligibleTiers.includes(profile.patreon_tier)) {
         return NextResponse.json<SubmissionResponse>(
           {
             success: false,
             error: {
-              message: `Deck submissions require Duke tier ($50/month) or higher. Your current tier: ${profile.patreon_tier}`,
+              message: 'Your Patreon tier does not permit deck submissions. Please upgrade your tier to submit a deck.',
               code: 'INSUFFICIENT_TIER',
             },
           },
@@ -260,7 +257,7 @@ export async function POST(request: NextRequest) {
       logger.error('Failed to insert deck submission', dbError, { userId: user.id, isDraft, tier: profile.patreon_tier })
 
       // If credit was deducted, try to refund it
-      if (!isDraft && !isPrivileged) {
+      if (!isDraft) {
         const currentMonth = new Date()
         currentMonth.setDate(1)
         currentMonth.setHours(0, 0, 0, 0)
@@ -334,64 +331,32 @@ export async function POST(request: NextRequest) {
         // The submission is already saved
       }
 
-      // Also notify admin (optional)
-      try {
-        const resend = getResendClient()
-        const maxSubmissions = profile.patreon_tier === 'ArchMage' ? 2 : 1
-        const { count: submissionCount } = await supabase
-          .from('deck_submissions')
-          .select('*', { count: 'exact', head: true })
-          .eq('user_id', user.id)
-          .neq('status', 'draft')
-          .gte(
-            'created_at',
-            new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()
-          )
-
-        await resend.emails.send({
-          from: 'DefCat Submissions <notifications@defcat.com>', // Update with your domain
-          to: process.env.ADMIN_EMAIL || 'admin@defcat.com', // Update with your admin email
-          subject: `New ${profile.patreon_tier} Deck Submission #${submissionNumber} from ${body.patreonUsername}`,
-          html: `
-            <h2>New Deck Submission Received</h2>
-            <p><strong>Submission #:</strong> ${submissionNumber}</p>
-            <p><strong>Patreon Tier:</strong> ${profile.patreon_tier}</p>
-            <p><strong>Remaining this month:</strong> ${maxSubmissions - (submissionCount || 0) - 1}</p>
-            <hr>
-            <p><strong>Patreon User:</strong> ${body.patreonUsername}</p>
-            <p><strong>Discord:</strong> ${body.discordUsername}</p>
-            <p><strong>Email:</strong> ${body.email}</p>
-            <p><strong>Mystery Deck:</strong> ${mysteryDeck ? 'Yes' : 'No'}</p>
-            ${body.commander ? `<p><strong>Commander:</strong> ${body.commander}</p>` : ''}
-            <p><strong>Color Preference:</strong> ${body.colorPreference}</p>
-            ${body.theme ? `<p><strong>Theme:</strong> ${body.theme}</p>` : ''}
-            <p><strong>Bracket:</strong> ${body.bracket}</p>
-            <p><strong>Budget:</strong> ${body.budget}</p>
-            <p><strong>Coffee:</strong> ${body.coffee}</p>
-            ${body.idealDate ? `<p><strong>Ideal Date:</strong> ${body.idealDate}</p>` : ''}
-            <br>
-            <p><a href="${process.env.NEXT_PUBLIC_APP_URL}/admin/submissions/${submission.id}">View in Dashboard</a></p>
-          `,
+      // Track metrics for successful submission
+      if (!isDraft) {
+        deckSubmissions.add(1, {
+          tier: profile.patreon_tier,
+          status: 'success',
         })
-      } catch (adminEmailError) {
-        logger.error('Failed to send admin notification email', adminEmailError instanceof Error ? adminEmailError : undefined, {
-          submissionId: submission.id
-        })
-        // Don't fail the request
       }
+
+      // Return success response
+      statusCode = 201
+      const response = NextResponse.json<SubmissionResponse>(
+        {
+          success: true,
+          data: {
+            id: submission.id,
+            submissionNumber,
+          },
+        },
+        { status: 201 }
+      )
+      return response
     }
 
-    // Track metrics for successful submission
-    if (!isDraft) {
-      deckSubmissions.add(1, {
-        tier: profile.patreon_tier,
-        status: 'success',
-      })
-    }
-
-    // Return success response
+    // Return success response for drafts
     statusCode = 201
-    const response = NextResponse.json<SubmissionResponse>(
+    return NextResponse.json<SubmissionResponse>(
       {
         success: true,
         data: {
@@ -401,38 +366,27 @@ export async function POST(request: NextRequest) {
       },
       { status: 201 }
     )
-
-    // Track request metrics
-    trackRequestDuration('POST', '/api/submit-deck', statusCode, Date.now() - startTime)
-    return response
   } catch (error) {
-    logger.error('Unexpected error in deck submission endpoint', error instanceof Error ? error : undefined)
-    statusCode = 500
-    const response = NextResponse.json<SubmissionResponse>(
+    logger.error('Unexpected error in deck submission', error instanceof Error ? error : undefined)
+
+    // Track metrics for failed submission
+    deckSubmissions.add(1, {
+      tier: 'unknown',
+      status: 'error',
+    })
+
+    return NextResponse.json<SubmissionResponse>(
       {
         success: false,
         error: {
-          message: 'An unexpected error occurred. Please try again.',
+          message: 'An unexpected error occurred. Please try again later.',
           code: 'INTERNAL_ERROR',
         },
       },
       { status: 500 }
     )
-
-    // Track request metrics even on error
-    trackRequestDuration('POST', '/api/submit-deck', statusCode, Date.now() - startTime)
-    return response
+  } finally {
+    const duration = Date.now() - startTime
+    trackRequestDuration('POST', '/api/submit-deck', statusCode, duration)
   }
-}
-
-// Handle OPTIONS request for CORS
-export async function OPTIONS() {
-  return new NextResponse(null, {
-    status: 200,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    },
-  })
 }

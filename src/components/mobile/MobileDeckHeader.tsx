@@ -70,9 +70,9 @@ export const MobileDeckHeader = memo(function MobileDeckHeader({
               {deck.event_date_std}
             </p>
           )}
-          {deck.username && (
+          {(deck.username || deck.author_username) && (
             <p className="text-tinted text-lg font-bold mb-2">
-              {deck.author_username}
+              {deck.username || deck.author_username}
             </p>
           )}
           {deck.deck_title && deck.deck_title !== 'Custom Deck' && (

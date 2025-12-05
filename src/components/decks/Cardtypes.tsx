@@ -1,15 +1,4 @@
-interface DeckCard {
-  quantity: number
-  board: string
-  cards: {
-    name: string
-    mana_cost: string | null
-    type_line: string | null
-    cmc: number | null
-    image_url: string | null
-    scryfall_id: string | null
-  } | null
-}
+import type { DeckCard } from '@/types/core'
 
 interface TypeDistributionProps {
   deckCards: DeckCard[]
@@ -79,16 +68,15 @@ export function TypeDistribution({ deckCards }: TypeDistributionProps) {
                   <div
                     className={`bg-gradient-to-r ${typeColors[type] || typeColors.Other} h-full transition-all duration-500 backdrop-blur-sm`}
                     style={{
-                      width: `${Math.max(barPercentage, 8)}%`,
+                      width: `${Math.max(barPercentage, 4)}%`,
                       opacity: 0.9,
                     }}
-                  >
-                    <div className="absolute inset-0 flex items-center justify-end px-4 pointer-events-none">
-                      <span className="text-sm font-bold text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">
-                        {percentage}%
-                      </span>
-                    </div>
-                  </div>
+                  />
+                </div>
+                <div className="absolute inset-0 flex items-center justify-end px-4 pointer-events-none">
+                  <span className="text-sm font-bold text-foreground">
+                    {percentage}%
+                  </span>
                 </div>
               </div>
             </div>

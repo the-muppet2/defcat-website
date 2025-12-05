@@ -10,84 +10,65 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      // =============================================
+      // All values reference CSS variables from globals.css
+      // Edit values there, not here
+      // =============================================
       backgroundColor: {
         tinted: 'var(--bg-tinted)',
-        'card-tinted': 'var(--card-tinted)',
+        'card-tinted': 'var(--card-tinted-bg)',
         'accent-tinted': 'var(--accent-tinted)',
-        'tinted-subtle': 'rgba(var(--mana-rgb), 0.06)',
-        'tinted-medium': 'rgba(var(--mana-rgb), 0.15)',
-        'tinted-strong': 'rgba(var(--mana-rgb), 0.25)',
+        'mana-subtle': 'var(--mana-tint-subtle)',
+        'mana-light': 'var(--mana-tint-light)',
+        'mana-medium': 'var(--mana-tint-medium)',
+        'mana-strong': 'var(--mana-tint-strong)',
+        'mana-intense': 'var(--mana-tint-intense)',
       },
       borderColor: {
         tinted: 'var(--border-tinted)',
-        'tinted-strong': 'rgba(var(--mana-rgb), 0.4)',
-        'tinted-medium': 'rgba(var(--mana-rgb), 0.25)',
-        'tinted-subtle': 'rgba(var(--mana-rgb), 0.15)',
+        'tinted-subtle': 'var(--border-tinted-subtle)',
+        'tinted-strong': 'var(--border-tinted-strong)',
       },
       textColor: {
-        tinted: 'var(--mana-color)',
-        'tinted-subtle': 'rgba(var(--mana-rgb), 0.8)',
-        'tinted-strong': 'var(--mana-color)',
-        'tinted-dim': 'rgba(var(--mana-rgb), 0.6)',
+        tinted: 'var(--text-tinted)',
+        'tinted-dim': 'var(--text-tinted-dim)',
       },
       boxShadow: {
-        tinted: '0 4px 16px rgba(var(--mana-rgb), 0.15)',
-        'tinted-lg': '0 8px 32px rgba(var(--mana-rgb), 0.2)',
-        'tinted-xl': '0 16px 48px rgba(var(--mana-rgb), 0.25)',
-        'tinted-glow': '0 0 20px rgba(var(--mana-rgb), 0.25), 0 8px 32px rgba(var(--mana-rgb), 0.15)',
-        'tinted-inner': 'inset 0 2px 4px 0 rgba(var(--mana-rgb), 0.15)',
+        tinted: 'var(--shadow-tinted)',
+        'tinted-sm': 'var(--shadow-tinted-sm)',
+        'tinted-md': 'var(--shadow-tinted-md)',
+        'tinted-lg': 'var(--shadow-tinted-lg)',
+        'tinted-xl': 'var(--shadow-tinted-xl)',
+        'glow-sm': 'var(--glow-sm)',
+        glow: 'var(--glow)',
+        'glow-lg': 'var(--glow-lg)',
       },
       backgroundImage: {
         'gradient-tinted': 'linear-gradient(135deg, var(--gradient-start), var(--gradient-end))',
-        'gradient-tinted-radial': 'radial-gradient(circle at center, rgba(var(--mana-rgb), 0.2), transparent 70%)',
-        'gradient-tinted-conic': 'conic-gradient(from 180deg at 50% 50%, var(--gradient-start), var(--gradient-mid), var(--gradient-end), var(--gradient-start))',
-        'gradient-tinted-subtle': 'linear-gradient(135deg, rgba(var(--mana-rgb), 0.08), rgba(var(--mana-rgb), 0.04))',
+        'gradient-tinted-radial': 'radial-gradient(circle at center, var(--mana-tint-medium), transparent 70%)',
+        'gradient-tinted-subtle': 'linear-gradient(135deg, var(--mana-tint-subtle), transparent)',
       },
       keyframes: {
         meteor: {
-          '0%': {
-            transform: 'rotate(var(--angle)) translateX(0)',
-            opacity: '1',
-          },
-          '70%': {
-            opacity: '1',
-          },
-          '100%': {
-            transform: 'rotate(var(--angle)) translateX(-500px)',
-            opacity: '0',
-          },
+          '0%': { transform: 'rotate(var(--angle)) translateX(0)', opacity: '1' },
+          '70%': { opacity: '1' },
+          '100%': { transform: 'rotate(var(--angle)) translateX(-500px)', opacity: '0' },
         },
         shimmer: {
-          '0%': {
-            transform: 'translateX(-100%) translateY(-100%)',
-          },
-          '100%': {
-            transform: 'translateX(100%) translateY(100%)',
-          },
+          '0%': { transform: 'translateX(-100%) translateY(-100%)' },
+          '100%': { transform: 'translateX(100%) translateY(100%)' },
         },
         'pulse-tinted': {
-          '0%, 100%': {
-            boxShadow: '0 0 0 0 rgba(var(--mana-rgb), 0.5)',
-          },
-          '50%': {
-            boxShadow: '0 0 0 12px rgba(var(--mana-rgb), 0)',
-          },
+          '0%, 100%': { boxShadow: '0 0 0 0 var(--mana-tint-strong)' },
+          '50%': { boxShadow: '0 0 0 12px transparent' },
         },
         float: {
-          '0%, 100%': {
-            transform: 'translateY(0px)',
-          },
-          '50%': {
-            transform: 'translateY(-10px)',
-          },
+          '0%, 100%': { transform: 'translateY(0px)' },
+          '50%': { transform: 'translateY(-10px)' },
         },
         glow: {
-          '0%, 100%': {
-            boxShadow: '0 0 5px rgba(var(--mana-rgb), 0.5)',
-          },
-          '50%': {
-            boxShadow: '0 0 20px rgba(var(--mana-rgb), 0.8)',
-          },
+          '0%, 100%': { boxShadow: 'var(--glow-sm)' },
+          '50%': { boxShadow: 'var(--glow)' },
         },
       },
       animation: {
@@ -136,8 +117,6 @@ const config: Config = {
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',
         mana: 'var(--mana-color)',
-        manargb: 'rgba(var(--mana-rgb), <alpha-value>)',
-        ms: 'font-size: var(--ms)',
         chart: {
           '1': 'hsl(var(--chart-1))',
           '2': 'hsl(var(--chart-2))',
@@ -155,23 +134,9 @@ const config: Config = {
         xl: '24px',
         '2xl': '32px',
       },
-      opacity: {
-        '2': '0.02',
-        '3': '0.03',
-        '4': '0.04',
-        '6': '0.06',
-        '8': '0.08',
-        '12': '0.12',
-        '15': '0.15',
-        '18': '0.18',
-        '25': '0.25',
-        '35': '0.35',
-        '45': '0.45',
-      },
       ringColor: {
         mana: 'var(--mana-color)',
-        tinted: 'rgba(var(--mana-rgb), 0.35)',
-        'tinted-strong': 'rgba(var(--mana-rgb), 0.5)',
+        tinted: 'var(--focus-ring)',
       },
       ringOffsetColor: {
         mana: 'var(--mana-color)',
@@ -200,250 +165,45 @@ const config: Config = {
     require('tailwindcss-animate'),
     function ({ addUtilities }: any) {
       const newUtilities = {
-        // Glass effects with proper mana coloring
+        // =============================================
+        // GLASS EFFECTS
+        // =============================================
         '.glass-tinted': {
-          background: 'linear-gradient(135deg, rgba(var(--mana-rgb), 0.08), rgba(var(--mana-rgb), 0.04))',
-          backdropFilter: 'blur(16px) saturate(1.2)',
-          WebkitBackdropFilter: 'blur(16px) saturate(1.2)',
-          border: '1px solid rgba(var(--mana-rgb), 0.2)',
-          boxShadow: '0 8px 32px rgba(var(--mana-rgb), 0.1)',
+          background: 'linear-gradient(135deg, var(--mana-tint-subtle), var(--mana-tint-subtle))',
+          backdropFilter: 'blur(var(--glass-blur)) saturate(1.2)',
+          WebkitBackdropFilter: 'blur(var(--glass-blur)) saturate(1.2)',
+          border: '1px solid var(--border-tinted)',
+          boxShadow: 'var(--shadow-tinted)',
         },
         '.glass-tinted-subtle': {
-          background: 'linear-gradient(135deg, rgba(var(--mana-rgb), 0.04), rgba(var(--mana-rgb), 0.02))',
+          background: 'var(--glass-bg)',
           backdropFilter: 'blur(12px)',
           WebkitBackdropFilter: 'blur(12px)',
-          border: '1px solid rgba(var(--mana-rgb), 0.12)',
+          border: '1px solid var(--border-tinted-subtle)',
         },
         '.glass-tinted-strong': {
-          background: 'linear-gradient(135deg, rgba(var(--mana-rgb), 0.15), rgba(var(--mana-rgb), 0.08))',
+          background: 'linear-gradient(135deg, var(--mana-tint-light), var(--mana-tint-subtle))',
           backdropFilter: 'blur(20px) saturate(1.4)',
           WebkitBackdropFilter: 'blur(20px) saturate(1.4)',
-          border: '1px solid rgba(var(--mana-rgb), 0.3)',
-          boxShadow: '0 12px 48px rgba(var(--mana-rgb), 0.15)',
+          border: '1px solid var(--border-tinted-strong)',
+          boxShadow: 'var(--shadow-tinted-lg)',
         },
-        
-        // Light mode glass (white-based with mana tint)
         '.glass-light': {
-          background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7))',
-          backdropFilter: 'blur(16px) saturate(1.2)',
-          WebkitBackdropFilter: 'blur(16px) saturate(1.2)',
-          border: '1px solid rgba(var(--mana-rgb), 0.2)',
-          boxShadow: '0 8px 32px rgba(var(--mana-rgb), 0.12)',
+          background: 'var(--glass-bg)',
+          backdropFilter: 'blur(var(--glass-blur)) saturate(1.2)',
+          WebkitBackdropFilter: 'blur(var(--glass-blur)) saturate(1.2)',
+          border: '1px solid var(--border-tinted)',
+          boxShadow: 'var(--shadow-tinted)',
         },
 
-        // Dark mode glass adjustments
-        '.dark .glass-tinted': {
-          background: 'linear-gradient(135deg, rgba(var(--mana-rgb), 0.1), rgba(var(--mana-rgb), 0.05))',
-          border: '1px solid rgba(var(--mana-rgb), 0.25)',
-          backdropFilter: 'blur(16px) saturate(1.25)',
-          WebkitBackdropFilter: 'blur(16px) saturate(1.25)',
-        },
-        '.dark .glass-tinted-subtle': {
-          background: 'linear-gradient(135deg, rgba(var(--mana-rgb), 0.05), rgba(var(--mana-rgb), 0.025))',
-          border: '1px solid rgba(var(--mana-rgb), 0.15)',
-        },
-        '.dark .glass-tinted-strong': {
-          background: 'linear-gradient(135deg, rgba(var(--mana-rgb), 0.18), rgba(var(--mana-rgb), 0.1))',
-          border: '1px solid rgba(var(--mana-rgb), 0.35)',
-        },
-
-        // Button styles with stronger tinting
-        '.btn-tinted': {
-          background: 'rgba(var(--mana-rgb), 0.1)',
-          border: '1px solid rgba(var(--mana-rgb), 0.25)',
-          color: 'var(--mana-color)',
-          fontWeight: '500',
-          transition: 'all 0.2s ease',
-          '&:hover': {
-            background: 'rgba(var(--mana-rgb), 0.18)',
-            border: '1px solid rgba(var(--mana-rgb), 0.35)',
-            transform: 'translateY(-1px)',
-            boxShadow: '0 4px 12px rgba(var(--mana-rgb), 0.2)',
-          },
-          '&:active': {
-            transform: 'translateY(0)',
-            boxShadow: '0 2px 6px rgba(var(--mana-rgb), 0.15)',
-          },
-        },
-        '.btn-tinted-primary': {
-          background: 'var(--mana-color)',
-          border: 'none',
-          color: 'white',
-          fontWeight: '600',
-          transition: 'all 0.2s ease',
-          boxShadow: '0 4px 12px rgba(var(--mana-rgb), 0.25)',
-          '&:hover': {
-            filter: 'brightness(1.1) saturate(1.1)',
-            boxShadow: '0 6px 20px rgba(var(--mana-rgb), 0.3)',
-            transform: 'translateY(-2px)',
-          },
-          '&:active': {
-            transform: 'translateY(0)',
-            boxShadow: '0 2px 8px rgba(var(--mana-rgb), 0.2)',
-          },
-        },
-        '.btn-tinted-outline': {
-          background: 'transparent',
-          border: '2px solid var(--mana-color)',
-          color: 'var(--mana-color)',
-          fontWeight: '500',
-          transition: 'all 0.2s ease',
-          '&:hover': {
-            background: 'rgba(var(--mana-rgb), 0.1)',
-            transform: 'translateY(-1px)',
-            boxShadow: '0 4px 12px rgba(var(--mana-rgb), 0.15)',
-          },
-        },
-
-        // Input styles with visible tinting
-        '.input-tinted': {
-          background: 'rgba(255, 255, 255, 0.9)',
-          border: '1px solid rgba(var(--mana-rgb), 0.2)',
-          transition: 'all 0.2s ease',
-          '&:focus': {
-            background: 'rgba(255, 255, 255, 1)',
-            borderColor: 'var(--mana-color)',
-            boxShadow: '0 0 0 3px rgba(var(--mana-rgb), 0.1)',
-            outline: 'none',
-          },
-          '&::placeholder': {
-            color: 'rgba(var(--mana-rgb), 0.5)',
-          },
-        },
-        '.dark .input-tinted': {
-          background: 'rgba(255, 255, 255, 0.05)',
-          '&:focus': {
-            background: 'rgba(255, 255, 255, 0.08)',
-          },
-        },
-
-        // Card styles with proper elevation
-        '.card-tinted': {
-          background: 'var(--card)',
-          border: '1px solid rgba(var(--mana-rgb), 0.15)',
-          boxShadow: '0 4px 16px rgba(var(--mana-rgb), 0.08)',
-          transition: 'all 0.2s ease',
-        },
-        '.card-tinted-filled': {
-          background: 'rgba(var(--mana-rgb), 0.08)',
-          border: '1px solid rgba(var(--mana-rgb), 0.2)',
-          boxShadow: '0 4px 16px rgba(var(--mana-rgb), 0.1)',
-        },
-        '.card-tinted-glass': {
-          background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7))',
-          backdropFilter: 'blur(16px) saturate(1.2)',
-          WebkitBackdropFilter: 'blur(16px) saturate(1.2)',
-          border: '1px solid rgba(var(--mana-rgb), 0.2)',
-          boxShadow: '0 8px 32px rgba(var(--mana-rgb), 0.12)',
-          transition: 'all 0.2s ease',
-          '&:hover': {
-            boxShadow: '0 12px 40px rgba(var(--mana-rgb), 0.18)',
-            borderColor: 'rgba(var(--mana-rgb), 0.3)',
-          },
-        },
-        '.dark .card-tinted-glass': {
-          background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05))',
-        },
-
-        // Badge styles
-        '.badge-tinted': {
-          background: 'rgba(var(--mana-rgb), 0.1)',
-          border: '1px solid rgba(var(--mana-rgb), 0.25)',
-          color: 'var(--mana-color)',
-          fontWeight: '500',
-        },
-        '.badge-tinted-primary': {
-          background: 'var(--mana-color)',
-          border: 'none',
-          color: 'white',
-          fontWeight: '600',
-        },
-
-        // Hover and focus utilities
-        '.hover-tinted': {
-          transition: 'all 0.2s ease',
-          '&:hover': {
-            background: 'rgba(var(--mana-rgb), 0.12)',
-            borderColor: 'rgba(var(--mana-rgb), 0.3)',
-          },
-        },
-        '.focus-ring-tinted': {
-          '&:focus': {
-            outline: 'none',
-            boxShadow: '0 0 0 3px rgba(var(--mana-rgb), 0.15)',
-          },
-          '&:focus-visible': {
-            outline: 'none',
-            boxShadow: '0 0 0 3px rgba(var(--mana-rgb), 0.15)',
-          },
-        },
-
-        // Gradient utilities
-        '.gradient-tinted': {
-          background: 'linear-gradient(135deg, var(--gradient-start), var(--gradient-end))',
-        },
-        '.gradient-tinted-text': {
-          background: 'linear-gradient(to right, var(--gradient-start), var(--gradient-end))',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          backgroundClip: 'text',
-          textFillColor: 'transparent',
-        },
-
-        // Glow effects
-        '.mana-glow': {
-          boxShadow: '0 0 30px rgba(var(--mana-rgb), 0.3), 0 0 60px rgba(var(--mana-rgb), 0.15)',
-        },
-        '.mana-glow-sm': {
-          boxShadow: '0 0 15px rgba(var(--mana-rgb), 0.25)',
-        },
-        '.mana-glow-lg': {
-          boxShadow: '0 0 40px rgba(var(--mana-rgb), 0.35), 0 0 80px rgba(var(--mana-rgb), 0.2)',
-        },
-
-        // Border gradient
-        '.mana-border-gradient': {
-          position: 'relative',
-          background: 'var(--card)',
-          backgroundClip: 'padding-box',
-          border: '2px solid transparent',
-          '&::before': {
-            content: '""',
-            position: 'absolute',
-            inset: '0',
-            zIndex: '-1',
-            margin: '-2px',
-            borderRadius: 'inherit',
-            background: 'linear-gradient(45deg, var(--gradient-start), var(--gradient-end))',
-          },
-        },
-
-        // Overlay effects
-        '.overlay-tinted': {
-          position: 'relative',
-          '&::before': {
-            content: '""',
-            position: 'absolute',
-            inset: '0',
-            background: 'linear-gradient(135deg, rgba(var(--mana-rgb), 0.08), transparent)',
-            pointerEvents: 'none',
-            borderRadius: 'inherit',
-          },
-        },
-
-        // Special handling for white mana (yellow) text contrast
+        // =============================================
+        // WHITE MANA CONTRAST FIX
+        // =============================================
         '[data-mana="white"] .btn-tinted-primary': {
           color: '#1a1a1a !important',
-          textShadow: 'none !important',
         },
-        'html[data-mana="white"] .badge-tinted-primary': {
+        '[data-mana="white"] .badge-tinted-primary': {
           color: '#1a1a1a !important',
-        },
-        '.dark html[data-mana="white"] .btn-tinted-primary': {
-          color: '#0a0a0a !important',
-        },
-        '.dark html[data-mana="white"] .badge-tinted-primary': {
-          color: '#0a0a0a !important',
         },
       }
       addUtilities(newUtilities)

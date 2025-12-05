@@ -47,7 +47,6 @@ export function Header({
   const pendingCount = initialPendingCount
 
   const [showLoginModal, setShowLoginModal] = useState(false)
-  const [showLogoutModal, setShowLogoutModal] = useState(false)
   const [showBadge, setShowBadge] = useState(true)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
@@ -71,19 +70,6 @@ export function Header({
     }
   }, [userRole])
 
-  // Listen for notification badge toggle events (developer only)
-  useEffect(() => {
-    const handleToggle = () => {
-      if (userRole === 'developer') {
-        const stored = localStorage.getItem('show-submission-badge')
-        setShowBadge(stored === null || stored === 'true')
-      }
-    }
-
-    window.addEventListener('submission-badge-toggle', handleToggle)
-    return () => window.removeEventListener('submission-badge-toggle', handleToggle)
-  }, [userRole])
-
   const handleLogin = useCallback(() => {
     setShowLoginModal(true)
     setTimeout(() => {
@@ -94,8 +80,7 @@ export function Header({
   return (
     <>
       <AuthLoadingModal isOpen={showLoginModal} type="login" />
-
-      <header className="sticky top-0 w-full glass-tinted-strong shadow-tinted-lg z-50">
+      <header className="sticky top-0 w-full shadow-md z-50">
         <div className="px-8 md:px-16 lg:px-24 flex h-16 items-center justify-between">
           {/* Logo and Back Button */}
           <div className="flex items-center gap-2 flex-shrink-0">
@@ -120,8 +105,11 @@ export function Header({
           {/* Navigation Menu - centered with equal spacing */}
           <div className="absolute left-1/2 -translate-x-1/2">
             <NavigationMenu className="hidden md:flex">
-              <NavigationMenuList>
-                <NavigationMenuItem>
+              <NavigationMenuList
+                className="flex-row gap-4 border rounded-lg shadow-lg p-1">
+                <NavigationMenuItem
+                  style={{ border: "rounded 1px solid var(--mana-color)"}}
+                >
                   <NavigationMenuLink asChild>
                     <Link
                       href="/decks"
@@ -136,7 +124,8 @@ export function Header({
                   </NavigationMenuLink>
                 </NavigationMenuItem>
 
-                <NavigationMenuItem>
+                <NavigationMenuItem
+                  style={{ border: "rounded 1px solid var(--mana-color)"}}>
                   <NavigationMenuLink asChild>
                     <Link
                       href="/pivot/home"
@@ -151,7 +140,8 @@ export function Header({
                   </NavigationMenuLink>
                 </NavigationMenuItem>
 
-                <NavigationMenuItem>
+                <NavigationMenuItem
+                  style={{ border: "rounded 1px solid var(--mana-color)"}}>
                   <NavigationMenuLink asChild>
                     <Link
                       href="/pivot/college"
@@ -166,7 +156,9 @@ export function Header({
                   </NavigationMenuLink>
                 </NavigationMenuItem>
 
-                <NavigationMenuItem>
+                <NavigationMenuItem
+                  style={{ border: "rounded 1px solid var(--mana-color)"}}
+                >
                   <NavigationMenuLink asChild>
                     <Link
                       href="/pivot/store"
@@ -181,25 +173,10 @@ export function Header({
                   </NavigationMenuLink>
                 </NavigationMenuItem>
 
-                <NavigationMenuItem>
-                  <NavigationMenuLink asChild>
-                    <Link
-                      href="/about"
-                      className={cn(
-                        navigationMenuTriggerStyle(),
-                        'hover-tinted',
-                        pathname === '/about' && 'tinted-accent border border-tinted'
-                      )}
-                    >
-                      About
-                    </Link>
-                  </NavigationMenuLink>
-                </NavigationMenuItem>
-
-                {/* Show Submit Deck for Duke+ tier or admins/mods */}
                 {(['Duke', 'Wizard', 'ArchMage'].includes(userTier) ||
                   ['admin', 'moderator', 'developer'].includes(userRole)) && (
-                  <NavigationMenuItem>
+                  <NavigationMenuItem
+                    style={{ border: "rounded 1px solid var(--mana-color)"}}>
                     <NavigationMenuLink asChild>
                       <Link
                         href="/decks/submission"

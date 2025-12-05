@@ -11,7 +11,7 @@ import { toast } from 'sonner'
 export function TierBenefitsMatrix() {
   const supabase = createClient()
   const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
+  const [_saving, _setSaving] = useState(false)
   const [matrix, setMatrix] = useState<any>({})
   const [creditTypes, setCreditTypes] = useState<any[]>([])
   const [tiers, setTiers] = useState<any[]>([])
@@ -138,7 +138,7 @@ export function TierBenefitsMatrix() {
                 <tr key={tier.id} className="border-b border-tinted hover:bg-tinted">
                   <td className="p-2 font-medium">{tier.display_name}</td>
                   {creditTypes.map(credit => (
-                    <td key={credit.id} className="p-2">
+                    <td key={credit.id} className="p-2 text-center">
                       <Input
                         type="number"
                         min="0"

@@ -1,7 +1,7 @@
 // components/mobile/MobileActionBar.tsx
 'use client'
 
-import { Share2, MessageSquare } from 'lucide-react'
+import { Share2 } from 'lucide-react'
 import { memo, useState } from 'react'
 import { RoastButton } from '@/components/decks/RoastButton'
 import { cn } from '@/lib/utils'

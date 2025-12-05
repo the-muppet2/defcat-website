@@ -2,7 +2,7 @@
 import { memo } from 'react'
 import { TypeFilterBar } from './TypeFilterBar'
 import { CardPreview } from '@/components/decks'
-import type { DecklistCardWithCard } from '@/types/supabase'
+import type { DecklistCardWithCard } from '@/types/core'
 
 interface DeckListViewProps {
   cards: DecklistCardWithCard[]
@@ -11,7 +11,7 @@ interface DeckListViewProps {
 }
 
 const CardTypeSection = memo(function CardTypeSection({ type, typeCards }: { type: string; typeCards: DecklistCardWithCard[] }) {
-  const cardCount = typeCards.reduce((sum, dc) => sum + dc.quantity, 0)
+  const cardCount = typeCards.reduce((sum, dc) => sum + (dc.quantity ?? 0), 0)
 
   // Special handling for Commander label - singular if 1, plural if multiple
   const displayLabel = type === 'Commander' && cardCount === 1 ? 'Commander' : `${type}s`

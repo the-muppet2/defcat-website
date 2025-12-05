@@ -1,36 +1,14 @@
 'use client'
 
-import { Loader2, Sparkles } from 'lucide-react'
-import { DeckCard } from '@/components/decks/DeckCard'
+import { Sparkles } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
-import { useLatestDeck } from '@/lib/api/stats'
 
-export function FeaturedDeckCard() {
-  const { data: featuredDeck, isLoading, error } = useLatestDeck()
+interface FeaturedDeckCardProps {
+  deckId?: string
+}
 
-  if (isLoading) {
-    return (
-      <Card className="glass border-white/10 bg-card-tinted">
-        <CardContent className="p-12 flex items-center justify-center">
-          <Loader2 className="h-12 w-12 animate-spin" style={{ color: 'var(--mana-color)' }} />
-        </CardContent>
-      </Card>
-    )
-  }
-
-  if (error) {
-    return (
-      <Card className="glass border-white/10 bg-card-tinted">
-        <CardContent className="p-12 text-center">
-          <p className="text-muted-foreground">
-            Unable to load featured deck. Please try again later.
-          </p>
-        </CardContent>
-      </Card>
-    )
-  }
-
-  if (!featuredDeck) {
+export function FeaturedDeckCard({ deckId }: FeaturedDeckCardProps) {
+  if (!deckId) {
     return (
       <Card className="glass border-white/10 bg-card-tinted">
         <CardContent className="p-12 text-center">
@@ -41,5 +19,12 @@ export function FeaturedDeckCard() {
     )
   }
 
-  return <DeckCard deck={featuredDeck} variant="featured" />
+  return (
+    <Card className="glass border-white/10 bg-card-tinted">
+      <CardContent className="p-12 text-center">
+        <Sparkles className="h-16 w-16 mx-auto mb-4" style={{ color: 'var(--mana-color)' }} />
+        <p className="text-lg text-muted-foreground">Featured Deck: {deckId}</p>
+      </CardContent>
+    </Card>
+  )
 }

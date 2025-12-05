@@ -32,7 +32,7 @@ export async function GET(request: Request) {
     logger.debug('OAuth redirect URI determined', { redirectUri, isLocalhost })
 
     const patreonAccessToken = await exchangeCodeForToken(code, redirectUri)
-    const { tier, patreonId } = await fetchPatreonMembership(patreonAccessToken)
+    const { tier, patreonId, discordId } = await fetchPatreonMembership(patreonAccessToken)
 
     const patreonUserResponse = await fetch(
       'https://www.patreon.com/api/oauth2/v2/identity?fields%5Buser%5D=email,full_name',
@@ -115,12 +115,13 @@ export async function GET(request: Request) {
 
     const userRole = existingProfile?.role || 'user'
     
-    // Update/create profile
+    // Update/create profile (including Discord ID from Patreon social connections)
     const { error: upsertError } = await adminClient.from('profiles').upsert({
       id: userId,
       email,
       patreon_id: patreonId,
       patreon_tier: tier,
+      discord_id: discordId,
       role: userRole,
       updated_at: new Date().toISOString(),
     })

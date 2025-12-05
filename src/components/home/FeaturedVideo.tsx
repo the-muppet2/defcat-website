@@ -7,10 +7,6 @@ interface FeaturedVideoProps {
   videoId?: string
   url?: string
   title?: string
-  playing?: boolean
-  controls?: boolean
-  light?: boolean
-  muted?: boolean
 }
 
 function extractVideoId(input: string): string {
@@ -49,15 +45,9 @@ function extractVideoId(input: string): string {
 
 export function FeaturedVideo({
   videoId,
-  url,
   title = "Today's Featured Video",
-  playing = false,
-  controls = true,
-  light = true,
-  muted = false,
 }: FeaturedVideoProps) {
   const extractedId = videoId ? extractVideoId(videoId) : ''
-  const videoUrl = url || (extractedId ? `https://www.youtube.com/watch?v=${extractedId}` : null)
 
   return (
     <section className="py-12 px-6">

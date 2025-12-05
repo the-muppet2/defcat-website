@@ -82,7 +82,7 @@ export default function MobileDeckDetailPage({ params }: PageProps) {
 
       {/* Fixed bottom action bar */}
       <MobileActionBar
-        moxfieldUrl={deck.moxfield_url || deck.moxfield_url}
+        moxfieldUrl={deck.moxfield_url ?? undefined}
         deckName={deck.name || deck.deck_title || 'Deck'}
         deckOwnerId={deck.user_id}
       />

@@ -2,9 +2,9 @@
 /** biome-ignore-all lint/performance/noImgElement: <explanation> */
 /** biome-ignore-all lint/style/useImportType: <explanation> */
 // biome-ignore assist/source/organizeImports: <explanation>
-import { useState, memo } from 'react'
+import { useState, useEffect, memo } from 'react'
 import { ManaCost } from '@/components/decks/ManaSymbols'
-import { DeckCard, ScryfallImageSize, cardFace } from '@/types/core'
+import { DeckCard, ScryfallImageSize, CardFace } from '@/types/core'
 
 /**
  * Construct Scryfall image URL from scryfall_id
@@ -14,7 +14,7 @@ import { DeckCard, ScryfallImageSize, cardFace } from '@/types/core'
 function getScryfallImageUrl(
   scryfallId: string,
   size: ScryfallImageSize = 'png',
-  side: cardFace = 'front'
+  side: CardFace = 'front'
 ): string {
   const imgExt = size !== 'png' ? 'jpg' : 'png'
   return `https://cards.scryfall.io/${size}/${side}/${scryfallId[0]}/${scryfallId[1]}/${scryfallId}.${imgExt}`
@@ -38,9 +38,25 @@ function getCardImageUrl(card: DeckCard['cards']): string | null {
 
 export const CardPreview = memo(function CardPreview({ card, quantity }: { card: DeckCard['cards']; quantity: number }) {
   const [isHovered, setIsHovered] = useState(false)
+  const [previewPosition, setPreviewPosition] = useState<{ top: number; left: number } | null>(null)
 
   // Get the proper image URL - cached first, then Scryfall
   const imageUrl = getCardImageUrl(card)
+
+  // Calculate position based on commander images container
+  useEffect(() => {
+    if (isHovered) {
+      const commanderEl = document.getElementById('commander-images')
+      if (commanderEl) {
+        const rect = commanderEl.getBoundingClientRect()
+        const containerCenter = rect.left + rect.width / 2
+        setPreviewPosition({
+          top: rect.bottom + 16, // 16px gap below commander images
+          left: containerCenter, // center of commander images
+        })
+      }
+    }
+  }, [isHovered])
 
   // Determine what to display for mana cost
   // If card has mana_cost, use it; otherwise construct from CMC
@@ -70,11 +86,18 @@ export const CardPreview = memo(function CardPreview({ card, quantity }: { card:
         )}
       </div>
 
-      {/* Card Image Preview on Hover */}
-      {isHovered && imageUrl && (
-        <div className="fixed left-2 top-1/2 -translate-y-1/2 pointer-events-none z-[9999]">
-          <div className="bg-card border-2 border-primary rounded-xl overflow-hidden shadow-2xl max-w-[250px]">
-            <img src={imageUrl} alt={card?.name} className="w-full h-auto" />
+      {/* Card Image Preview on Hover - dynamically positioned below commander images */}
+      {isHovered && imageUrl && previewPosition && (
+        <div
+          className="fixed pointer-events-none z-[9999] -translate-x-1/2"
+          style={{
+            top: `${previewPosition.top}px`,
+            left: `${previewPosition.left}px`,
+            scale: '1.2',
+          }}
+        >
+          <div className="rounded-xl shadow-2xl overflow-hidden w-[180px] lg:w-[200px] border-2 border-primary">
+            <img src={imageUrl} alt={card?.name} className="w-full h-auto block" />
           </div>
         </div>
       )}

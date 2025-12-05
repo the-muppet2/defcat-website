@@ -125,11 +125,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Check if user is privileged (bypass tier and credit requirements)
     const isPrivileged = ['admin', 'moderator', 'developer'].includes(profile.role)
-
-    // Check tier requirements (skip for privileged users)
-    if (!isPrivileged) {
+{
       const eligibleTiers = ['Emissary', 'Duke', 'Wizard', 'ArchMage']
       if (!eligibleTiers.includes(profile.patreon_tier)) {
         return NextResponse.json<SubmissionResponse>(

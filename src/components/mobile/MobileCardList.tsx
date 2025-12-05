@@ -4,8 +4,8 @@
 import { ChevronDown, ChevronUp } from 'lucide-react'
 import { memo, useState } from 'react'
 import { CardPreview } from '@/components/decks'
-import { cn } from '@/lib/utils'
-import type { DecklistCardWithCard } from '@/types/supabase'
+
+import type { DecklistCardWithCard } from '@/types/core'
 
 interface MobileCardListProps {
   cards: DecklistCardWithCard[]
@@ -24,41 +24,39 @@ function CardTypeSection({
   isExpanded: boolean
   onToggle: () => void
 }) {
-  const cardCount = typeCards.reduce((sum, dc) => sum + dc.quantity, 0)
+  const cardCount = typeCards.reduce((sum, dc) => sum + (dc.quantity ?? 0), 0)
   const displayLabel = type === 'Commander' && cardCount === 1 ? 'Commander' : `${type}s`
 
   return (
-    <div>
-      {/* Sticky Section Header */}
-      <div className="sticky top-0 z-10 glass-tinted-strong border-b border-tinted/50">
-        <button
-          onClick={onToggle}
-          className="w-full flex items-center justify-between px-4 py-3 transition-smooth active:scale-98 touch-target"
-        >
-          <div className="flex items-center gap-2.5">
-            <h3 className="text-base font-bold text-tinted">
-              {displayLabel}
-            </h3>
-            <span className="badge-tinted px-2 py-1 rounded-md text-xs font-bold">
-              {cardCount}
-            </span>
-          </div>
-          {isExpanded ? (
-            <ChevronUp className="h-5 w-5 text-tinted" />
-          ) : (
-            <ChevronDown className="h-5 w-5 text-muted-foreground" />
-          )}
-        </button>
-      </div>
+    <div className="border-b border-tinted/30 last:border-b-0">
+      {/* Section Header */}
+      <button
+        onClick={onToggle}
+        className="w-full flex items-center justify-between px-3 py-2.5 bg-accent-tinted/30 hover:bg-accent-tinted/50 transition-smooth active:scale-[0.99]"
+      >
+        <div className="flex items-center gap-2">
+          <h3 className="text-sm font-bold text-tinted">
+            {displayLabel}
+          </h3>
+          <span className="badge-tinted px-1.5 py-0.5 rounded text-xs font-bold">
+            {cardCount}
+          </span>
+        </div>
+        {isExpanded ? (
+          <ChevronUp className="h-4 w-4 text-tinted" />
+        ) : (
+          <ChevronDown className="h-4 w-4 text-muted-foreground" />
+        )}
+      </button>
 
       {/* Card List - Collapsible */}
       {isExpanded && (
-        <div className="px-3 py-3 space-y-1 bg-background/50 animate-in slide-in-from-top duration-150">
+        <div className="px-2 py-2 space-y-0.5 bg-background/30">
           {typeCards.map((dc, idx) => (
             <CardPreview
               key={`${dc.cards?.name || 'unknown'}-${idx}`}
               card={dc.cards}
-              quantity={dc.quantity || 0}
+              quantity={dc.quantity ?? 0}
             />
           ))}
         </div>
@@ -70,7 +68,7 @@ function CardTypeSection({
 export const MobileCardList = memo(function MobileCardList({
   cards,
   selectedType,
-  onTypeSelect,
+  onTypeSelect: _onTypeSelect,
 }: MobileCardListProps) {
   const [expandedSections, setExpandedSections] = useState<Set<string>>(
     new Set(['Commander', 'Creature', 'Instant', 'Sorcery'])
@@ -109,35 +107,35 @@ export const MobileCardList = memo(function MobileCardList({
     setExpandedSections(new Set())
   }
 
-  const totalCards = cards.reduce((sum, dc) => sum + dc.quantity, 0)
+  const totalCards = cards.reduce((sum, dc) => sum + (dc.quantity ?? 0), 0)
 
   return (
-    <div>
-      {/* Quick Actions Bar - Sticky */}
-      <div className="sticky top-0 z-20 glass-tinted-strong border-b border-tinted px-4 py-3">
+    <div className="relative">
+      {/* Quick Actions Bar */}
+      <div className="bg-accent-tinted/50 border-b border-tinted px-3 py-2 rounded-t-lg">
         <div className="flex items-center justify-between">
-          <span className="text-sm text-muted-foreground font-semibold">
+          <span className="text-xs text-muted-foreground font-semibold">
             {totalCards} cards
           </span>
-          <div className="flex gap-4">
+          <div className="flex gap-3">
             <button
               onClick={expandAll}
-              className="text-sm text-tinted hover:brightness-110 font-bold transition-smooth active:scale-98"
+              className="text-xs text-tinted hover:brightness-110 font-bold transition-smooth active:scale-98"
             >
-              Expand All
+              Expand
             </button>
             <button
               onClick={collapseAll}
-              className="text-sm text-tinted hover:brightness-110 font-bold transition-smooth active:scale-98"
+              className="text-xs text-tinted hover:brightness-110 font-bold transition-smooth active:scale-98"
             >
-              Collapse All
+              Collapse
             </button>
           </div>
         </div>
       </div>
 
       {/* Card Type Sections */}
-      <div className="pb-24">
+      <div className="pb-4 max-h-[500px] overflow-y-auto">
         {CARD_TYPES.map((type) => {
           const typeCards =
             type === 'Commander'

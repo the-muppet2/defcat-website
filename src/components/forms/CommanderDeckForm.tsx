@@ -33,7 +33,7 @@ import { defCatBracketOptions } from '@/types/core'
 
 export default function PagedDeckForm() {
   const auth = useAuth()
-  const { isEligible, remainingSubmissions, maxSubmissions } = useSubmissionEligibility()
+  const { isEligible, remainingSubmissions } = useSubmissionEligibility()
   const [currentStep, setCurrentStep] = useState(1)
   const [isLoading, setIsLoading] = useState(true)
   const [showSuccess, setShowSuccess] = useState(false)
@@ -82,7 +82,7 @@ export default function PagedDeckForm() {
           const eligibleTiers = ['Duke', 'Wizard', 'ArchMage']
           if (!eligibleTiers.includes(auth.profile.tier)) {
             setTierError(
-              `Deck submissions require Duke tier ($50/month) or higher. Your current tier: ${auth.profile.tier}`
+              'Your Patreon tier does not grant access to deck submissions. Please upgrade your tier to submit a request.'
             )
             setIsLoading(false)
             return
@@ -121,8 +121,8 @@ export default function PagedDeckForm() {
           setWillBeQueued(true)
         }
 
-        if (auth.user.email) {
-          setFormData((prev) => ({ ...prev, email: auth.user.email }))
+        if (auth.user?.email) {
+          setFormData((prev) => ({ ...prev, email: auth.user?.email || '' }))
         }
 
         setIsLoading(false)
@@ -230,6 +230,24 @@ export default function PagedDeckForm() {
 
         return { ...prev, colorPreference: newColors }
       })
+    } else if (field === 'backupColorPreference') {
+      setFormData((prev) => {
+        const currentColors = Array.isArray(prev.backupColorPreference) ? prev.backupColorPreference : []
+        let newColors: string[]
+
+        if (currentColors.includes(value)) {
+          // Remove if already selected
+          newColors = currentColors.filter((c) => c !== value)
+        } else if (currentColors.length < 3) {
+          // Add if less than 3 selected
+          newColors = [...currentColors, value]
+        } else {
+          // Already at max, don't add
+          return prev
+        }
+
+        return { ...prev, backupColorPreference: newColors }
+      })
     } else {
       setFormData((prev) => ({ ...prev, [field]: value }))
     }
@@ -264,7 +282,7 @@ export default function PagedDeckForm() {
         const submissionStatus = isDraft ? 'draft' : willBeQueued ? 'queued' : 'pending'
 
         // Submit deck request to database using auth context data
-        const { data, error } = await supabase
+        const { error } = await supabase
           .from('deck_submissions')
           .insert({
             user_id: auth.user.id,
@@ -862,12 +880,12 @@ export default function PagedDeckForm() {
                     </span>
                   </div>
                 )}
-                {formData.backupColorPreference?.length > 0 && (
+                {Array.isArray(formData.backupColorPreference) && formData.backupColorPreference.length > 0 && (
                   <div className="review-item">
                     <span className="review-label">Backup Color Preferences:</span>
                     <span className="review-value">
                       <div className="flex gap-4 flex-wrap">
-                        {(formData.backupColorPreference || []).map((colorId) => {
+                        {formData.backupColorPreference.map((colorId) => {
                           const colorInfo = ColorIdentity.getColorInfo(colorId)
                           const is5Color = colorId === 'WUBRG'
                           return (

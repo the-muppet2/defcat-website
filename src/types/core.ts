@@ -115,11 +115,11 @@ export const ROLE_HIERARCHY: Record<UserRole, number> = {
 }
 
 export const bracketOptions = [
-  { value: 'bracket1', label: 'Bracket 1', description: 'Casual, precon level' },
-  { value: 'bracket2', label: 'Bracket 2', description: 'Focused casual' },
-  { value: 'bracket3', label: 'Bracket 3', description: 'Optimized casual' },
-  { value: 'bracket4', label: 'Bracket 4', description: 'High power' },
-  { value: 'bracket5', label: 'Bracket 5', description: 'Fringe competitive' },
+  { value: '1', label: 'Bracket 1', description: 'Casual, precon level' },
+  { value: '2', label: 'Bracket 2', description: 'Focused casual' },
+  { value: '3', label: 'Bracket 3', description: 'Optimized casual' },
+  { value: '4', label: 'Bracket 4', description: 'High power' },
+  { value: '5', label: 'Bracket 5', description: 'Fringe competitive' },
 ] as const
 
 export const defCatBracketOptions = [

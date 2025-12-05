@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
       headers: {
         accept: 'application/json, text/plain, */*',
         'accept-language': 'en-US,en;q=0.9',
-        authorization: 'Bearer undefined', // Yes, literally "undefined"
+        authorization: 'Bearer undefined',
         'cache-control': 'no-cache',
         pragma: 'no-cache',
         'sec-ch-ua': '"Microsoft Edge";v="141", "Not?A_Brand";v="8", "Chromium";v="141"',
@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
         'sec-fetch-dest': 'empty',
         'sec-fetch-mode': 'cors',
         'sec-fetch-site': 'same-site',
-        'x-moxfield-version': MOXFIELD_VERSION, // 🔑 KEY HEADER!
+        'x-moxfield-version': MOXFIELD_VERSION,
         Referer: 'https://moxfield.com/',
         'Referrer-Policy': 'strict-origin-when-cross-origin',
         'User-Agent':

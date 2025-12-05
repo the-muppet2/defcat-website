@@ -1,4 +1,5 @@
 // app/page.tsx
+/** biome-ignore-all lint/performance/noImgElement: <explanation> */
 'use client'
 
 import { LogIn, Sparkles } from 'lucide-react'
@@ -24,7 +25,7 @@ export default function LandingPage() {
         src="/defcat_logo.png"
         alt=""
         fetchPriority="high"
-        className="absolute inset-0 w-full h-full object-contain object-[center_70%] pointer-events-none opacity-70"
+        className="absolute inset-0 w-full h-full object-contain object-[center_70%] pointer-events-none "
         style={{
           objectFit: 'contain',
         }}
@@ -49,7 +50,7 @@ export default function LandingPage() {
                 DefCat's DeckVault
               </h1>
               <p className="text-xl text-muted-foreground">
-                MTG Decklist repository for our community Patrons
+                Carefully Curated Cache of Commander Creations 
               </p>
             </div>
 

@@ -3,7 +3,6 @@
 import { ChevronDown, FileText, Library, Loader2, Package, User } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
-import { TierBadge } from '@/components/tier/TierBadge'
 import { MyDrafts } from '@/components/profile/MyDrafts'
 import { MySubmissions } from '@/components/profile/MySubmissions'
 import { ProfileEditForm } from '@/components/profile/ProfileEditForm'

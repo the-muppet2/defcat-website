@@ -146,7 +146,7 @@ export const MobileFilterSheet = memo(function MobileFilterSheet({
                       'flex flex-col items-center gap-1.5 p-2.5 rounded-xl transition-smooth touch-target',
                       selectedColors.includes(letter)
                         ? 'bg-accent ring-2 scale-100 elevation-2'
-                        : 'bg-accent/50 scale-95 opacity-70 hover:opacity-90'
+                        : 'bg-accent/50 scale-95  hover:opacity-90'
                     )}
                     style={
                       selectedColors.includes(letter)
@@ -175,7 +175,7 @@ export const MobileFilterSheet = memo(function MobileFilterSheet({
                   'flex flex-col items-center gap-1.5 p-2.5 rounded-xl transition-smooth touch-target',
                   selectedColors.includes('WUBRG')
                     ? 'ring-2 scale-100 elevation-2'
-                    : 'bg-accent/50 scale-95 opacity-70 hover:opacity-90'
+                    : 'bg-accent/50 scale-95  hover:opacity-90'
                 )}
                 style={
                   selectedColors.includes('WUBRG')

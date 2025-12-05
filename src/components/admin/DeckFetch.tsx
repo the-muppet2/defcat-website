@@ -45,7 +45,7 @@ export function DeckFetchButton({ mode }: DeckFetchButtonProps) {
     try {
       const supabase = createClient()
 
-      const { data, error } = await supabase.functions.invoke(config.edgeFunction, {
+      const { error } = await supabase.functions.invoke(config.edgeFunction, {
         body: config.body,
       })
 

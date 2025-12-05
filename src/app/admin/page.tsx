@@ -18,7 +18,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { GlowingEffect } from '@/components/ui/glowEffect'
-import { requireAdmin, requireModerator } from '@/lib/auth/server'
+import { requireModerator } from '@/lib/auth/server'
 import { createClient } from '@/lib/supabase/server'
 
 export default async function AdminDashboard() {
@@ -40,125 +40,27 @@ export default async function AdminDashboard() {
       <div className="max-w-7xl mx-auto space-y-8">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-4xl font-bold bg-gradient-to-r from-[var(--gradient-start)] via-[var(--gradient-mid)] to-[var(--gradient-end)] bg-clip-text text-transparent">
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-[var(--gradient-start)] via-[var(--gradient-mid)] to-[var(--gradient-end)] bg-clip-text text-transparent">
               Admin Dashboard
             </h1>
             <p className="text-muted-foreground mt-2">Manage decks, users, and site content</p>
           </div>
         </div>
+      </div>
 
-        {/* Stats Grid with tinted cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="relative rounded-2xl border p-2 md:rounded-3xl md:p-3">
-            <GlowingEffect
-              blur={0}
-              borderWidth={3}
-              spread={80}
-              glow={true}
-              disabled={false}
-              proximity={64}
-              inactiveZone={0.01}
-            />
-            <Card className="card-glass border-0 hover:shadow-tinted-lg transition-all relative">
-            <CardHeader>
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total Decks
-              </CardTitle>
-              <Database className="h-5 w-5 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-foreground">{deckCount || 0}</div>
-              <div className="text-xs text-muted-foreground mt-1">Active listings</div>
-            </CardContent>
-          </Card>
-          </div>
-
-          <div className="relative rounded-2xl border p-2 md:rounded-3xl md:p-3">
-            <GlowingEffect
-              blur={0}
-              borderWidth={3}
-              spread={80}
-              glow={true}
-              disabled={false}
-              proximity={64}
-              inactiveZone={0.01}
-            />
-            <Card className="card-glass border-0 hover:shadow-tinted-lg transition-all relative">
-            <CardHeader>
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Total Users
-              </CardTitle>
-              <Users className="h-5 w-5 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-foreground">{userCount || 0}</div>
-              <div className="text-xs text-muted-foreground mt-1">Registered accounts</div>
-            </CardContent>
-          </Card>
-          </div>
-
-          <div className="relative rounded-2xl border p-2 md:rounded-3xl md:p-3">
-            <GlowingEffect
-              blur={0}
-              borderWidth={3}
-              spread={80}
-              glow={true}
-              disabled={false}
-              proximity={64}
-              inactiveZone={0.01}
-            />
-            <Card className="card-glass border-0 hover:shadow-tinted-lg transition-all relative">
-            <CardHeader>
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Active Patrons
-              </CardTitle>
-              <TrendingUp className="h-5 w-5 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-foreground">-</div>
-              <div className="text-xs text-muted-foreground mt-1">With benefits</div>
-            </CardContent>
-          </Card>
-          </div>
-
-          <div className="relative rounded-2xl border p-2 md:rounded-3xl md:p-3">
-            <GlowingEffect
-              blur={0}
-              borderWidth={3}
-              spread={80}
-              glow={true}
-              disabled={false}
-              proximity={64}
-              inactiveZone={0.01}
-            />
-            <Card className="card-glass border-0 hover:shadow-tinted-lg transition-all relative">
-            <CardHeader>
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Premium Decks
-              </CardTitle>
-              <BarChart3 className="h-5 w-5 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-foreground">-</div>
-              <div className="text-xs text-muted-foreground mt-1">Tier exclusive</div>
-            </CardContent>
-          </Card>
-          </div>
-        </div>
-
-        {/* Quick Actions with tinted cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="relative rounded-2xl border p-2 md:rounded-3xl md:p-3">
-            <GlowingEffect
-              blur={0}
-              borderWidth={3}
-              spread={80}
-              glow={true}
-              disabled={false}
-              proximity={64}
-              inactiveZone={0.01}
-            />
-            <Card className="card-glass border-0 hover:shadow-tinted-lg transition-all relative">
+      {/* Quick Actions with tinted cards */}
+      <div className="grid grid-cols-1 mt-10 md:grid-cols-2 gap-6">
+        <div className="relative rounded-2xl border p-2 md:rounded-3xl md:p-3">
+          <GlowingEffect
+            blur={0}
+            borderWidth={3}
+            spread={80}
+            glow={true}
+            disabled={false}
+            proximity={64}
+            inactiveZone={0.01}
+          />
+          <Card className="card-glass border-0 hover:shadow-tinted-lg transition-all relative">
             <CardHeader>
               <Database className="h-8 w-8 mb-2" style={{ color: 'var(--mana-color)' }} />
               <CardTitle className="text-foreground">Deck Management</CardTitle>
@@ -171,23 +73,23 @@ export default async function AdminDashboard() {
                 <Button asChild className="w-full btn-tinted-primary">
                   <Link href="/admin/decks">Manage Decks</Link>
                 </Button>
-                </div>
+              </div>
             </CardContent>
           </Card>
-          </div>
+        </div>
 
-          <div className="relative rounded-2xl border p-2 md:rounded-3xl md:p-3">
-            <GlowingEffect
-              blur={1}
-              movementDuration={4}
-              borderWidth={3}
-              spread={75}
-              glow={true}
-              disabled={false}
-              proximity={74}
-              inactiveZone={0.05}
-            />
-            <Card className="card-glass border-0 hover:shadow-tinted-lg transition-all relative">
+        <div className="relative rounded-2xl border p-2 md:rounded-3xl md:p-3">
+          <GlowingEffect
+            blur={1}
+            movementDuration={4}
+            borderWidth={3}
+            spread={75}
+            glow={true}
+            disabled={false}
+            proximity={74}
+            inactiveZone={0.05}
+          />
+          <Card className="card-glass border-0 hover:shadow-tinted-lg transition-all relative">
             <CardHeader>
               <ClipboardList className="h-8 w-8 mb-2" style={{ color: 'var(--mana-color)' }} />
               <CardTitle className="text-foreground">Pending Submissions {pendingCount ? `(${pendingCount})` : ''}</CardTitle>
@@ -198,25 +100,25 @@ export default async function AdminDashboard() {
             <CardContent>
               <Button asChild className="w-full btn-tinted-primary">
                 <Link href="/admin/submissions">
-                  View Submissions 
+                  View Submissions
                 </Link>
               </Button>
             </CardContent>
           </Card>
-          </div>
+        </div>
 
-          <div className="relative rounded-2xl border p-2 md:rounded-3xl md:p-3">
-            <GlowingEffect
-              blur={0}
-              borderWidth={3}
-              movementDuration={2}
-              spread={80}
-              glow={true}
-              disabled={false}
-              proximity={64}
-              inactiveZone={0.01}
-            />
-            <Card className="card-glass border-0 hover:shadow-tinted-lg transition-all relative">
+        <div className="relative rounded-2xl border p-2 md:rounded-3xl md:p-3">
+          <GlowingEffect
+            blur={0}
+            borderWidth={3}
+            movementDuration={2}
+            spread={80}
+            glow={true}
+            disabled={false}
+            proximity={64}
+            inactiveZone={0.01}
+          />
+          <Card className="card-glass border-0 hover:shadow-tinted-lg transition-all relative">
             <CardHeader>
               <Users className="h-8 w-8 mb-2" style={{ color: 'var(--mana-color)' }} />
               <CardTitle className="text-foreground">User Management</CardTitle>
@@ -230,20 +132,20 @@ export default async function AdminDashboard() {
               </Button>
             </CardContent>
           </Card>
-          </div>
+        </div>
 
-          <div className="relative rounded-2xl border p-2 md:rounded-3xl md:p-3">
-            <GlowingEffect
-              blur={0}
-              borderWidth={3}
-              movementDuration={5}
-              spread={80}
-              glow={true}
-              disabled={false}
-              proximity={64}
-              inactiveZone={0.01}
-            />
-            <Card className="card-glass border-0 hover:shadow-tinted-lg transition-all relative">
+        <div className="relative rounded-2xl border p-2 md:rounded-3xl md:p-3">
+          <GlowingEffect
+            blur={0}
+            borderWidth={3}
+            movementDuration={5}
+            spread={80}
+            glow={true}
+            disabled={false}
+            proximity={64}
+            inactiveZone={0.01}
+          />
+          <Card className="card-glass border-0 hover:shadow-tinted-lg transition-all relative">
             <CardHeader>
               <Package className="h-8 w-8 mb-2" style={{ color: 'var(--mana-color)' }} />
               <CardTitle className="text-foreground">Products Configuration</CardTitle>
@@ -257,20 +159,20 @@ export default async function AdminDashboard() {
               </Button>
             </CardContent>
           </Card>
-          </div>
+        </div>
 
-          <div className="relative rounded-2xl border p-2 md:rounded-3xl md:p-3">
-            <GlowingEffect
-              blur={0}
-              borderWidth={3}
-              movementDuration={2.5}
-              spread={80}
-              glow={true}
-              disabled={false}
-              proximity={64}
-              inactiveZone={0.01}
-            />
-            <Card className="card-glass border-0 hover:shadow-tinted-lg transition-all relative">
+        <div className="relative rounded-2xl border p-2 md:rounded-3xl md:p-3">
+          <GlowingEffect
+            blur={0}
+            borderWidth={3}
+            movementDuration={2.5}
+            spread={80}
+            glow={true}
+            disabled={false}
+            proximity={64}
+            inactiveZone={0.01}
+          />
+          <Card className="card-glass border-0 hover:shadow-tinted-lg transition-all relative">
             <CardHeader>
               <Settings className="h-8 w-8 mb-2" style={{ color: 'var(--mana-color)' }} />
               <CardTitle className="text-foreground">Site Settings</CardTitle>
@@ -284,20 +186,20 @@ export default async function AdminDashboard() {
               </Button>
             </CardContent>
           </Card>
-          </div>
+        </div>
 
-          <div className="relative rounded-2xl border p-2 md:rounded-3xl md:p-3">
-            <GlowingEffect
-              blur={0}
-              borderWidth={4}
-              movementDuration={2}
-              spread={50}
-              glow={true}
-              disabled={false}
-              proximity={70}
-              inactiveZone={0.04}
-            />
-            <Card className="card-glass border-0 hover:shadow-tinted-lg transition-all relative">
+        <div className="relative rounded-2xl border p-2 md:rounded-3xl md:p-3">
+          <GlowingEffect
+            blur={0}
+            borderWidth={4}
+            movementDuration={2}
+            spread={50}
+            glow={true}
+            disabled={false}
+            proximity={70}
+            inactiveZone={0.04}
+          />
+          <Card className="card-glass border-0 hover:shadow-tinted-lg transition-all relative">
             <CardHeader>
               <BookOpen className="h-8 w-8 mb-2" style={{ color: 'var(--mana-color)' }} />
               <CardTitle className="text-foreground">Documentation</CardTitle>
@@ -311,9 +213,8 @@ export default async function AdminDashboard() {
               </Button>
             </CardContent>
           </Card>
-          </div>
         </div>
       </div>
-    </div>
+    </div >
   )
 }

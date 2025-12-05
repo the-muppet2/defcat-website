@@ -44,7 +44,7 @@ function slugify(text: string): string {
     .trim()
 }
 
-function MermaidDiagram({ chart, filename }: { chart: string; filename?: string }) {
+function MermaidDiagram({ chart }: { chart: string }) {
   const ref = useRef<HTMLDivElement>(null);
   const id = useRef(`mermaid-${Math.random().toString(36).substr(2, 9)}`);
 
@@ -69,7 +69,7 @@ function MermaidDiagram({ chart, filename }: { chart: string; filename?: string 
   return <div ref={ref} className="my-6 flex justify-center" />;
 }
 
-function MarkdownContent({ content, filename }: { content: string; filename?: string }) {
+function MarkdownContent({ content }: { content: string }) {
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
@@ -103,7 +103,7 @@ function MarkdownContent({ content, filename }: { content: string; filename?: st
           const code = String(children).trim();
 
           if (!inline && match?.[1] === "mermaid") {
-            return <MermaidDiagram chart={code} filename={filename} />;
+            return <MermaidDiagram chart={code} />;
           }
 
           if (!inline) {
@@ -424,7 +424,7 @@ export function DocumentationView() {
               {mainDocs.map(doc => (
                 <TabsContent key={doc.id} value={doc.id} className="mt-6">
                   <div className="prose prose-sm dark:prose-invert max-w-none">
-                    <MarkdownContent content={doc.content} filename={doc.label} />
+                    <MarkdownContent content={doc.content} />
                   </div>
                 </TabsContent>
               ))}
@@ -449,8 +449,7 @@ export function DocumentationView() {
                   <div className="prose prose-sm dark:prose-invert max-w-none">
                     {diagramDocs.find(d => d.id === selectedDiagram) && (
                       <MarkdownContent
-                        content={diagramDocs.find(d => d.id === selectedDiagram)!.content}
-                        filename={diagramDocs.find(d => d.id === selectedDiagram)!.label}
+                        content={diagramDocs.find(d => d.id === selectedDiagram)?.content || ''}
                       />
                     )}
                   </div>

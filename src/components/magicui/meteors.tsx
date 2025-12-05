@@ -52,7 +52,7 @@ export const Meteors = ({
             <div className="relative flex items-center">
               {/* Counter-rotate the icon to keep it upright */}
               <div
-                className="relative opacity-70"
+                className="relative "
                 style={{
                   width: '32px',
                   height: '32px',

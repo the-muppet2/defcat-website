@@ -63,14 +63,17 @@ export type Database = {
         Row: {
           cache_attempts: number | null
           cache_error: string | null
+          cached_back_image_url: string | null
           cached_image_url: string | null
           cmc: number | null
+          collector_number: string | null
           color_identity: string[] | null
           colors: string[] | null
           created_at: string | null
           id: string
           image_url: string | null
           last_cache_attempt_at: string | null
+          layout: string | null
           mana_cost: string | null
           name: string
           oracle_text: string | null
@@ -84,14 +87,17 @@ export type Database = {
         Insert: {
           cache_attempts?: number | null
           cache_error?: string | null
+          cached_back_image_url?: string | null
           cached_image_url?: string | null
           cmc?: number | null
+          collector_number?: string | null
           color_identity?: string[] | null
           colors?: string[] | null
           created_at?: string | null
           id: string
           image_url?: string | null
           last_cache_attempt_at?: string | null
+          layout?: string | null
           mana_cost?: string | null
           name: string
           oracle_text?: string | null
@@ -105,14 +111,17 @@ export type Database = {
         Update: {
           cache_attempts?: number | null
           cache_error?: string | null
+          cached_back_image_url?: string | null
           cached_image_url?: string | null
           cmc?: number | null
+          collector_number?: string | null
           color_identity?: string[] | null
           colors?: string[] | null
           created_at?: string | null
           id?: string
           image_url?: string | null
           last_cache_attempt_at?: string | null
+          layout?: string | null
           mana_cost?: string | null
           name?: string
           oracle_text?: string | null
@@ -406,6 +415,8 @@ export type Database = {
       }
       moxfield_decks: {
         Row: {
+          admin_description: string | null
+          admin_title: string | null
           author_name: string | null
           author_username: string | null
           cards_fetched_at: string | null
@@ -421,14 +432,20 @@ export type Database = {
           mainboard_count: number | null
           moxfield_id: string
           name: string
+          owner_profile_id: string | null
           public_id: string | null
           public_url: string | null
           raw_data: Json | null
           sideboard_count: number | null
+          user_description: string | null
+          user_hidden: boolean | null
+          user_title: string | null
           view_count: number | null
           visibility: string | null
         }
         Insert: {
+          admin_description?: string | null
+          admin_title?: string | null
           author_name?: string | null
           author_username?: string | null
           cards_fetched_at?: string | null
@@ -444,14 +461,20 @@ export type Database = {
           mainboard_count?: number | null
           moxfield_id: string
           name: string
+          owner_profile_id?: string | null
           public_id?: string | null
           public_url?: string | null
           raw_data?: Json | null
           sideboard_count?: number | null
+          user_description?: string | null
+          user_hidden?: boolean | null
+          user_title?: string | null
           view_count?: number | null
           visibility?: string | null
         }
         Update: {
+          admin_description?: string | null
+          admin_title?: string | null
           author_name?: string | null
           author_username?: string | null
           cards_fetched_at?: string | null
@@ -467,14 +490,26 @@ export type Database = {
           mainboard_count?: number | null
           moxfield_id?: string
           name?: string
+          owner_profile_id?: string | null
           public_id?: string | null
           public_url?: string | null
           raw_data?: Json | null
           sideboard_count?: number | null
+          user_description?: string | null
+          user_hidden?: boolean | null
+          user_title?: string | null
           view_count?: number | null
           visibility?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "moxfield_decks_owner_profile_id_fkey"
+            columns: ["owner_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       products: {
         Row: {
@@ -521,6 +556,7 @@ export type Database = {
       profiles: {
         Row: {
           created_at: string | null
+          discord_id: string | null
           email: string
           id: string
           moxfield_username: string | null
@@ -531,6 +567,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          discord_id?: string | null
           email: string
           id: string
           moxfield_username?: string | null
@@ -541,6 +578,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          discord_id?: string | null
           email?: string
           id?: string
           moxfield_username?: string | null
@@ -841,10 +879,13 @@ export type Database = {
         Row: {
           author_display_name: string | null
           auto_bracket: number | null
+          bookmark_count: number | null
           bracket: number | null
           cards_fetched_at: string | null
           color_identity: Json | null
           color_string: string | null
+          commanders: Json | null
+          commanders_count: number | null
           comment_count: number | null
           created_at: string | null
           deck_title: string | null
@@ -856,12 +897,16 @@ export type Database = {
           id: number | null
           is_legal: boolean | null
           is_shared: boolean | null
+          last_updated_at: string | null
           like_count: number | null
+          main_card_id: string | null
           mainboard_count: number | null
           moxfield_id: string | null
           moxfield_url: string | null
+          name: string | null
           player_username: string | null
           public_id: string | null
+          public_url: string | null
           sideboard_count: number | null
           total_cards: number | null
           updated_at: string | null

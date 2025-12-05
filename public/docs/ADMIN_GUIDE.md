@@ -1,6 +1,6 @@
 # Admin Panel User Guide
 
-Welcome to the DefCat DeckVault Admin Panel! This guide will help you navigate and use all the administrative features available to manage the site.
+This guide will help you navigate and use all the administrative features available to manage the site.
 
 ## Table of Contents
 
@@ -20,7 +20,6 @@ Welcome to the DefCat DeckVault Admin Panel! This guide will help you navigate a
 
 ### Accessing the Admin Panel
 
-1. Navigate to `yourdomain.com/admin`
 2. You must have **Moderator** role or higher to access the admin panel
 3. If you don't have access, you'll be redirected to the login page
 
@@ -32,7 +31,6 @@ The system has a hierarchical role structure:
 - **Member (Level 1)** - Member privileges
 - **Moderator (Level 2)** - Can access dashboard and basic site settings
 - **Admin (Level 3)** - Full content and user management
-- **Developer (Level 4)** - Complete system access including database tools
 
 Higher roles inherit all permissions from lower roles.
 
@@ -49,7 +47,6 @@ At the top of the dashboard, you'll see four key metrics:
 - **Total Decks** - Number of active deck listings in the database
 - **Total Users** - Number of registered user accounts
 - **Active Patrons** - Users with active Patreon subscriptions
-- **Premium Decks** - Number of tier-exclusive decks
 
 ### Quick Access Cards
 
@@ -60,7 +57,6 @@ Below the statistics, you'll find cards for quick access to major features:
 3. **User Management** - Manage user accounts and roles
 4. **Products** - Configure store product links
 5. **Site Settings** - Configure site-wide settings and credits
-6. **Documentation** - View technical documentation and diagrams
 
 Each card shows the number of pending items (if applicable) and provides a direct link to that feature.
 
@@ -68,7 +64,7 @@ Each card shows the number of pending items (if applicable) and provides a direc
 
 ## Deck Management
 
-**Access Required:** Admin or Developer
+**Access Required:** Admin
 
 ### Viewing All Decks
 
@@ -91,7 +87,7 @@ From the main Deck Management page, you'll see a list of all decks with:
 
 Use this to import all decks from your Moxfield bookmark collection:
 
-1. Click **Fetch All (New)** button
+1. Click **Fetch All** button
 2. The system will:
    - Connect to Moxfield
    - Find all bookmarked decks
@@ -114,12 +110,10 @@ To refresh metadata for all decks:
 2. Click the **Edit** button
 3. You can modify:
    - Deck name
-   - Moxfield ID
-   - Public URL
-   - Format (Commander, Brawl, etc.)
-   - View/like/comment counts
-   - Mainboard and sideboard card counts
-   - Author username
+   - Who the deck is for
+   - Public URL (moxfield link)
+   - Deck Description
+   - Add Video links (if applicable)
 4. Click **Save Changes** when done
 
 ### Viewing a Deck
@@ -150,6 +144,7 @@ For each user, you can see:
 - Deck credits balance
 - Roast credits balance
 - Total submission count
+- Pending submissions (if they have any)
 
 ### Changing User Roles
 
@@ -159,7 +154,6 @@ For each user, you can see:
    - User
    - Admin
    - Moderator
-   - Developer (only if you're a Developer)
 4. The change is applied immediately
 
 ### Adding a New User
@@ -172,7 +166,6 @@ For each user, you can see:
 3. Click **Add User**
 4. The system will:
    - Create the user account
-   - Send a password reset email
    - Show success message
 
 **Tip:** If you're searching for someone who doesn't exist, their email will be pre-filled in the Add User form!
@@ -193,14 +186,14 @@ Each submission card displays:
 
 **User Information:**
 - Email address
-- Moxfield username (clickable link)
+- Moxfield username
 - Discord username
 - Patreon tier
 
 **Deck Preferences:**
 - Submission type (Mystery Deck or Custom Build)
 - Commander preference
-- Color preference (shown with mana symbols)
+- Color preference
 - Power bracket
 - Budget
 - Coffee preference
@@ -217,12 +210,15 @@ You have two action options:
 
 1. **Start** - Marks submission as "in_progress"
    - Use this when you begin working on the deck
-   - Moves it out of the pending queue
+   - Moves it out of the submitted queue -> pending queue
 
 2. **Reject** - Marks submission as "rejected"
    - Use this if the submission can't be fulfilled
    - Consider adding notes about why (future feature)
 
+3. **Finish** - Marks submission as "complete"
+   - Moves it out of the pending queue
+   - Links to the users profile and marks it as complete
 ---
 
 ## Products Management
@@ -287,7 +283,6 @@ The settings are organized into categories. Each category has an **Add New** but
    - **Value** - The actual value (URL, text, number, etc.)
    - **Category** - Auto-filled based on which section you clicked
    - **Description** - What this configuration controls
-   - **Sensitive** - Check if this value should be hidden
 3. Click **Create**
 
 #### Editing Configuration
@@ -304,7 +299,7 @@ The settings are organized into categories. Each category has an **Add New** but
 
 ### Credits Tab
 
-**Access Required:** Admin or Developer
+**Access Required:** Admin
 
 Manage the credit system used for deck submissions and roasts.
 
@@ -315,6 +310,7 @@ View and manage different types of credits:
 - **Roast Credits** - Used for deck roast requests
 
 **Adding a Credit Type:**
+You can create and distribute other types of credits as you see fit to track other benefits and such
 1. Click **Add Credit Type**
 2. Enter:
    - Display Name
@@ -330,9 +326,11 @@ Configure how many credits each Patreon tier receives monthly:
 2. Enter the number of credits for each tier/type combination
 3. Click **Save Benefits Matrix**
 
-**Example:**
-- Citizen tier: 1 deck credit, 2 roast credits per month
-- Knight tier: 2 deck credits, 4 roast credits per month
+**Current configuration:**
+- Duke tier: 1 deck credit, 1 roast credits per month
+- Emissary tier: 0 deck credits, 1 roast credit per month
+- Wizard tier: 3 deck credits, 1 roast credit per month
+- ArchMage tier: 2 deck credits, 1 roast credit per month
 
 #### Distribution Manager
 
@@ -342,66 +340,17 @@ View and manage credit distribution history:
 - View which tiers received credits
 - Trigger manual distributions if needed
 
-**Note:** Credits are typically distributed automatically on a monthly schedule.
-
----
-
-## Documentation
-
-**Access Required:** Admin or Developer
-
-The Documentation section provides technical diagrams and architecture information.
-
-### Architecture Tab
-
-View the system architecture diagram showing:
-- External services (Patreon, Moxfield, Scryfall APIs)
-- Application layers (Presentation, API, Business Logic, Data)
-- Component relationships
-- Security boundaries
-
-### Database Tab
-
-Explore the database schema with:
-- Entity relationship diagram
-- All database tables and their relationships
-- Key constraints and indexes
-- Row-level security policies
-
-**Core Tables:**
-- `profiles` - User accounts and authentication
-- `products` - Patreon tier products
-- `decks` - Deck metadata
-- `cards` - MTG card cache
-- `deck_cards` - Cards in each deck
-- `deck_submissions` - User submission requests
-- `site_config` - Site configuration
-
-### Components Tab
-
-See the component hierarchy diagram showing:
-- Layout components (Header, Footer, Navigation)
-- Feature components (Decks, Admin, Auth)
-- Base UI components (shadcn/ui)
-- Magic UI components (Mana symbols, card previews)
-
-### Data Flows Tab
-
-Understand how data flows through the system:
-- Authentication flow sequence
-- Deck submission process
-- Caching strategies
-- Error handling patterns
+**Note:** Credits are distributed automatically on a monthly schedule.
 
 ---
 
 ## Common Tasks
 
-### Task: Import New Decks from Moxfield
+### Task: Force Update New Decks from Moxfield
 
 1. Go to **Deck Management**
-2. Click **Fetch All (New)**
-3. Wait 3-5 minutes for import to complete
+2. Click **Fetch All**
+3. Wait 1-2 minutes for import to complete
 4. Page refreshes automatically to show new decks
 
 ### Task: Update Deck View Counts
@@ -411,12 +360,12 @@ Understand how data flows through the system:
 3. Wait for sync to complete
 4. View counts and metadata are refreshed
 
-### Task: Promote a User to Admin
+### Task: Change a users Role
 
 1. Go to **User Management**
 2. Search for the user by email
 3. Click their role dropdown
-4. Select "Admin"
+4. Select desired Role, ("Admin", "Mod", etc.)
 5. Change is applied immediately
 
 ### Task: Process a Pending Submission
@@ -425,7 +374,7 @@ Understand how data flows through the system:
 2. Review submission details
 3. Click **Start** when you begin working on it
 4. (Outside admin panel) Build the deck
-5. (Future feature) Mark as completed
+5. Mark as completed once done - this will link the deck to the user's account on the site
 
 ### Task: Add a New Product to the Store
 
@@ -446,8 +395,9 @@ Understand how data flows through the system:
    - Key: `video_feature_3`
    - Value: YouTube/video URL
    - Description: What this video is about
-4. Click **Create**
-5. Click **Save Changes** at the bottom
+4. Set Featured if desired
+5. Click **Create**
+6. Click **Save Changes** at the bottom
 
 ### Task: Configure Monthly Credit Distribution
 
@@ -471,18 +421,10 @@ Understand how data flows through the system:
 - **Check permissions** - If you can't see a feature, check your role level
 - **Refresh after bulk operations** - Imports and updates may take time, page will auto-refresh
 
-### Security Best Practices
-
-- **Be careful with roles** - Only assign Admin role to trusted individuals
-- **Don't share credentials** - Each admin should have their own account
-- **Review submissions carefully** - Check for inappropriate content or spam
-- **Use Developer Tools responsibly** - Reset tier spoofing after testing
-
 ### Content Management
 
 - **Monitor submissions** - Check pending submissions daily
 - **Organize products** - Use Sort Order and Categories effectively
-- **Document configuration** - Use clear keys and descriptions for site config
 
 ### Troubleshooting
 
@@ -508,18 +450,3 @@ Understand how data flows through the system:
 - User may not exist (add them instead)
 
 ---
-
-## Support and Questions
-
-If you encounter issues or have questions:
-
-1. Check this guide first
-2. Review the Documentation section for technical details
-3. Contact the development team
-4. Check the GitHub repository for known issues
-
----
-
-**Last Updated:** 2025-11-01
-
-**Version:** 1.0.0

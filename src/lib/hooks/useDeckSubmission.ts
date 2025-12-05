@@ -60,7 +60,7 @@ export function useDeckSubmission(): UseSubmissionReturn {
         if (result.error?.code === 'INSUFFICIENT_TIER') {
           throw new Error(
             result.error.message ||
-              'Your Patreon tier does not have access to deck submissions. Duke tier ($50/month) or higher required.'
+              'Your Patreon tier does not allow deck submissions. Please upgrade your tier to submit decks.'
           )
         } else if (result.error?.code === 'MONTHLY_LIMIT_REACHED') {
           throw new Error(result.error.message || 'You have reached your monthly submission limit.')

@@ -39,7 +39,7 @@ export function ManaSymbols({
   size = 'md',
   className,
   cost = false,
-  shadow = false,
+  
   useGuildSymbols = false,
   fixedWidth = false,
 }: ManaSymbolsProps) {

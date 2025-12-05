@@ -1,15 +1,4 @@
-interface DeckCard {
-  quantity: number
-  board: string
-  cards: {
-    name: string
-    mana_cost: string | null
-    type_line: string | null
-    cmc: number | null
-    image_url: string | null
-    scryfall_id: string | null
-  } | null
-}
+import type { DeckCard } from '@/types/core'
 
 export function ManaCurve({ cards }: { cards: DeckCard[] }) {
   const curveCounts = cards

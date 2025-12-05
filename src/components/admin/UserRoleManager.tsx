@@ -1,9 +1,9 @@
 'use client'
 
-import { AlertCircle, CheckCircle2, Search, Shield, UserPlus, X } from 'lucide-react'
+import { AlertCircle, CheckCircle2, Search, UserPlus, X } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { GlowingEffect } from '@/components/ui/glowEffect'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'

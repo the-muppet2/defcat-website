@@ -2,7 +2,6 @@
 'use client'
 
 import { LogoutButton } from '@/components/auth/logout-button'
-import { TierBadge } from '@/components/tier'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
   DropdownMenu,
