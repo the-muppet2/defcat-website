@@ -132,7 +132,7 @@ export function Header({
                       className={cn(
                         navigationMenuTriggerStyle(),
                         'hover-tinted',
-                        pathname === '/home/search' && 'tinted-accent border border-tinted'
+                        pathname === '/search' && 'tinted-accent border border-tinted'
                       )}
                     >
                       Search
@@ -144,11 +144,11 @@ export function Header({
                   style={{ border: "rounded 1px solid var(--mana-color)"}}>
                   <NavigationMenuLink asChild>
                     <Link
-                      href="/home/college"
+                      href="/college"
                       className={cn(
                         navigationMenuTriggerStyle(),
                         'hover-tinted',
-                        pathname === '/home/college' && 'tinted-accent border border-tinted'
+                        pathname === '/college' && 'tinted-accent border border-tinted'
                       )}
                     >
                       College
@@ -161,11 +161,11 @@ export function Header({
                 >
                   <NavigationMenuLink asChild>
                     <Link
-                      href="/home/store"
+                      href="/store"
                       className={cn(
                         navigationMenuTriggerStyle(),
                         'hover-tinted',
-                        pathname === '/home/store' && 'tinted-accent border border-tinted'
+                        pathname === '/store' && 'tinted-accent border border-tinted'
                       )}
                     >
                       Store
@@ -290,44 +290,34 @@ export function Header({
                 The Vault
               </Link>
               <Link
-                href="/home/home"
+                href="/search"
                 onClick={() => setMobileMenuOpen(false)}
                 className={cn(
                   'block px-4 py-3 rounded-lg hover-tinted transition-all',
-                  pathname === '/home/home' && 'tinted-accent border border-tinted'
+                  pathname === '/search' && 'tinted-accent border border-tinted'
                 )}
               >
-                Home
+                Search
               </Link>
               <Link
-                href="/home/college"
+                href="/college"
                 onClick={() => setMobileMenuOpen(false)}
                 className={cn(
                   'block px-4 py-3 rounded-lg hover-tinted transition-all',
-                  pathname === '/home/college' && 'tinted-accent border border-tinted'
+                  pathname === '/college' && 'tinted-accent border border-tinted'
                 )}
               >
                 College
               </Link>
               <Link
-                href="/home/store"
+                href="/store"
                 onClick={() => setMobileMenuOpen(false)}
                 className={cn(
                   'block px-4 py-3 rounded-lg hover-tinted transition-all',
-                  pathname === '/home/store' && 'tinted-accent border border-tinted'
+                  pathname === '/store' && 'tinted-accent border border-tinted'
                 )}
               >
                 Store
-              </Link>
-              <Link
-                href="/about"
-                onClick={() => setMobileMenuOpen(false)}
-                className={cn(
-                  'block px-4 py-3 rounded-lg hover-tinted transition-all',
-                  pathname === '/about' && 'tinted-accent border border-tinted'
-                )}
-              >
-                About
               </Link>
               {(['Duke', 'Wizard', 'ArchMage'].includes(userTier) ||
                 ['admin', 'moderator', 'developer'].includes(userRole)) && (
