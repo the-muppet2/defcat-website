@@ -4,6 +4,7 @@
 import { use, useState, useEffect } from 'react'
 import { notFound } from 'next/navigation'
 import { useDeck } from '@/lib/hooks/useDecks'
+import { useProtectedRoute } from '@/lib/hooks/useProtectedRoute'
 import { DeckDetailLayout } from '@/components/decks/details/DeckDetailLayout'
 import { DeckDetailLoading } from '@/components/decks/details/DeckDetailLoading'
 import { DeckDetailError } from '@/components/decks/details/DeckDetailError'
@@ -16,6 +17,9 @@ export default function DeckDetailPage({ params }: PageProps) {
   const { id } = use(params)
   const { data: deck, cards, isLoading, error } = useDeck(id)
   const [mounted, setMounted] = useState(false)
+
+  // Protect this route - requires Duke tier
+  useProtectedRoute({ requiredTier: 'Duke' })
 
   useEffect(() => {
     setMounted(true)

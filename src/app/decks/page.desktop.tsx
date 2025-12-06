@@ -5,6 +5,7 @@
 'use client'
 
 import { ChevronDown, ChevronUp, ExternalLink, Filter, X, Shuffle, Loader2 } from 'lucide-react'
+import Link from '@/components/auth/ProtectedLink'
 import { memo, useMemo, useState } from 'react'
 import { ManaSymbols } from '@/components/decks/ManaSymbols'
 import { RoastButton } from '@/components/decks/RoastButton'
@@ -19,13 +20,13 @@ const DeckRow = memo(function DeckRow({ deck }: { deck: EnhancedDeck }) {
   return (
     <tr className="border-b border-tinted hover:bg-accent-tinted transition-all">
       <td className="py-4 px-4">
-        <a
+        <Link
           href={`/decks/${deck.moxfield_id}`}
           className="block hover:text-[var(--mana-color)] transition-colors"
         >
           <div className="font-medium">{deck.deck_title}</div>
           <div className="text-xs text-muted-foreground line-clamp-1 mt-1">{deck.description}</div>
-        </a>
+        </Link>
       </td>
       <td className="py-4 px-4">
         <div className="flex flex-wrap gap-1">
