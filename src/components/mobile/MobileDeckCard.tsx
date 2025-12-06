@@ -2,7 +2,7 @@
 'use client'
 
 import { Eye, Heart, ExternalLink, Flame } from 'lucide-react'
-import Link from 'next/link'
+import Link from '@/components/auth/ProtectedLink'
 import { memo } from 'react'
 import { ManaSymbols } from '@/components/decks/ManaSymbols'
 import { cn } from '@/lib/utils'

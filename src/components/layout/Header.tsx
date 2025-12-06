@@ -128,14 +128,14 @@ export function Header({
                   style={{ border: "rounded 1px solid var(--mana-color)"}}>
                   <NavigationMenuLink asChild>
                     <Link
-                      href="/pivot/home"
+                      href="/search"
                       className={cn(
                         navigationMenuTriggerStyle(),
                         'hover-tinted',
-                        pathname === '/pivot/home' && 'tinted-accent border border-tinted'
+                        pathname === '/home/search' && 'tinted-accent border border-tinted'
                       )}
                     >
-                      Home
+                      Search
                     </Link>
                   </NavigationMenuLink>
                 </NavigationMenuItem>
@@ -144,11 +144,11 @@ export function Header({
                   style={{ border: "rounded 1px solid var(--mana-color)"}}>
                   <NavigationMenuLink asChild>
                     <Link
-                      href="/pivot/college"
+                      href="/home/college"
                       className={cn(
                         navigationMenuTriggerStyle(),
                         'hover-tinted',
-                        pathname === '/pivot/college' && 'tinted-accent border border-tinted'
+                        pathname === '/home/college' && 'tinted-accent border border-tinted'
                       )}
                     >
                       College
@@ -161,11 +161,11 @@ export function Header({
                 >
                   <NavigationMenuLink asChild>
                     <Link
-                      href="/pivot/store"
+                      href="/home/store"
                       className={cn(
                         navigationMenuTriggerStyle(),
                         'hover-tinted',
-                        pathname === '/pivot/store' && 'tinted-accent border border-tinted'
+                        pathname === '/home/store' && 'tinted-accent border border-tinted'
                       )}
                     >
                       Store
@@ -290,31 +290,31 @@ export function Header({
                 The Vault
               </Link>
               <Link
-                href="/pivot/home"
+                href="/home/home"
                 onClick={() => setMobileMenuOpen(false)}
                 className={cn(
                   'block px-4 py-3 rounded-lg hover-tinted transition-all',
-                  pathname === '/pivot/home' && 'tinted-accent border border-tinted'
+                  pathname === '/home/home' && 'tinted-accent border border-tinted'
                 )}
               >
                 Home
               </Link>
               <Link
-                href="/pivot/college"
+                href="/home/college"
                 onClick={() => setMobileMenuOpen(false)}
                 className={cn(
                   'block px-4 py-3 rounded-lg hover-tinted transition-all',
-                  pathname === '/pivot/college' && 'tinted-accent border border-tinted'
+                  pathname === '/home/college' && 'tinted-accent border border-tinted'
                 )}
               >
                 College
               </Link>
               <Link
-                href="/pivot/store"
+                href="/home/store"
                 onClick={() => setMobileMenuOpen(false)}
                 className={cn(
                   'block px-4 py-3 rounded-lg hover-tinted transition-all',
-                  pathname === '/pivot/store' && 'tinted-accent border border-tinted'
+                  pathname === '/home/store' && 'tinted-accent border border-tinted'
                 )}
               >
                 Store

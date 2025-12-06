@@ -554,16 +554,7 @@ export function UserRoleManager({ currentUserRole }: UserRoleManagerProps) {
 
       <div className="p-3 bg-muted/30 rounded-lg">
         <p className="text-xs text-muted-foreground">
-          <strong>Role Permissions:</strong>
-          <br />• <strong>User:</strong> Basic access
-          <br />• <strong>Admin:</strong> Content management (client access)
-          <br />• <strong>Moderator:</strong> Content management + moderation
-          <br />
-          {isDeveloper && (
-            <>
-              • <strong>Developer:</strong> Full system access (database, SQL queries)
-            </>
-          )}
+          Note: User role changes may take a few minutes to propagate throughout the system.
         </p>
       </div>
     </div>
