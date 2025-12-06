@@ -59,7 +59,8 @@ export default function LandingPage() {
 
             {/* Enter/Login Buttons - positioned below logo */}
             <div className="flex flex-col sm:flex-row gap-4 items-center justify-center pb-24">
-              <Link href="/pivot/home">
+              {/* Vault entry button */}
+              <Link href="/decks">
                 <Button
                   size="lg"
                   className="btn-tinted-primary shadow-tinted-glow text-lg px-8 py-6"
@@ -68,6 +69,8 @@ export default function LandingPage() {
                   Enter the Vault
                 </Button>
               </Link>
+              
+              {/* Login button */}
               <Link href="/auth/login">
                 <Button
                   size="lg"
