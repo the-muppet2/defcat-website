@@ -170,9 +170,7 @@ async function insertToSupabase(
 async function main() {
   // Configuration
   const SUPABASE_URL = process.env.SUPABASE_URL || 'https://paerhoqoypdezkqhzimk.supabase.co'
-  const SUPABASE_KEY =
-    process.env.SUPABASE_KEY ||
-    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InpyY2F3dWp5ZGVldnpkaGx3cGluIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2MDM3NDMxNiwiZXhwIjoyMDc1OTUwMzE2fQ.iADgKmR_W2jZsJq4KnsTjzcL7UxEQ2sVAB9X4IgeuJY'
+  const SUPABASE_KEY = process.env.SUPABASE_KEY
   const TABLE_NAME = 'mox_meta'
 
   try {
@@ -188,7 +186,7 @@ async function main() {
 
     // Insert into Supabase
     console.log('Inserting into Supabase...')
-    await insertToSupabase(flattenedDecks, SUPABASE_URL, SUPABASE_KEY, TABLE_NAME)
+    await insertToSupabase(flattenedDecks, SUPABASE_URL, SUPABASE_KEY!, TABLE_NAME)
     console.log('✓ Complete!')
   } catch (error) {
     console.error('Error:', error)
