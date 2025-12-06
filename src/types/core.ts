@@ -105,7 +105,6 @@ export const TIER_RANKS: Record<PatreonTier, number> = {
 }
 
 export type UserRole = 'user' | 'member' | 'admin' | 'moderator' | 'developer'
-
 export const ROLE_HIERARCHY: Record<UserRole, number> = {
   user: 0,
   member: 1,
