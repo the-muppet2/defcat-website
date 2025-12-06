@@ -157,11 +157,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 /**
  * Main auth hook - provides complete auth state
+ * Returns loading state if used outside AuthProvider (SSR)
  */
-export function useAuth() {
+export function useAuth(): AuthState {
   const context = useContext(AuthContext)
   if (!context) {
-    throw new Error('useAuth must be used within AuthProvider')
+    // Return loading state for SSR - will hydrate with real data on client
+    return {
+      user: null,
+      profile: { tier: 'Citizen', role: 'user' },
+      credits: {},
+      eligibility: {},
+      tierBenefits: {},
+      isLoading: true,
+      isAuthenticated: false,
+      isAdmin: false,
+      isModerator: false,
+      isDeveloper: false,
+    }
   }
   return context
 }

@@ -90,7 +90,7 @@ export default function ResetPasswordPage() {
       })
 
       setTimeout(() => {
-        router.push('/pivot/home')
+        router.push('/home')
       }, 2000)
     } catch (error) {
       console.error('Password reset error:', error)
