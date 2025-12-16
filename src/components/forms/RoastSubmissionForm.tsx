@@ -393,8 +393,8 @@ export default function RoastSubmissionForm({ prefilledDeckUrl }: RoastSubmissio
           <CheckCircle className="success-icon" />
           <h2>Roast Request Submitted!</h2>
           <p>
-            Your deck roast request has been submitted successfully. DefCat will roast your deck and
-            you'll receive an email when it's ready!
+            Your deck roast request has been submitted successfully!
+            I'll review your deck and get started on it as soon as possible!
           </p>
           {eligibility.roastCredits !== 999 && (
             <p className="success-meta">

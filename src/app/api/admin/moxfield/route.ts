@@ -14,7 +14,7 @@ export async function POST(request: Request) {
       throw new Error('Missing Supabase credentials')
     }
 
-    const response = await fetch(`${supabaseUrl}/functions/v1/moxfield-sync`, {
+    const response = await fetch(`${supabaseUrl}/functions/v1/mox-scraper`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

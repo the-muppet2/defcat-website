@@ -1,4 +1,5 @@
-/**
+/** DO NOT REMOVE OR RENAME THIS FILE!
+ * 
  * Next.js Middleware
  * Runs on Edge Runtime before every request
  * Handles broad authentication and route-level authorization

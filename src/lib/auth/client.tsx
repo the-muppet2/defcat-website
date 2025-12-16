@@ -73,26 +73,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       }
 
-      // Batch fetch profile with user_credits in single query
+      // Fetch profile
       const { data: profile } = await supabase
         .from('profiles')
-        .select(`
-          patreon_tier,
-          role,
-          user_credits (credits)
-        `)
+        .select('patreon_tier, role')
         .eq('id', user.id)
-        .single<{
-          patreon_tier: string | null
-          role: string | null
-          user_credits: Array<{ credits: Record<string, number> }> | null
-        }>()
+        .single()
 
       const tier = profile?.patreon_tier || 'Citizen'
       const role = (profile?.role as UserRole) || 'user'
 
-      // Extract credits from joined query
-      const userCreditsData = profile?.user_credits?.[0]?.credits
+      // Fetch user credits separately (join was silently failing)
+      const { data: userCreditsRow } = await supabase
+        .from('user_credits')
+        .select('credits')
+        .eq('user_id', user.id)
+        .single()
+
+      const userCreditsData = userCreditsRow?.credits as Record<string, number> | null
 
       // Get tier benefits configuration (separate query since tier_id is dynamic)
       const { data: tierBenefits } = await supabase

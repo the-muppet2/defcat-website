@@ -323,6 +323,14 @@
   body {
     @apply bg-background text-foreground;
     color: var(--text-primary);
+    -webkit-user-select: text;
+    user-select: text;
+  }
+
+  /* Ensure text is selectable everywhere except specific UI elements */
+  p, span, div, h1, h2, h3, h4, h5, h6, li, td, th, label, a {
+    -webkit-user-select: text;
+    user-select: text;
   }
 
   svg.lucide:not(.no-mana-color) {

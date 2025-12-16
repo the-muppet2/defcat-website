@@ -1,10 +1,3 @@
-/** biome-ignore-all lint/a11y/noLabelWithoutControl: <explanation> */
-/** biome-ignore-all lint/a11y/useKeyWithClickEvents: <explanation> */
-/** biome-ignore-all lint/a11y/noStaticElementInteractions: <explanation> */
-/** biome-ignore-all lint/a11y/useButtonType: <explanation> */
-/** biome-ignore-all lint/a11y/useAriaPropsSupportedByRole: <explanation> */
-/** biome-ignore-all lint/suspicious/noArrayIndexKey: <explanation> */
-
 import {
   AlertCircle,
   Calendar,
@@ -31,6 +24,8 @@ import { createClient } from '@/lib/supabase/client'
 import { ColorIdentity } from '@/types/colors'
 import { defCatBracketOptions } from '@/types/core'
 
+const MAX_QUEUED = 3
+
 export default function PagedDeckForm() {
   const auth = useAuth()
   const { isEligible, remainingSubmissions } = useSubmissionEligibility()
@@ -39,8 +34,7 @@ export default function PagedDeckForm() {
   const [showSuccess, setShowSuccess] = useState(false)
   const [tierError, setTierError] = useState<string | null>(null)
   const [willBeQueued, setWillBeQueued] = useState(false)
-  const [totalSubmissions, setTotalSubmissions] = useState(0)
-  const MAX_QUEUED = 3
+  const [queuedSubmissions, setQueuedSubmissions] = useState(0)
   const [formData, setFormData] = useState({
     email: '',
     moxfieldUsername: '',
@@ -62,11 +56,9 @@ export default function PagedDeckForm() {
 
   const totalSteps = 5
 
-  // Check tier eligibility on mount
   useEffect(() => {
     const checkEligibility = async () => {
       try {
-        // Wait for auth to load
         if (auth.isLoading) {
           return
         }
@@ -77,19 +69,15 @@ export default function PagedDeckForm() {
           return
         }
 
-        // Check submission eligibility from auth context
         if (!isEligible) {
           const eligibleTiers = ['Duke', 'Wizard', 'ArchMage']
           if (!eligibleTiers.includes(auth.profile.tier)) {
-            setTierError(
-              'Your Patreon tier does not grant access to deck submissions. Please upgrade your tier to submit a request.'
-            )
+            setTierError('Deck submissions require Duke, Wizard, or ArchMage tier.')
             setIsLoading(false)
             return
           }
         }
 
-        // Check for queued submissions
         const supabase = createClient()
         const { data: submissions, error: countError } = await supabase
           .from('deck_submissions')
@@ -104,14 +92,12 @@ export default function PagedDeckForm() {
           console.error('Error checking submissions:', countError)
         }
 
-        const queuedSubmissions = submissions?.filter((s) => s.status === 'queued').length || 0
-        const totalSubmissionsCount = submissions?.length || 0
+        const queuedCount = submissions?.filter((s) => s.status === 'queued').length || 0
+        setQueuedSubmissions(queuedCount)
 
-        setTotalSubmissions(totalSubmissionsCount)
-
-        if (queuedSubmissions >= MAX_QUEUED) {
+        if (queuedCount >= MAX_QUEUED) {
           setTierError(
-            `You have ${MAX_QUEUED} deck requests already queued. Please wait for them to be processed before submitting more.`
+            `You have ${MAX_QUEUED} requests waiting to be built. Once one is completed, you can submit another.`
           )
           setIsLoading(false)
           return
@@ -157,7 +143,6 @@ export default function PagedDeckForm() {
         if (!formData.moxfieldUsername.trim()) {
           stepErrors.moxfieldUsername = 'Moxfield username is required'
         }
-        // Discord username is optional
         break
       case 2:
         if (!formData.mysteryDeck) {
@@ -218,13 +203,10 @@ export default function PagedDeckForm() {
         let newColors: string[]
 
         if (currentColors.includes(value)) {
-          // Remove if already selected
           newColors = currentColors.filter((c) => c !== value)
         } else if (currentColors.length < 3) {
-          // Add if less than 3 selected
           newColors = [...currentColors, value]
         } else {
-          // Already at max, don't add
           return prev
         }
 
@@ -232,17 +214,16 @@ export default function PagedDeckForm() {
       })
     } else if (field === 'backupColorPreference') {
       setFormData((prev) => {
-        const currentColors = Array.isArray(prev.backupColorPreference) ? prev.backupColorPreference : []
+        const currentColors = Array.isArray(prev.backupColorPreference)
+          ? prev.backupColorPreference
+          : []
         let newColors: string[]
 
         if (currentColors.includes(value)) {
-          // Remove if already selected
           newColors = currentColors.filter((c) => c !== value)
         } else if (currentColors.length < 3) {
-          // Add if less than 3 selected
           newColors = [...currentColors, value]
         } else {
-          // Already at max, don't add
           return prev
         }
 
@@ -262,13 +243,11 @@ export default function PagedDeckForm() {
   }
 
   const handleSubmit = async (isDraft = false) => {
-    // Skip validation for drafts
     const stepErrors = isDraft ? {} : validateStep(currentStep)
     if (Object.keys(stepErrors).length === 0) {
       setIsLoading(true)
 
       try {
-        // Use auth from context instead of making redundant API call
         if (!auth.user) {
           console.error('User not authenticated')
           setErrors({ submit: 'Please log in to submit a deck request' })
@@ -277,18 +256,15 @@ export default function PagedDeckForm() {
         }
 
         const supabase = createClient()
-
-        // Determine submission status
         const submissionStatus = isDraft ? 'draft' : willBeQueued ? 'queued' : 'pending'
 
-        // Submit deck request to database using auth context data
         const { error } = await supabase
           .from('deck_submissions')
           .insert({
             user_id: auth.user.id,
             patreon_id: auth.user.user_metadata?.patreon_id || '',
             patreon_tier: auth.profile.tier || '',
-            patreon_username: auth.user.email?.split('@')[0] || '', // Use email prefix as fallback patreon username
+            patreon_username: auth.user.email?.split('@')[0] || '',
             email: formData.email || '',
             moxfield_username: formData.moxfieldUsername || '',
             discord_username: formData.discordUsername || '',
@@ -307,8 +283,6 @@ export default function PagedDeckForm() {
 
         if (error) {
           console.error('Submission error:', error)
-
-          // Check for specific error messages
           let errorMessage = 'Failed to submit deck request. Please try again.'
 
           if (error.message?.includes('Draft limit reached')) {
@@ -317,9 +291,7 @@ export default function PagedDeckForm() {
             errorMessage = error.message
           }
 
-          setErrors({
-            submit: errorMessage,
-          })
+          setErrors({ submit: errorMessage })
           setIsLoading(false)
           return
         }
@@ -327,23 +299,42 @@ export default function PagedDeckForm() {
         setIsLoading(false)
 
         if (isDraft) {
-          toast.success('Draft saved successfully!', {
-            description: 'You can continue editing later from your profile.',
+          toast.success('Draft saved!', {
+            description: 'You can continue editing from your profile.',
             duration: 5000,
           })
         } else {
+          setQueuedSubmissions((prev) => (willBeQueued ? prev + 1 : prev))
           setShowSuccess(true)
         }
       } catch (err) {
         console.error('Unexpected error:', err)
-        setErrors({
-          submit: 'An unexpected error occurred. Please try again.',
-        })
+        setErrors({ submit: 'An unexpected error occurred. Please try again.' })
         setIsLoading(false)
       }
     } else {
       setErrors(stepErrors)
     }
+  }
+
+  const resetForm = () => {
+    setShowSuccess(false)
+    setCurrentStep(1)
+    setFormData({
+      email: auth.user?.email || '',
+      moxfieldUsername: '',
+      discordUsername: '',
+      mysteryDeck: '',
+      commander: '',
+      colorPreference: [],
+      backupColorPreference: [],
+      theme: '',
+      bracket: '',
+      budget: '',
+      coffee: '',
+      idealDate: '',
+    })
+    setCompletedSteps([])
   }
 
   const renderStepContent = () => {
@@ -586,7 +577,6 @@ export default function PagedDeckForm() {
                 <span className="error-message">{errors.colorPreference}</span>
               )}
 
-              {/* Add Backup Colors Button */}
               {!showBackupColors && (
                 <button
                   type="button"
@@ -600,7 +590,6 @@ export default function PagedDeckForm() {
                 </button>
               )}
 
-              {/* Backup Color Selection */}
               {showBackupColors && (
                 <div className="mt-6 p-4 bg-accent-tinted/30 rounded-lg border border-tinted">
                   <div className="flex items-center justify-between mb-4">
@@ -846,7 +835,7 @@ export default function PagedDeckForm() {
                 )}
                 {formData.colorPreference.length > 0 && (
                   <div className="review-item">
-                    <span className="review-label">Primary Color Preferences:</span>
+                    <span className="review-label">Primary Colors:</span>
                     <span className="review-value">
                       <div className="flex gap-4 flex-wrap">
                         {formData.colorPreference.map((colorId) => {
@@ -880,42 +869,43 @@ export default function PagedDeckForm() {
                     </span>
                   </div>
                 )}
-                {Array.isArray(formData.backupColorPreference) && formData.backupColorPreference.length > 0 && (
-                  <div className="review-item">
-                    <span className="review-label">Backup Color Preferences:</span>
-                    <span className="review-value">
-                      <div className="flex gap-4 flex-wrap">
-                        {formData.backupColorPreference.map((colorId) => {
-                          const colorInfo = ColorIdentity.getColorInfo(colorId)
-                          const is5Color = colorId === 'WUBRG'
-                          return (
-                            <div key={colorId} className="flex items-center gap-2">
-                              {is5Color ? (
-                                <div className="inline-flex gap-0.5 items-center">
-                                  {['W', 'U', 'B', 'R', 'G'].map((color) => (
-                                    <i
-                                      key={color}
-                                      className={`${ColorIdentity.getColorInfo(color).className} text-base`}
-                                      aria-label={`${color} mana`}
-                                    />
-                                  ))}
-                                </div>
-                              ) : (
-                                <i
-                                  className={`${colorInfo.className} text-base`}
-                                  aria-label={`${colorInfo.name} mana`}
-                                />
-                              )}
-                              <span className="text-xs text-muted-foreground">
-                                {is5Color ? '5-Color' : colorInfo.name}
-                              </span>
-                            </div>
-                          )
-                        })}
-                      </div>
-                    </span>
-                  </div>
-                )}
+                {Array.isArray(formData.backupColorPreference) &&
+                  formData.backupColorPreference.length > 0 && (
+                    <div className="review-item">
+                      <span className="review-label">Backup Colors:</span>
+                      <span className="review-value">
+                        <div className="flex gap-4 flex-wrap">
+                          {formData.backupColorPreference.map((colorId) => {
+                            const colorInfo = ColorIdentity.getColorInfo(colorId)
+                            const is5Color = colorId === 'WUBRG'
+                            return (
+                              <div key={colorId} className="flex items-center gap-2">
+                                {is5Color ? (
+                                  <div className="inline-flex gap-0.5 items-center">
+                                    {['W', 'U', 'B', 'R', 'G'].map((color) => (
+                                      <i
+                                        key={color}
+                                        className={`${ColorIdentity.getColorInfo(color).className} text-base`}
+                                        aria-label={`${color} mana`}
+                                      />
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <i
+                                    className={`${colorInfo.className} text-base`}
+                                    aria-label={`${colorInfo.name} mana`}
+                                  />
+                                )}
+                                <span className="text-xs text-muted-foreground">
+                                  {is5Color ? '5-Color' : colorInfo.name}
+                                </span>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </span>
+                    </div>
+                  )}
                 {formData.theme && (
                   <div className="review-item">
                     <span className="review-label">Theme:</span>
@@ -953,7 +943,6 @@ export default function PagedDeckForm() {
     }
   }
 
-  // Loading state while checking eligibility
   if (isLoading) {
     return (
       <div className="deck-form-container">
@@ -962,7 +951,6 @@ export default function PagedDeckForm() {
             <div className="success-card">
               <Loader2 className="animate-spin success-icon" />
               <h2>Checking Eligibility...</h2>
-              <p>Verifying your Patreon tier and submission status</p>
             </div>
           </div>
         </div>
@@ -970,7 +958,6 @@ export default function PagedDeckForm() {
     )
   }
 
-  // Tier error state - show BEFORE form
   if (tierError) {
     return (
       <div className="deck-form-container">
@@ -980,12 +967,7 @@ export default function PagedDeckForm() {
               <AlertCircle className="success-icon" style={{ color: '#ef4444' }} />
               <h2>Unable to Submit</h2>
               <p>{tierError}</p>
-              <div className="mt-4">
-                <a href="/tiers" className="btn btn-primary">
-                  View Tiers & Pricing
-                </a>
               </div>
-            </div>
           </div>
         </div>
       </div>
@@ -993,50 +975,26 @@ export default function PagedDeckForm() {
   }
 
   if (showSuccess) {
+    const canSubmitAnother = queuedSubmissions < MAX_QUEUED
+
     return (
       <div className="success-container">
         <div className="success-card">
           <CheckCircle className="success-icon" />
-          <h2>{willBeQueued ? 'Deck Request Queued!' : 'Deck Request Submitted!'}</h2>
+          <h2>Request Received!</h2>
           <p>
-            {willBeQueued ? (
-              <>
-                Your deck request has been queued and will be automatically processed when a slot
-                opens up next month. You'll receive an email notification when work begins!
-              </>
-            ) : (
-              <>Your custom Commander deck request has been received. We'll be in touch soon!</>
-            )}
+            {willBeQueued
+              ? "Your deck submission has been added to your queue!"
+              : "Your deck is in the build queue and will be started soon!"}
           </p>
-          {!willBeQueued && remainingSubmissions > 0 && (
+          {!willBeQueued && remainingSubmissions > 1 && (
             <p className="success-meta">
-              You have {remainingSubmissions - 1} slot(s) remaining this month
+              You have {remainingSubmissions - 1} credit
+              {remainingSubmissions - 1 !== 1 && 's'} remaining this month.
             </p>
           )}
-          {willBeQueued && <p className="success-meta">Queue position: {totalSubmissions + 1}</p>}
-          <button
-            className="btn btn-primary"
-            onClick={() => {
-              setShowSuccess(false)
-              setCurrentStep(1)
-              setFormData({
-                email: '',
-                moxfieldUsername: '',
-                discordUsername: '',
-                mysteryDeck: '',
-                commander: '',
-                colorPreference: [],
-                backupColorPreference: [],
-                theme: '',
-                bracket: '',
-                budget: '',
-                coffee: '',
-                idealDate: '',
-              })
-              setCompletedSteps([])
-            }}
-          >
-            {totalSubmissions + 1 < MAX_QUEUED ? 'Submit Another Deck' : 'View My Submissions'}
+          <button className="btn btn-primary" onClick={resetForm}>
+            {canSubmitAnother ? 'Submit Another' : 'View My Submissions'}
           </button>
         </div>
       </div>
@@ -1052,30 +1010,36 @@ export default function PagedDeckForm() {
           </div>
           <h1 className="header-title">Deck Submission Form</h1>
           <p className="header-subtitle">Customized Commander Creations</p>
-          {auth.profile.tier && remainingSubmissions !== undefined && (
+          {auth.profile.tier && (
             <div
               className="tier-info"
               style={{
                 marginTop: '1rem',
                 padding: '0.75rem',
-                background: willBeQueued ? 'rgba(234, 179, 8, 0.1)' : 'rgba(34, 197, 94, 0.1)',
-                border: willBeQueued
-                  ? '1px solid rgba(234, 179, 8, 0.3)'
-                  : '1px solid rgba(34, 197, 94, 0.3)',
+                background:
+                  remainingSubmissions > 0 ? 'rgba(34, 197, 94, 0.1)' : 'rgba(234, 179, 8, 0.1)',
+                border:
+                  remainingSubmissions > 0
+                    ? '1px solid rgba(34, 197, 94, 0.3)'
+                    : '1px solid rgba(234, 179, 8, 0.3)',
                 borderRadius: '0.5rem',
               }}
             >
               <p style={{ margin: 0, fontSize: '0.875rem' }}>
-                <strong>{auth.profile.tier} Tier:</strong>{' '}
                 {remainingSubmissions > 0 ? (
                   <>
-                    {remainingSubmissions} slot
-                    {remainingSubmissions !== 1 ? 's' : ''} available this month
+                    You have <strong>{remainingSubmissions}</strong> deck credit
+                    {remainingSubmissions !== 1 && 's'} remaining this month.
+                  </>
+                ) : queuedSubmissions < MAX_QUEUED ? (
+                  <>
+                    You've used your deck credits for this month. You can still submit — your
+                    request will be added to your personal queue.
                   </>
                 ) : (
                   <>
-                    All slots filled - submissions will be queued ({MAX_QUEUED - totalSubmissions}{' '}
-                    queue slots left)
+                    You have {MAX_QUEUED} requests in your queue. Once one is completed, you can
+                    submit another.
                   </>
                 )}
               </p>
@@ -1153,7 +1117,7 @@ export default function PagedDeckForm() {
                     </>
                   ) : (
                     <>
-                      Save for Later
+                      Save Draft
                       <Hourglass style={{ width: 20, height: 20 }} />
                     </>
                   )}
@@ -1170,7 +1134,7 @@ export default function PagedDeckForm() {
                     </>
                   ) : (
                     <>
-                      Submit Deck Request
+                      Submit
                       <CheckCircle style={{ width: 20, height: 20 }} />
                     </>
                   )}

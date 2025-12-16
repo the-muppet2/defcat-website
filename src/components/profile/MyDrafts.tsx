@@ -1,6 +1,6 @@
 'use client'
 
-import { Edit, FileText, Loader2, Trash2 } from 'lucide-react'
+import { Edit, FileText, Loader2, Trash2, AlertTriangle } from 'lucide-react'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import {
@@ -10,6 +10,14 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion'
 import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { useAuth } from '@/lib/auth/client'
 import { createClient } from '@/lib/supabase/client'
 
@@ -27,6 +35,7 @@ export function MyDrafts() {
   const [drafts, setDrafts] = useState<DraftSubmission[]>([])
   const [loading, setLoading] = useState(true)
   const [deleting, setDeleting] = useState<string | null>(null)
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
 
   useEffect(() => {
     if (!auth.isLoading) {
@@ -53,8 +62,6 @@ export function MyDrafts() {
   }
 
   async function deleteDraft(id: string) {
-    if (!confirm('Are you sure you want to delete this draft?')) return
-
     setDeleting(id)
     const supabase = createClient()
 
@@ -64,7 +71,10 @@ export function MyDrafts() {
       setDrafts(drafts.filter((d) => d.id !== id))
     }
     setDeleting(null)
+    setDeleteConfirmId(null)
   }
+
+  const draftToDelete = drafts.find(d => d.id === deleteConfirmId)
 
   if (loading) {
     return (
@@ -130,7 +140,7 @@ export function MyDrafts() {
                   size="sm"
                   variant="outline"
                   className="border-red-500/20 hover:bg-red-500/10 text-red-500"
-                  onClick={() => deleteDraft(draft.id)}
+                  onClick={() => setDeleteConfirmId(draft.id)}
                   disabled={deleting === draft.id}
                 >
                   {deleting === draft.id ? (
@@ -147,6 +157,56 @@ export function MyDrafts() {
           </AccordionContent>
         </AccordionItem>
       ))}
+
+      <Dialog open={!!deleteConfirmId} onOpenChange={(open) => !open && setDeleteConfirmId(null)}>
+        <DialogContent
+          className="sm:max-w-md"
+          style={{ background: 'var(--glass-bg)', border: '1px solid var(--border-tinted)' }}
+        >
+          <DialogHeader>
+            <div className="flex items-center gap-3">
+              <div
+                className="p-2 rounded-full"
+                style={{ background: 'rgba(239, 68, 68, 0.1)' }}
+              >
+                <AlertTriangle className="h-5 w-5 text-red-500" />
+              </div>
+              <DialogTitle>Delete Draft</DialogTitle>
+            </div>
+            <DialogDescription className="pt-2">
+              Are you sure you want to delete this draft?
+              {draftToDelete && (
+                <span className="block mt-1 font-medium text-foreground">
+                  {draftToDelete.mystery_deck ? 'Mystery Deck' : draftToDelete.commander || 'Custom Build'}
+                </span>
+              )}
+              This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              variant="outline"
+              onClick={() => setDeleteConfirmId(null)}
+              className="border-tinted"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => deleteConfirmId && deleteDraft(deleteConfirmId)}
+              disabled={deleting === deleteConfirmId}
+              className="bg-red-500 hover:bg-red-600"
+            >
+              {deleting === deleteConfirmId ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+              ) : (
+                <Trash2 className="h-4 w-4 mr-2" />
+              )}
+              Delete Draft
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Accordion>
   )
 }
