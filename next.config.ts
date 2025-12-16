@@ -1,8 +1,25 @@
 import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
-  // SVG handling is now done via public directory and Next.js Image component
-  // No webpack config needed with Turbopack
+  async redirects() {
+    return [
+      {
+        source: '/home/college',
+        destination: '/college',
+        permanent: true,
+      },
+      {
+        source: '/home/store',
+        destination: '/store',
+        permanent: true,
+      },
+      {
+        source: '/home/:path*',
+        destination: '/:path*',
+        permanent: true,
+      },
+    ]
+  },
   images: {
     remotePatterns: [
       {
