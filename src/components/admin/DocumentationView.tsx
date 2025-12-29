@@ -93,37 +93,43 @@ function MarkdownContent({ content }: { content: string }) {
       remarkPlugins={[remarkGfm]}
       components={{
         code({
-          node,
-          inline,
           className,
           children,
           ...props
-        }: React.ComponentProps<"code"> & { node?: any; inline?: boolean }) {
+        }: React.ComponentProps<"code">) {
           const match = /language-(\w+)/.exec(className || "");
-          const code = String(children).trim();
+          const codeStr = String(children).trim();
 
-          if (!inline && match?.[1] === "mermaid") {
-            return <MermaidDiagram chart={code} />;
+          // Fenced code blocks have a language class
+          const isFencedBlock = Boolean(match);
+
+          if (isFencedBlock && match?.[1] === "mermaid") {
+            return <MermaidDiagram chart={codeStr} />;
           }
 
-          if (!inline) {
+          // Fenced code blocks get block styling (handled by pre wrapper)
+          if (isFencedBlock) {
             return (
-              <pre className="bg-muted border border-border rounded-lg p-4 overflow-x-auto my-4">
-                <code className={className} {...props}>
-                  {children}
-                </code>
-              </pre>
+              <code className={className} {...props}>
+                {children}
+              </code>
             );
           }
 
+          // Inline code (backticks in text) - no language class
           return (
-            <code className="bg-muted px-1.5 py-0.5 rounded text-sm" {...props}>
+            <code className="bg-muted px-1.5 py-0.5 rounded text-sm font-mono" {...props}>
               {children}
             </code>
           );
         },
         pre({ children }) {
-          return <>{children}</>;
+          // Wrap fenced code blocks
+          return (
+            <pre className="bg-muted border border-border rounded-lg p-4 overflow-x-auto my-4">
+              {children}
+            </pre>
+          );
         },
         h1({ children }) {
           const text = String(children);

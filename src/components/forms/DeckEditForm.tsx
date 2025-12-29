@@ -7,27 +7,14 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { CommanderSelector } from '@/components/decks/CommanderSelector'
 import { createClient } from '@/lib/supabase/client'
 
-interface Commander {
-  name: string
-  scryfall_id: string
-}
 
 interface UserSearchResult {
   id: string
   email: string
   moxfield_username: string | null
   patreon_tier: string | null
-}
-
-interface RawDataCommander {
-  card?: {
-    name?: string
-    id?: string
-  }
-  name?: string
 }
 
 interface DeckEditFormProps {
@@ -41,7 +28,6 @@ interface DeckEditFormProps {
     user_title?: string | null
     user_description?: string | null
     raw_data?: {
-      commanders?: Record<string, RawDataCommander> | RawDataCommander[]
       description?: string
     } | null
   }
@@ -105,36 +91,9 @@ export function DeckEditForm({ deck }: DeckEditFormProps) {
     setFormData(prev => ({ ...prev, owner_profile_id: '' }))
   }
   
-  // Initialize commanders from raw_data (handles both object and array formats)
-  const [commanders, setCommanders] = useState<Commander[]>(() => {
-    const rawCommanders = deck.raw_data?.commanders
-    if (!rawCommanders) return []
-
-    let commanderList: RawDataCommander[]
-    if (Array.isArray(rawCommanders)) {
-      commanderList = rawCommanders
-    } else if (typeof rawCommanders === 'object') {
-      commanderList = Object.values(rawCommanders)
-    } else {
-      return []
-    }
-
-    return commanderList
-      .map(c => ({
-        name: c?.card?.name || c?.name || '',
-        scryfall_id: c?.card?.id || '',
-      }))
-      .filter(c => c.name) // Keep commanders with names
-  })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-
-    if (commanders.length === 0) {
-      alert('Please select at least one commander')
-      return
-    }
-
     setLoading(true)
 
     try {
@@ -158,7 +117,6 @@ export function DeckEditForm({ deck }: DeckEditFormProps) {
           name: formData.name,
           description: formData.description || null,
           owner: formData.owner,
-          commanders: commanders,
           owner_profile_id: formData.owner_profile_id || null,
         }),
       })
@@ -341,41 +299,11 @@ export function DeckEditForm({ deck }: DeckEditFormProps) {
           )}
         </div>
 
-        {/* Manual Profile ID Entry */}
-        <div className="space-y-2">
-          <Label htmlFor="owner_profile_id">Or Enter Profile ID Manually</Label>
-          <Input
-            id="owner_profile_id"
-            value={formData.owner_profile_id}
-            onChange={(e) => {
-              setFormData({ ...formData, owner_profile_id: e.target.value })
-              setSelectedUser(null)
-            }}
-            placeholder="User profile UUID"
-            className="font-mono text-sm"
-          />
-          <p className="text-xs text-muted-foreground">
-            When set, this user can edit deck visibility and description.
-          </p>
-        </div>
-      </div>
-
-      {/* Commanders */}
-      <div className="space-y-2">
-        <Label>Commanders</Label>
-        <CommanderSelector
-          value={commanders}
-          onChange={setCommanders}
-          maxCommanders={2}
-        />
-        <p className="text-sm text-muted-foreground">
-          Select up to 2 commanders for partner combinations. New commanders will be added to the database automatically.
-        </p>
       </div>
 
       {/* Actions */}
       <div className="flex gap-4 pt-4 border-t">
-        <Button type="submit" disabled={loading || commanders.length === 0}>
+        <Button type="submit" disabled={loading}>
           {loading ? (
             <>
               <Loader2 className="h-4 w-4 mr-2 animate-spin" />

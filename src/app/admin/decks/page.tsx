@@ -8,13 +8,13 @@ import Link from 'next/link'
 import { DecksList } from '@/components/admin/DecksList'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { requireAdmin } from '@/lib/auth/server'
+import { requireModerator } from '@/lib/auth/server'
 import { createClient } from '@/lib/supabase/server'
 
 export const dynamic = 'force-dynamic'
 
 export default async function AdminDecksPage() {
-  await requireAdmin()
+  await requireModerator()
 
   const supabase = await createClient()
 
