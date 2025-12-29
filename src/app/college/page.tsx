@@ -100,7 +100,6 @@ export default function CommanderCollegePage() {
                         <BookOpen className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
                         <p className="text-lg text-muted-foreground">Sales Video Coming Soon</p>
                         <p className="text-sm text-muted-foreground/70 mt-2">
-                          Set the video ID in the admin panel
                         </p>
                       </div>
                     </div>
@@ -161,7 +160,7 @@ export default function CommanderCollegePage() {
                       <BookOpen className="h-16 w-16 mx-auto mb-4 text-muted-foreground" />
                       <p className="text-lg text-muted-foreground">Lesson Plan Visual</p>
                       <p className="text-sm text-muted-foreground/70 mt-2">
-                        Your lesson plan PNG will be displayed here
+                        Detailed curriculum coming soon.
                       </p>
                     </div>
                   </div>
