@@ -34,51 +34,28 @@ export async function PATCH(
       )
     }
 
-    // Get user's profile
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
-      .select('id, moxfield_username')
-      .eq('id', user.id)
-      .single()
-
-    if (profileError) {
-      return NextResponse.json(
-        { error: 'Profile not found' },
-        { status: 400 }
-      )
-    }
-
     const adminClient = createAdminClient()
 
-    // Get deck info from decks_enhanced view
-    const { data: deckEnhanced, error: deckError } = await adminClient
-      .from('decks_enhanced')
-      .select('id, player_username, moxfield_id')
+    // Get deck ownership info from moxfield_decks
+    const { data: deck, error: deckError } = await adminClient
+      .from('moxfield_decks')
+      .select('id, owner_profile_id')
       .eq('id', parseInt(id, 10))
       .single()
 
-    if (deckError || !deckEnhanced) {
+    if (deckError || !deck) {
       return NextResponse.json(
         { error: 'Deck not found' },
         { status: 404 }
       )
     }
 
-    // Also get owner_profile_id from moxfield_decks
-    const { data: deckOwner } = await adminClient
-      .from('moxfield_decks')
-      .select('owner_profile_id')
-      .eq('id', parseInt(id, 10))
-      .single()
-
-    // Verify ownership: check owner_profile_id first, then fall back to player_username matching
-    const isOwnerByProfileId = deckOwner?.owner_profile_id === user.id
-    const isOwnerByUsername = profile.moxfield_username &&
-      deckEnhanced.player_username?.toLowerCase() === profile.moxfield_username.toLowerCase()
-
-    if (!isOwnerByProfileId && !isOwnerByUsername) {
+    // SECURITY: Only allow editing via owner_profile_id (admin-assigned)
+    // Username matching is NOT secure because users can change their moxfield_username freely
+    // Deck ownership must be explicitly assigned by an admin through owner_profile_id
+    if (deck.owner_profile_id !== user.id) {
       return NextResponse.json(
-        { error: 'You do not have permission to edit this deck' },
+        { error: 'You do not have permission to edit this deck. Contact an admin to have this deck assigned to your profile.' },
         { status: 403 }
       )
     }

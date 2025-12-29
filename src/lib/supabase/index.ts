@@ -8,20 +8,17 @@
  * Server Components/Actions:
  *   import { createClient } from '@/lib/supabase/server'
  *
- * Middleware:
- *   import { updateSession } from '@/lib/supabase/middleware'
- *
  * Admin operations (server-only):
  *   import { createAdminClient } from '@/lib/supabase/admin'
+ *
+ * Note: Middleware is handled by src/proxy.ts (Next.js 16+)
  */
 
 export { createAdminClient } from './admin'
 export { createClient as createBrowserClient } from './client'
-export { updateSession } from './middleware'
 export { createClient as createServerClient } from './server'
 
 export interface supabase {
-  updateSession: (session: any) => any
   createBrowserClient: () => any
   createServerClient: () => any
   createAdminClient: () => any

@@ -46,19 +46,74 @@ export function UserDecks({ moxfieldUsername }: UserDecksProps) {
     }
 
     try {
-      // Query decks_enhanced view first to get player_username matching, then join with moxfield_decks for user settings
+      // First get the user's profile ID for direct ownership lookup
+      const { data: userData } = await supabase.auth.getUser()
+      const profileId = userData?.user?.id
+
+      // Query moxfield_decks directly with multiple attribution methods:
+      // 1. Direct owner_profile_id match (most reliable)
+      // 2. author_username match (from Moxfield API)
+      // 3. Fallback to player_username in decks_enhanced view
+      let deckIds: number[] = []
+
+      if (profileId) {
+        // Get decks directly owned by this profile
+        const { data: ownedDecks } = await supabase
+          .from('moxfield_decks')
+          .select('id')
+          .eq('owner_profile_id', profileId)
+
+        if (ownedDecks) {
+          deckIds = ownedDecks.map(d => d.id)
+        }
+      }
+
+      // Also get decks where author_username matches moxfield_username
+      const { data: authorDecks } = await supabase
+        .from('moxfield_decks')
+        .select('id')
+        .ilike('author_username', moxfieldUsername)
+
+      if (authorDecks) {
+        for (const d of authorDecks) {
+          if (!deckIds.includes(d.id)) {
+            deckIds.push(d.id)
+          }
+        }
+      }
+
+      // Fallback: also check decks_enhanced player_username for legacy deck name parsing
+      const { data: enhancedByName } = await supabase
+        .from('decks_enhanced')
+        .select('id')
+        .ilike('player_username', moxfieldUsername)
+
+      if (enhancedByName) {
+        for (const d of enhancedByName) {
+          if (d.id && !deckIds.includes(d.id)) {
+            deckIds.push(d.id)
+          }
+        }
+      }
+
+      if (deckIds.length === 0) {
+        setDecks([])
+        setDeckSettings({})
+        setIsLoading(false)
+        return
+      }
+
+      // Now fetch full deck data for all matched IDs
       const { data: enhancedData, error: enhancedError } = await supabase
         .from('decks_enhanced')
         .select('id, name, format, view_count, like_count, comment_count, mainboard_count, last_updated_at, public_id, moxfield_id, player_username, deck_title, commanders, color_string, description')
-        .ilike('player_username', moxfieldUsername)
+        .in('id', deckIds)
         .order('last_updated_at', { ascending: false })
 
       if (enhancedError) throw enhancedError
 
       // Get user settings from moxfield_decks for these deck IDs
-      const deckIds = (enhancedData || []).map(d => d.id).filter((id): id is number => id !== null)
-
-      let settingsMap: Record<number, { user_hidden: boolean | null; user_title: string | null; user_description: string | null }> = {}
+      const settingsMap: Record<number, { user_hidden: boolean | null; user_title: string | null; user_description: string | null }> = {}
 
       if (deckIds.length > 0) {
         const { data: settingsData } = await supabase

@@ -214,13 +214,13 @@
   }
 
   .mana-white {
-    --mana-color: #92400e;
-    --manargb: 146, 64, 14;
-    --mana-color-vivid: #b45309;
-    --mana-color-deep: #d9a600;
-    --gradient-start: #ffd000;
-    --gradient-mid: #b45309;
-    --gradient-end: #92400e;
+    --mana-color: #cac704;
+    --manargb: 202, 138, 4;
+    --mana-color-vivid: #dfea08;
+    --mana-color-deep: #d3be07;
+    --gradient-start: #fde047;
+    --gradient-mid: #eab308;
+    --gradient-end: #cab304;
   }
 
   .mana-blue {
@@ -943,12 +943,21 @@ textarea::placeholder {
 
 /* Links */
 a {
-  color: var(--mana-color);
+  color: var(--mana-color-deep, var(--mana-color));
   transition: color 0.15s ease;
 }
 
 a:hover {
-  color: var(--mana-color-deep, var(--mana-color));
+  color: var(--mana-color);
+}
+
+/* Light mode: more muted link colors */
+html:not(.dark) a {
+  color: color-mix(in srgb, var(--mana-color) 75%, #374151);
+}
+
+html:not(.dark) a:hover {
+  color: var(--mana-color);
 }
 
 /* Disabled State */
@@ -1119,23 +1128,20 @@ html:not(.dark) table {
 }
 
 html:not(.dark) table th {
-  background: linear-gradient(180deg,
-    rgba(var(--manargb), 0.08) 0%,
-    rgba(var(--manargb), 0.05) 100%
-  ) !important;
+  background: rgba(var(--manargb), 0.06) !important;
   border-bottom: 1px solid rgba(var(--manargb), 0.15) !important;
 }
 
 html:not(.dark) table tbody tr:nth-child(even) {
-  background: rgba(var(--manargb), 0.05);
+  background: rgba(var(--manargb), 0.025);
 }
 
 html:not(.dark) table tbody tr:nth-child(odd) {
-  background: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.7);
 }
 
 html:not(.dark) table tbody tr:hover {
-  background: rgba(var(--manargb), 0.07) !important;
+  background: rgba(var(--manargb), 0.04) !important;
 }
 
 /* Enhanced inputs for light mode */
@@ -1198,10 +1204,8 @@ html:not(.dark) ::-webkit-scrollbar-track {
 /* Light mode cards should have visible mana tint */
 html:not(.dark) .bg-card,
 html:not(.dark) [class*="bg-card"] {
-  background: linear-gradient(135deg,
-    rgba(255, 255, 255, 0.98) 0%,
-    rgba(var(--manargb), 0.06) 100%
-  );
+  background: rgba(255, 255, 255, 0.96);
+  background-image: radial-gradient(ellipse at 50% 0%, rgba(var(--manargb), 0.08) 0%, transparent 70%);
 }
 
 /* Light mode badges and tags */

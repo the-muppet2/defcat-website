@@ -18,10 +18,10 @@ export default async function AdminDecksPage() {
 
   const supabase = await createClient()
 
-  // Fetch all decks with minimal data
+  // Fetch all decks with minimal data including owner info
   const { data: rawDecks, error } = await supabase
     .from('moxfield_decks')
-    .select('id, moxfield_id, public_id, name, raw_data, created_at, view_count')
+    .select('id, moxfield_id, public_id, name, raw_data, created_at, view_count, owner_profile_id, author_username, user_hidden')
     .order('created_at', { ascending: false })
 
   if (error) {
@@ -55,6 +55,9 @@ export default async function AdminDecksPage() {
       color_identity: colorIdentity && colorIdentity.length > 0 ? colorIdentity : null,
       created_at: deck.created_at || new Date().toISOString(),
       view_count: deck.view_count,
+      owner_profile_id: deck.owner_profile_id || null,
+      author_username: deck.author_username || null,
+      user_hidden: deck.user_hidden || false,
     }
   })
 

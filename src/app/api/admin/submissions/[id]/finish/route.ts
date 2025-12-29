@@ -136,6 +136,11 @@ export async function POST(
 
     const deckData = await moxfieldResponse.json()
 
+    // Determine owner_profile_id:
+    // 1. Use explicitly provided ownerProfileId (admin override)
+    // 2. Fall back to the submission's user_id (automatic linking to submitter)
+    const effectiveOwnerId = ownerProfileId ?? submission.user_id ?? null
+
     // Transform and upsert deck into moxfield_decks table
     const transformedDeck = {
       moxfield_id: deckData.id,
@@ -156,7 +161,7 @@ export async function POST(
       comment_count: deckData.commentCount || 0,
       is_legal: deckData.isLegal ?? true,
       raw_data: deckData,
-      owner_profile_id: ownerProfileId || null,
+      owner_profile_id: effectiveOwnerId,
       fetched_at: new Date().toISOString(),
     }
 
@@ -273,7 +278,8 @@ export async function POST(
       deckImported: true,
       deckId: upsertedDeck.moxfield_id,
       deckName: upsertedDeck.name,
-      ownerLinked: !!ownerProfileId,
+      ownerLinked: !!effectiveOwnerId,
+      ownerSource: ownerProfileId ? 'manual' : (submission.user_id ? 'submitter' : 'none'),
       cardsProcessed: cardsToUpsert.length,
     })
   } catch (error) {

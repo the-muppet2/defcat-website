@@ -1,7 +1,7 @@
 'use client'
 
 import { AlertCircle, CheckCircle2, Coins, Search, UserPlus, X } from 'lucide-react'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { GlowingEffect } from '@/components/ui/glowEffect'
@@ -38,8 +38,8 @@ export function UserRoleManager({ currentUserRole }: UserRoleManagerProps) {
   const [loading, setLoading] = useState(true)
   const [updating, setUpdating] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
-  const [searching, setSearching] = useState(false)
-  const [searchResults, setSearchResults] = useState<User[] | null>(null)
+  const [tierFilter, setTierFilter] = useState<string | null>(null)
+  const [roleFilter, setRoleFilter] = useState<string | null>(null)
   const [message, setMessage] = useState<{
     type: 'success' | 'error'
     text: string
@@ -65,8 +65,8 @@ export function UserRoleManager({ currentUserRole }: UserRoleManagerProps) {
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
         .select('id, email, role, patreon_tier, patreon_id, created_at')
-        .order('created_at', { ascending: false })
-        .limit(50)
+        .order('email', { ascending: true })
+        .limit(200)
 
       if (profilesError) throw profilesError
 
@@ -100,7 +100,7 @@ export function UserRoleManager({ currentUserRole }: UserRoleManagerProps) {
       )
 
       setUsers(enrichedUsers)
-    } catch (err) {
+    } catch {
       // Error will be shown in UI via error state
     } finally {
       setLoading(false)
@@ -111,77 +111,6 @@ export function UserRoleManager({ currentUserRole }: UserRoleManagerProps) {
     loadUsers()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
-
-  const handleSearch = async () => {
-    if (!searchTerm.trim()) {
-      setSearchResults(null)
-      return
-    }
-
-    setSearching(true)
-    setMessage(null)
-
-    try {
-      const { data: profilesData, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, email, role, patreon_tier, patreon_id, created_at')
-        .ilike('email', `%${searchTerm.trim()}%`)
-        .order('created_at', { ascending: false })
-        .limit(20)
-
-      if (profilesError) throw profilesError
-
-      if (!profilesData || profilesData.length === 0) {
-        setSearchResults([])
-        setMessage({ type: 'error', text: 'No users found matching your search' })
-        return
-      }
-
-      const enrichedUsers = await Promise.all(
-        profilesData.map(async (profile) => {
-          const [creditsResult, submissionsResult] = await Promise.all([
-            supabase
-              .from('user_credits')
-              .select('credits')
-              .eq('user_id', profile.id)
-              .maybeSingle(),
-            supabase
-              .from('deck_submissions')
-              .select('id', { count: 'exact', head: true })
-              .eq('user_id', profile.id),
-          ])
-
-          const credits = creditsResult.data?.credits as { deck?: number; roast?: number } | null
-          const deckCredits = credits?.deck ?? 0
-          const roastCredits = credits?.roast ?? 0
-          const submissionCount = submissionsResult.count ?? 0
-
-          return {
-            ...profile,
-            deck_credits: deckCredits,
-            roast_credits: roastCredits,
-            submission_count: submissionCount,
-            patreon_since: profile.created_at,
-          }
-        })
-      )
-
-      setSearchResults(enrichedUsers)
-    } catch (err) {
-      setMessage({
-        type: 'error',
-        text: err instanceof Error ? err.message : 'Search failed',
-      })
-    } finally {
-      setSearching(false)
-    }
-  }
-
-  const handleClearSearch = () => {
-    setSearchTerm('')
-    setSearchResults(null)
-    setMessage(null)
-  }
 
   const handleUpdateRole = async (userId: string, newRole: string) => {
     setUpdating(true)
@@ -251,9 +180,6 @@ export function UserRoleManager({ currentUserRole }: UserRoleManagerProps) {
 
       setMessage({ type: 'success', text: result.message })
       await loadUsers()
-      if (searchResults !== null) {
-        await handleSearch()
-      }
     } catch (err) {
       setMessage({
         type: 'error',
@@ -301,9 +227,6 @@ export function UserRoleManager({ currentUserRole }: UserRoleManagerProps) {
       setCreditModal(null)
       setCreditAmount('1')
       await loadUsers()
-      if (searchResults !== null) {
-        await handleSearch()
-      }
     } catch (err) {
       setMessage({
         type: 'error',
@@ -370,27 +293,143 @@ export function UserRoleManager({ currentUserRole }: UserRoleManagerProps) {
     }
   }
 
-  const displayUsers = searchResults !== null ? searchResults : users
+  // Filter and sort users
+  const displayUsers = useMemo(() => {
+    let filtered = users
 
-  const getSubscriptionDuration = (patreonSince: string | null | undefined): string => {
-    if (!patreonSince) return 'Unknown'
+    // Apply search filter (client-side instant filtering)
+    if (searchTerm.trim()) {
+      const query = searchTerm.toLowerCase().trim()
+      filtered = filtered.filter(u => u.email.toLowerCase().includes(query))
+    }
 
-    const start = new Date(patreonSince)
-    const now = new Date()
-    const months = Math.floor((now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24 * 30))
+    // Apply tier filter
+    if (tierFilter) {
+      if (tierFilter === 'none') {
+        filtered = filtered.filter(u => !u.patreon_tier)
+      } else {
+        filtered = filtered.filter(u => u.patreon_tier === tierFilter)
+      }
+    }
 
-    if (months < 1) return 'Less than 1 month'
-    if (months === 1) return '1 month'
-    if (months < 12) return `${months} months`
+    // Apply role filter
+    if (roleFilter) {
+      filtered = filtered.filter(u => (u.role || 'user') === roleFilter)
+    }
 
-    const years = Math.floor(months / 12)
-    const remainingMonths = months % 12
-    if (remainingMonths === 0) return years === 1 ? '1 year' : `${years} years`
-    return `${years} year${years > 1 ? 's' : ''}, ${remainingMonths} month${remainingMonths > 1 ? 's' : ''}`
+    return filtered
+  }, [users, searchTerm, tierFilter, roleFilter])
+
+  // Tier counts for filter buttons (based on all users, not filtered)
+  const tierCounts = useMemo(() => {
+    const counts: Record<string, number> = { none: 0 }
+    for (const tier of PATREON_TIERS) {
+      counts[tier] = 0
+    }
+    for (const user of users) {
+      if (user.patreon_tier) {
+        counts[user.patreon_tier] = (counts[user.patreon_tier] || 0) + 1
+      } else {
+        counts.none++
+      }
+    }
+    return counts
+  }, [users])
+
+  // Background color based on Patreon tier
+  const getTierBackground = (tier: string | null): string => {
+    switch (tier) {
+      case 'Citizen':
+        return 'bg-blue-500/10'
+      case 'Knight':
+        return 'bg-amber-500/10'
+      case 'Emissary':
+        return 'bg-emerald-500/10'
+      case 'Duke':
+        return 'bg-purple-500/10'
+      case 'Wizard':
+        return 'bg-cyan-500/10'
+      case 'ArchMage':
+        return 'bg-rose-500/10'
+      default:
+        return ''
+    }
+  }
+
+  // Border color based on role
+  const getRoleBorder = (role: string | null): string => {
+    switch (role) {
+      case 'admin':
+        return 'border-red-500/50'
+      case 'moderator':
+        return 'border-amber-500/50'
+      case 'developer':
+        return 'border-purple-500/50'
+      default:
+        return 'border-border/30'
+    }
+  }
+
+  // Button styles for tier filters
+  const getTierButtonStyle = (tier: string, isActive: boolean): string => {
+    const styles: Record<string, { active: string; inactive: string }> = {
+      Citizen: {
+        active: 'bg-blue-500/30 text-blue-300 !ring-2 !ring-blue-400 border-transparent font-semibold',
+        inactive: 'bg-blue-500/20 hover:bg-blue-500/30 text-blue-400 border-blue-500/40',
+      },
+      Knight: {
+        active: 'bg-amber-500/30 text-amber-300 !ring-2 !ring-amber-400 border-transparent font-semibold',
+        inactive: 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 border-amber-500/40',
+      },
+      Emissary: {
+        active: 'bg-emerald-500/30 text-emerald-300 !ring-2 !ring-emerald-400 border-transparent font-semibold',
+        inactive: 'bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 border-emerald-500/40',
+      },
+      Duke: {
+        active: 'bg-purple-500/30 text-purple-300 !ring-2 !ring-purple-400 border-transparent font-semibold',
+        inactive: 'bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 border-purple-500/40',
+      },
+      Wizard: {
+        active: 'bg-cyan-500/30 text-cyan-300 !ring-2 !ring-cyan-400 border-transparent font-semibold',
+        inactive: 'bg-cyan-500/20 hover:bg-cyan-500/30 text-cyan-400 border-cyan-500/40',
+      },
+      ArchMage: {
+        active: 'bg-rose-500/30 text-rose-300 !ring-2 !ring-rose-400 border-transparent font-semibold',
+        inactive: 'bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 border-rose-500/40',
+      },
+      none: {
+        active: 'bg-gray-500/30 text-gray-300 !ring-2 !ring-gray-400 border-transparent font-semibold',
+        inactive: 'bg-gray-500/20 hover:bg-gray-500/30 text-gray-400 border-gray-500/40',
+      },
+    }
+    return styles[tier]?.[isActive ? 'active' : 'inactive'] || ''
+  }
+
+  // Button styles for role filters
+  const getRoleButtonStyle = (role: string, isActive: boolean): string => {
+    const styles: Record<string, { active: string; inactive: string }> = {
+      admin: {
+        active: 'bg-red-500/30 text-red-300 !ring-2 !ring-red-400 border-transparent font-semibold',
+        inactive: 'bg-red-500/20 hover:bg-red-500/30 text-red-400 border-red-500/40',
+      },
+      moderator: {
+        active: 'bg-amber-500/30 text-amber-300 !ring-2 !ring-amber-400 border-transparent font-semibold',
+        inactive: 'bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 border-amber-500/40',
+      },
+      developer: {
+        active: 'bg-purple-500/30 text-purple-300 !ring-2 !ring-purple-400 border-transparent font-semibold',
+        inactive: 'bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 border-purple-500/40',
+      },
+      user: {
+        active: 'bg-gray-500/30 text-gray-300 !ring-2 !ring-gray-400 border-transparent font-semibold',
+        inactive: '',
+      },
+    }
+    return styles[role]?.[isActive ? 'active' : 'inactive'] || ''
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 col-span-full">
       {/* Search and Controls */}
       <div className="space-y-4">
         {message && (
@@ -421,30 +460,18 @@ export function UserRoleManager({ currentUserRole }: UserRoleManagerProps) {
               placeholder="Search users by email..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  handleSearch()
-                }
-              }}
-              className="pl-9"
+              className="pl-9 pr-9"
             />
-          </div>
-          <Button
-            onClick={handleSearch}
-            disabled={searching || !searchTerm.trim()}
-            variant="outline"
-          >
-            {searching ? (
-              <div className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-            ) : (
-              'Search'
+            {searchTerm && (
+              <button
+                type="button"
+                onClick={() => setSearchTerm('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
             )}
-          </Button>
-          {searchResults !== null && (
-            <Button onClick={handleClearSearch} variant="outline">
-              <X className="h-4 w-4" />
-            </Button>
-          )}
+          </div>
           <Button
             onClick={() => {
               if (!showAddUser && searchTerm.trim()) {
@@ -468,6 +495,58 @@ export function UserRoleManager({ currentUserRole }: UserRoleManagerProps) {
           </Button>
         </div>
 
+        {/* Tier Filter Buttons */}
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant={tierFilter === null ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setTierFilter(null)}
+          >
+            All ({users.length})
+          </Button>
+          {PATREON_TIERS.map((tier) => (
+            <Button
+              key={tier}
+              variant="outline"
+              size="sm"
+              onClick={() => setTierFilter(tierFilter === tier ? null : tier)}
+              className={getTierButtonStyle(tier, tierFilter === tier)}
+            >
+              {tier} ({tierCounts[tier] || 0})
+            </Button>
+          ))}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setTierFilter(tierFilter === 'none' ? null : 'none')}
+            className={getTierButtonStyle('none', tierFilter === 'none')}
+          >
+            No Tier ({tierCounts.none || 0})
+          </Button>
+        </div>
+
+        {/* Role Filter */}
+        <div className="flex flex-wrap gap-2">
+          <span className="text-xs text-muted-foreground self-center mr-2">Role:</span>
+          <Button
+            variant={roleFilter === null ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => setRoleFilter(null)}
+          >
+            All
+          </Button>
+          {availableRoles.map((role) => (
+            <Button
+              key={role}
+              variant="outline"
+              size="sm"
+              onClick={() => setRoleFilter(roleFilter === role ? null : role)}
+              className={getRoleButtonStyle(role, roleFilter === role)}
+            >
+              {role.charAt(0).toUpperCase() + role.slice(1)}
+            </Button>
+          ))}
+        </div>
       </div>
 
       {showAddUser && (
@@ -541,9 +620,9 @@ export function UserRoleManager({ currentUserRole }: UserRoleManagerProps) {
         </Card>
       )}
 
-      {searchResults !== null && (
+      {(searchTerm.trim() || tierFilter || roleFilter) && (
         <p className="text-sm text-muted-foreground">
-          Found {searchResults.length} of {users.length} users
+          Showing {displayUsers.length} of {users.length} users
         </p>
       )}
 
@@ -575,43 +654,41 @@ export function UserRoleManager({ currentUserRole }: UserRoleManagerProps) {
           />
           <Card className="card-glass border-0 p-8 relative">
             <div className="text-center text-muted-foreground">
-              {searchResults !== null ? 'No users found matching your search' : 'No users found'}
+              {searchTerm.trim() || tierFilter || roleFilter
+                ? 'No users found matching your filters'
+                : 'No users found'}
             </div>
           </Card>
         </div>
       ) : (
-        displayUsers.map((user) => (
-          <div key={user.id} className="relative rounded-2xl border p-2 md:rounded-3xl md:p-3">
-            <GlowingEffect
-              blur={0}
-              borderWidth={3}
-              spread={80}
-              glow={true}
-              disabled={false}
-              proximity={64}
-              inactiveZone={0.01}
-            />
-            <Card className="card-glass border-0 relative">
-              <CardContent className="p-4">
-                <div className="flex items-start justify-between gap-4 mb-3">
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium truncate">{user.email}</p>
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-xs text-muted-foreground">
-                      <span>
-                        <strong>Subscriber:</strong> {getSubscriptionDuration(user.patreon_since)}
-                      </span>
-                      <span>
-                        <strong>Joined:</strong> {user.created_at ? new Date(user.created_at).toLocaleDateString() : 'Unknown'}
-                      </span>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+          {displayUsers.map((user) => (
+            <div key={user.id} className="relative rounded-2xl">
+              <GlowingEffect
+                blur={0}
+                borderWidth={3}
+                spread={80}
+                glow={true}
+                disabled={false}
+                proximity={64}
+                inactiveZone={0.01}
+              />
+              <Card className={`border relative h-full ${getTierBackground(user.patreon_tier)} ${getRoleBorder(user.role)}`}>
+                <CardContent className="p-4 flex flex-col h-full">
+                  <div className="flex-1">
+                    <p className="font-medium truncate text-sm">{user.email}</p>
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-1 text-xs text-muted-foreground">
+                      <span>Joined: {user.created_at ? new Date(user.created_at).toLocaleDateString() : 'Unknown'}</span>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
+
+                  <div className="flex items-center gap-2 mt-3">
                     <Select
                       value={user.patreon_tier || 'none'}
                       onValueChange={(newTier) => handleUpdateTier(user.id, newTier)}
                       disabled={updating}
                     >
-                      <SelectTrigger className="w-[120px]">
+                      <SelectTrigger className="flex-1 h-8 text-xs">
                         <SelectValue placeholder="Tier" />
                       </SelectTrigger>
                       <SelectContent>
@@ -628,7 +705,7 @@ export function UserRoleManager({ currentUserRole }: UserRoleManagerProps) {
                       onValueChange={(newRole) => handleUpdateRole(user.id, newRole)}
                       disabled={updating}
                     >
-                      <SelectTrigger className="w-[120px]">
+                      <SelectTrigger className="flex-1 h-8 text-xs">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -640,37 +717,27 @@ export function UserRoleManager({ currentUserRole }: UserRoleManagerProps) {
                       </SelectContent>
                     </Select>
                   </div>
-                </div>
 
-                <div className="flex items-center justify-between gap-4 pt-3 border-t border-border/50 text-xs">
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2">
-                      <span className="text-muted-foreground">Deck Credits:</span>
-                      <span className="font-medium tabular-nums">{user.deck_credits ?? 0}</span>
+                  <div className="flex items-center justify-between gap-2 pt-3 mt-3 border-t border-border/50 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-4">
+                      <span>Deck: {user.deck_credits ?? 0}</span>
+                      <span>Roast: {user.roast_credits ?? 0}</span>
+                      <span>Subs: {user.submission_count ?? 0}</span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-muted-foreground">Roast Credits:</span>
-                      <span className="font-medium tabular-nums">{user.roast_credits ?? 0}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="text-muted-foreground">Submissions:</span>
-                      <span className="font-medium tabular-nums">{user.submission_count ?? 0}</span>
-                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-6 text-xs px-2"
+                      onClick={() => setCreditModal({ userId: user.id, email: user.email })}
+                    >
+                      <Coins className="h-3 w-3" />
+                    </Button>
                   </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="h-7 text-xs"
-                    onClick={() => setCreditModal({ userId: user.id, email: user.email })}
-                  >
-                    <Coins className="h-3 w-3 mr-1" />
-                    Credits
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        ))
+                </CardContent>
+              </Card>
+            </div>
+          ))}
+        </div>
       )}
 
       <div className="p-3 bg-muted/30 rounded-lg">
