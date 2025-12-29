@@ -46,21 +46,26 @@ export async function GET() {
   try {
     const adminClient = createAdminClient()
 
-    const { data, error } = await adminClient.rpc('get_distribution_history', {
-      p_limit: 10
-    })
+    // Query distribution logs table directly
+    const { data, error } = await adminClient
+      .from('credit_distribution_logs')
+      .select('*')
+      .order('started_at', { ascending: false })
+      .limit(10)
 
     if (error) {
+      // Table might not exist yet - return empty history gracefully
+      if (error.code === '42P01' || error.code === 'PGRST204') {
+        console.warn('Distribution logs table not found, returning empty history')
+        return NextResponse.json({ history: [] })
+      }
       console.error('Error fetching history:', error)
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json({ history: [] })
     }
 
     return NextResponse.json({ history: data || [] })
   } catch (error) {
     console.error('Error fetching history:', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch distribution history' },
-      { status: 500 }
-    )
+    return NextResponse.json({ history: [] })
   }
 }
