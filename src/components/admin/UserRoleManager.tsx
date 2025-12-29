@@ -1,6 +1,6 @@
 'use client'
 
-import { AlertCircle, CheckCircle2, Search, UserPlus, X } from 'lucide-react'
+import { AlertCircle, CheckCircle2, Coins, Search, UserPlus, X } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -49,6 +49,10 @@ export function UserRoleManager({ currentUserRole }: UserRoleManagerProps) {
   const [newUserRole, setNewUserRole] = useState('user')
   const [newUserTier, setNewUserTier] = useState('')
   const [adding, setAdding] = useState(false)
+  const [creditModal, setCreditModal] = useState<{ userId: string; email: string } | null>(null)
+  const [creditType, setCreditType] = useState<'deck' | 'roast'>('deck')
+  const [creditAmount, setCreditAmount] = useState('1')
+  const [grantingCredits, setGrantingCredits] = useState(false)
   const supabase = createClient()
 
   const isDeveloper = currentUserRole === 'developer'
@@ -215,6 +219,98 @@ export function UserRoleManager({ currentUserRole }: UserRoleManagerProps) {
       })
     } finally {
       setUpdating(false)
+    }
+  }
+
+  const handleUpdateTier = async (userId: string, newTier: string) => {
+    setUpdating(true)
+    setMessage(null)
+
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+      if (!session) {
+        throw new Error('Not authenticated')
+      }
+
+      const response = await fetch('/api/admin/users/update-tier', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ userId, tier: newTier === 'none' ? null : newTier }),
+      })
+
+      const result = await response.json()
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Failed to update tier')
+      }
+
+      setMessage({ type: 'success', text: result.message })
+      await loadUsers()
+      if (searchResults !== null) {
+        await handleSearch()
+      }
+    } catch (err) {
+      setMessage({
+        type: 'error',
+        text: err instanceof Error ? err.message : 'Failed to update tier',
+      })
+    } finally {
+      setUpdating(false)
+    }
+  }
+
+  const handleGrantCredits = async () => {
+    if (!creditModal) return
+
+    setGrantingCredits(true)
+    setMessage(null)
+
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+      if (!session) {
+        throw new Error('Not authenticated')
+      }
+
+      const response = await fetch('/api/admin/users/grant-credits', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({
+          userId: creditModal.userId,
+          creditType,
+          amount: parseInt(creditAmount, 10),
+        }),
+      })
+
+      const result = await response.json()
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Failed to grant credits')
+      }
+
+      setMessage({ type: 'success', text: result.message })
+      setCreditModal(null)
+      setCreditAmount('1')
+      await loadUsers()
+      if (searchResults !== null) {
+        await handleSearch()
+      }
+    } catch (err) {
+      setMessage({
+        type: 'error',
+        text: err instanceof Error ? err.message : 'Failed to grant credits',
+      })
+    } finally {
+      setGrantingCredits(false)
     }
   }
 
@@ -502,9 +598,6 @@ export function UserRoleManager({ currentUserRole }: UserRoleManagerProps) {
                     <p className="font-medium truncate">{user.email}</p>
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1 text-xs text-muted-foreground">
                       <span>
-                        <strong>Tier:</strong> {user.patreon_tier || 'None'}
-                      </span>
-                      <span>
                         <strong>Subscriber:</strong> {getSubscriptionDuration(user.patreon_since)}
                       </span>
                       <span>
@@ -514,11 +607,28 @@ export function UserRoleManager({ currentUserRole }: UserRoleManagerProps) {
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <Select
+                      value={user.patreon_tier || 'none'}
+                      onValueChange={(newTier) => handleUpdateTier(user.id, newTier)}
+                      disabled={updating}
+                    >
+                      <SelectTrigger className="w-[120px]">
+                        <SelectValue placeholder="Tier" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">No Tier</SelectItem>
+                        {PATREON_TIERS.map((tier) => (
+                          <SelectItem key={tier} value={tier}>
+                            {tier}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Select
                       value={user.role || 'user'}
                       onValueChange={(newRole) => handleUpdateRole(user.id, newRole)}
                       disabled={updating}
                     >
-                      <SelectTrigger className="w-[140px]">
+                      <SelectTrigger className="w-[120px]">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -532,19 +642,30 @@ export function UserRoleManager({ currentUserRole }: UserRoleManagerProps) {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-4 pt-3 border-t border-border/50 text-xs">
-                  <div className="flex items-center gap-2">
-                    <span className="text-muted-foreground">Deck Credits:</span>
-                    <span className="font-medium tabular-nums">{user.deck_credits ?? 0}</span>
+                <div className="flex items-center justify-between gap-4 pt-3 border-t border-border/50 text-xs">
+                  <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
+                      <span className="text-muted-foreground">Deck Credits:</span>
+                      <span className="font-medium tabular-nums">{user.deck_credits ?? 0}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-muted-foreground">Roast Credits:</span>
+                      <span className="font-medium tabular-nums">{user.roast_credits ?? 0}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-muted-foreground">Submissions:</span>
+                      <span className="font-medium tabular-nums">{user.submission_count ?? 0}</span>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-muted-foreground">Roast Credits:</span>
-                    <span className="font-medium tabular-nums">{user.roast_credits ?? 0}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-muted-foreground">Submissions:</span>
-                    <span className="font-medium tabular-nums">{user.submission_count ?? 0}</span>
-                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 text-xs"
+                    onClick={() => setCreditModal({ userId: user.id, email: user.email })}
+                  >
+                    <Coins className="h-3 w-3 mr-1" />
+                    Credits
+                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -557,6 +678,85 @@ export function UserRoleManager({ currentUserRole }: UserRoleManagerProps) {
           Note: User role changes may take a few minutes to propagate throughout the system.
         </p>
       </div>
+
+      {creditModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <Card className="w-full max-w-md mx-4 border-tinted bg-card">
+            <CardContent className="pt-6 space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">Grant Credits</h3>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setCreditModal(null)
+                    setCreditAmount('1')
+                  }}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+
+              <p className="text-sm text-muted-foreground">
+                Granting credits to: <strong>{creditModal.email}</strong>
+              </p>
+
+              <div className="space-y-2">
+                <Label htmlFor="credit-type">Credit Type</Label>
+                <Select value={creditType} onValueChange={(v) => setCreditType(v as 'deck' | 'roast')}>
+                  <SelectTrigger id="credit-type">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="deck">Deck Credits</SelectItem>
+                    <SelectItem value="roast">Roast Credits</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="credit-amount">Amount (use negative to remove)</Label>
+                <Input
+                  id="credit-amount"
+                  type="number"
+                  min="-100"
+                  max="100"
+                  value={creditAmount}
+                  onChange={(e) => setCreditAmount(e.target.value)}
+                  placeholder="1"
+                />
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => {
+                    setCreditModal(null)
+                    setCreditAmount('1')
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  className="flex-1 btn-tinted-primary"
+                  onClick={handleGrantCredits}
+                  disabled={grantingCredits || !creditAmount}
+                >
+                  {grantingCredits ? (
+                    <div className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    <>
+                      <Coins className="h-4 w-4 mr-2" />
+                      Grant Credits
+                    </>
+                  )}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   )
 }

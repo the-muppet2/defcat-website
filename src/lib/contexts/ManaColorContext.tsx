@@ -1,5 +1,4 @@
 'use client'
-// biome-ignore assist/source/organizeImports: <explanation>
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react'
 import { ColorIdentity } from '@/types/colors'
 
@@ -17,14 +16,16 @@ export function ManaColorProvider({ children }: { children: ReactNode }) {
   const [selectedMana, setSelectedManaState] = useState<ManaSymbol>(ColorIdentity.Symbol.GREEN)
 
   useEffect(() => {
-    const saved = localStorage.getItem('mana-color')
-    if (saved && Object.values(ColorIdentity.Symbol).includes(saved as ManaSymbol)) {
-      setSelectedManaState(saved as ManaSymbol)
-      applyManaColor(saved as ManaSymbol)
-    } else {
-      applyManaColor(ColorIdentity.Symbol.COLORLESS)
-    }
-  }, [])
+    //const saved = localStorage.getItem('mana-color')
+    //if (saved && Object.values(ColorIdentity.Symbol).includes(saved as ManaSymbol)) {
+    //  setSelectedManaState(saved as ManaSymbol)
+    //  applyManaColor(saved as ManaSymbol)
+    //} else {
+      const symbols = Object.values(ColorIdentity.Symbol)
+      const randomColor = symbols[Math.floor(Math.random() * symbols.length)] as ManaSymbol
+      setSelectedManaState(randomColor)
+      applyManaColor(randomColor)
+    }, [])
 
   const setSelectedMana = (color: ManaSymbol) => {
     setSelectedManaState(color)

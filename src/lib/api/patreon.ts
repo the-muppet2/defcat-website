@@ -52,10 +52,17 @@ interface PatreonMember {
 
 /**
  * Determine user's tier based on Patreon pledge amount
+ * Thresholds match Patreon tier pricing:
+ * - ArchMage: $250+ (Arch Mage [Custom Video])
+ * - Wizard: $85+ (Court Wizard)
+ * - Duke: $50+ (Duke [Custom Deck!])
+ * - Emissary: $30+ (Foreign Emissary [Deck Roast / Fix])
+ * - Knight: $10+ (Knight of the Square Table)
+ * - Citizen: <$10 (Citizen of the Land [Discord Access])
  */
 export function determineTier(pledgeAmountCents: number): PatreonTier {
   if (pledgeAmountCents >= 25000) return 'ArchMage'
-  if (pledgeAmountCents >= 16500) return 'Wizard'
+  if (pledgeAmountCents >= 8500) return 'Wizard'
   if (pledgeAmountCents >= 5000) return 'Duke'
   if (pledgeAmountCents >= 3000) return 'Emissary'
   if (pledgeAmountCents >= 1000) return 'Knight'

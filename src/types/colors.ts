@@ -4,7 +4,6 @@ enum ManaSymbol {
   BLACK = 'black',
   RED = 'red',
   GREEN = 'green',
-  COLORLESS = 'colorless',
 }
 
 const ManaColorMap = {
@@ -13,7 +12,7 @@ const ManaColorMap = {
   B: 'oklch(0.32 0.36 330.58)',
   R: 'oklch(0.35 0.40 50)',
   G: 'oklch(0.40 0.40 150)',
-  C: 'oklch(0.8 0 0/1)',
+
 
   // Aliases for convenience
   WHITE: 'oklch(0.90 0.40 100)',
@@ -21,7 +20,6 @@ const ManaColorMap = {
   BLACK: 'oklch(0.30 0.36 333.58)',
   RED: 'oklch(0.35 0.40 50)',
   GREEN: 'oklch(0.40 0.40 150)',
-  COLORLESS: 'oklch(0.8 0 0/1)',
 } as const
 
 type ColorInfo = {
@@ -37,7 +35,6 @@ const ColorMapping: Record<string, ColorInfo> = {
   B: { letter: 'B', name: 'Black', className: 'ms ms-b', color: ManaColorMap.B },
   R: { letter: 'R', name: 'Red', className: 'ms ms-r', color: ManaColorMap.R },
   G: { letter: 'G', name: 'Green', className: 'ms ms-g', color: ManaColorMap.G },
-  C: { letter: 'C', name: 'Colorless', className: 'ms ms-c', color: ManaColorMap.C },
 }
 
 const HybridManaMap = {
@@ -55,7 +52,7 @@ const HybridManaMap = {
 
 export const ColorIdentity = {
   // Constants
-  ORDER: ['W', 'U', 'B', 'R', 'G', 'C'],
+  ORDER: ['W', 'U', 'B', 'R', 'G'],
 
   // Enums
   Symbol: ManaSymbol,
@@ -71,7 +68,6 @@ export const ColorIdentity = {
       [ManaSymbol.BLACK]: 'B',
       [ManaSymbol.RED]: 'R',
       [ManaSymbol.GREEN]: 'G',
-      [ManaSymbol.COLORLESS]: 'C',
     }
     return map[symbol]
   },
@@ -84,9 +80,8 @@ export const ColorIdentity = {
       B: ManaSymbol.BLACK,
       R: ManaSymbol.RED,
       G: ManaSymbol.GREEN,
-      C: ManaSymbol.COLORLESS,
     }
-    return map[letter.toUpperCase()] || ManaSymbol.COLORLESS
+    return map[letter.toUpperCase()]
   },
 
   // Get color value from symbol, letter, or name
@@ -96,7 +91,7 @@ export const ColorIdentity = {
       return ColorMapping[letter].color
     }
     const upper = input.toUpperCase()
-    return ColorMapping[upper]?.color || ManaColorMap.C
+    return ColorMapping[upper]?.color
   },
 
   // Get ColorInfo from symbol, letter, or name
@@ -324,3 +319,6 @@ export const ColorIdentity = {
 
 // Type exports for external use
 export type { ColorInfo }
+
+const symbols = Object.values(ColorIdentity.Symbol)
+export const randomColor = symbols[Math.floor(Math.random() * symbols.length)] as ManaSymbol

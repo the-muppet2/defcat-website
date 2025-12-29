@@ -66,11 +66,10 @@ export function NavigationHeader() {
 
           {/* Right Side Actions */}
           <div className="flex items-center gap-3">
+
             {/* Dark Mode Toggle */}
             <AnimatedThemeToggler
               animationType={ThemeAnimationType.MANA}
-              duration={1000}
-              blurAmount={0}
               className="hover-tinted rounded-full p-2"
             />
 

@@ -12,7 +12,6 @@ const MANA_SYMBOLS = [
   ColorIdentity.Symbol.BLACK,
   ColorIdentity.Symbol.RED,
   ColorIdentity.Symbol.GREEN,
-  ColorIdentity.Symbol.COLORLESS,
 ] as const
 
 export function ManaSymbolSelector() {

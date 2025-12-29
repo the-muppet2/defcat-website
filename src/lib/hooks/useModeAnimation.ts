@@ -75,11 +75,11 @@ export const useModeAnimation = (
 ): ReactThemeSwitchAnimationHook => {
   const {
     duration: propsDuration = 750,
-    easing = 'ease-in-out',
+    easing = 'ease-out-quart',
     pseudoElement = '::view-transition-new(root)',
     globalClassName = 'dark',
     animationType = ThemeAnimationType.MANA,
-    blurAmount = 2,
+    blurAmount = 4,
     styleId = 'theme-switch-style',
     manaSymbol = ColorIdentity.letterToSymbol('c'),
     isDarkMode: externalDarkMode,
@@ -89,7 +89,7 @@ export const useModeAnimation = (
   const isHighResolution =
     typeof window !== 'undefined' && (window.innerWidth >= 3000 || window.innerHeight >= 2000)
 
-  const duration = isHighResolution ? Math.max(propsDuration * 0.8, 500) : propsDuration
+  const duration = isHighResolution ? Math.max(propsDuration) : propsDuration
 
   useEffect(() => {
     injectBaseStyles()
@@ -120,7 +120,7 @@ export const useModeAnimation = (
       ? `<filter id="blur"><feGaussianBlur stdDeviation="${blur}" /></filter>`
       : ``
 
-    const circleRadius = isHighResolution ? 20 : 25
+    const circleRadius = isHighResolution ? 20 : 4000
 
     return `url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="-50 -50 100 100"><defs>${blurFilter}</defs><circle cx="0" cy="0" r="${circleRadius}" fill="white" filter="url(%23blur)"/></svg>')`
   }
@@ -139,15 +139,11 @@ export const useModeAnimation = (
       return
     }
 
-    // Diagnostic logging
-    const log = (msg: string, data?: any) => {
-      console.log(`[${Date.now() % 10000}ms] ${msg}`, data || '')
-    }
-
     const existingStyle = document.getElementById(styleId)
     if (existingStyle) {
       existingStyle.remove()
     }
+
 
     const x = window.innerWidth / 2
     const y = window.innerHeight / 2
@@ -158,11 +154,11 @@ export const useModeAnimation = (
     const bottomRight = Math.hypot(window.innerWidth - x, window.innerHeight - y)
 
     const maxRadius = Math.max(topLeft, topRight, bottomLeft, bottomRight)
-    const viewportSize = Math.max(window.innerWidth, window.innerHeight) + 200
+    const viewportSize = Math.max(window.innerWidth, window.innerHeight)
     const isHighResolution = window.innerWidth >= 3000 || window.innerHeight >= 2000
-    const scaleFactor = isHighResolution ? 2.5 : 5
+    const scaleFactor = isHighResolution ? 2 :2
     const optimalMaskSize = isHighResolution
-      ? Math.min(viewportSize * scaleFactor, 5000)
+      ? Math.min(viewportSize * scaleFactor, 500)
       : viewportSize * scaleFactor
 
     if (
@@ -172,16 +168,10 @@ export const useModeAnimation = (
       const styleElement = document.createElement('style')
       styleElement.id = styleId
 
-      const blurFactor = isHighResolution ? 1.5 : 1.2
+      const blurFactor = isHighResolution ? 1.5 : 1.0
+      
+      // Keep the 2.5x multiplier - it was good for pacing
       const finalMaskSize = Math.max(optimalMaskSize, maxRadius * 2.5)
-
-      log('Animation config:', {
-        x,
-        y,
-        finalMaskSize,
-        duration,
-        isHighResolution,
-      })
 
       const maskFunction =
         animationType === ThemeAnimationType.MANA
@@ -191,36 +181,48 @@ export const useModeAnimation = (
       styleElement.textContent = `
       ::view-transition-group(root) {
         animation-duration: ${duration}ms;
-        animation-timing-function: ${
-          isHighResolution
-            ? 'cubic-bezier(0.2, 0, 0.2, 1)'
-            : 'linear(' +
-              '0 0%, 0.2342 12.49%, 0.4374 24.99%,' +
-              '0.6093 37.49%, 0.6835 43.74%,' +
-              '0.7499 49.99%, 0.8086 56.25%,' +
-              '0.8593 62.5%, 0.9023 68.75%, 0.9375 75%,' +
-              '0.9648 81.25%, 0.9844 87.5%,' +
-              '0.9961 93.75%, 1 100%' +
-              ')'
-        };
-        will-change: transform;
+      }
+      
+      /* 
+         SPEC FIX 1: 'isolation: auto' 
+         See "Example 5" in the spec.
+         This prevents the browser from grouping the old/new views for 
+         blending, which eliminates weird compounding brightness artifacts.
+      */
+      ::view-transition-image-pair(root) {
+        isolation: auto;
       }
 
+      /* 
+         SPEC FIX 2: 'mix-blend-mode: normal'
+         The spec "User Agent Stylesheet" section shows that the default 
+         is 'plus-lighter'. We must override this to 'normal' to stop the flash.
+      */
+      ::view-transition-old(root),
+      ::view-transition-new(root) {
+        animation: none;
+        mix-blend-mode: normal;
+        display: block;
+      }
+
+      /* THE OLD VIEW - Static Background */
+      ::view-transition-old(root),
+      .dark::view-transition-old(root) {
+        z-index: 1;
+      }
+
+      /* THE NEW VIEW - Expanding Mask */
       ::view-transition-new(root) {
         mask-image: ${maskFunction};
         mask-repeat: no-repeat;
-        mask-size: 0px;
         mask-position: ${x}px ${y}px;
-          animation: maskScale ${duration * 1.5}ms ${easing};
-          transform-origin: ${x}px ${y}px;
-          will-change: mask-size, mask-position;
-        }
-
-        ::view-transition-old(root),
-        .dark::view-transition-old(root) {
-          animation: maskScale ${duration}ms ${easing};
-          transform-origin: ${x}px ${y}px;
-          z-index: -1;
+        mask-size: 0px;
+        
+        /* 'ease-in' matches Spec Example 5 recommendation for reveals */
+        animation: maskScale ${duration}ms ease-in;
+        
+        z-index: 2;
+        transform-origin: ${x}px ${y}px;
         will-change: mask-size, mask-position;
       }
 
@@ -230,26 +232,20 @@ export const useModeAnimation = (
             mask-position: ${x}px ${y}px;
           }
           100% {
-          mask-size: ${finalMaskSize}px;
-          mask-position: ${x - finalMaskSize / 2}px ${y - finalMaskSize / 2}px;
-        }
+            mask-size: ${finalMaskSize}px;
+            mask-position: ${x - finalMaskSize / 2}px ${y - finalMaskSize / 2}px;
+          }
       }
-    `
+      `
       document.head.appendChild(styleElement)
-      log('Styles injected')
     }
+
 
     const transition = (document as any).startViewTransition(() => {
       flushSync(() => {
         setIsDarkMode((isDarkMode) => !isDarkMode)
       })
     })
-
-    log('Transition started')
-
-    // Monitor transition states
-    transition.ready.then(() => log('Transition ready'))
-    transition.finished.then(() => log('Transition finished'))
 
     if (
       animationType === ThemeAnimationType.CIRCLE ||
