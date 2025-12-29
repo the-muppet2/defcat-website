@@ -20,56 +20,56 @@
     --accent-foreground: 240 10% 8%;
     --destructive: 0 72% 45%;
     --destructive-foreground: 0 0% 100%;
-    --border: 240 8% 70%;
+    --border: 240 8% 82%;
     --input: 0 0% 100%;
-    --input-border: 240 8% 65%;
+    --input-border: 240 8% 75%;
     --ring: 240 10% 10%;
     --radius: 0.5rem;
 
-    --glass-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(255, 255, 255, 0.95));
-    --glass-border: rgba(0, 0, 0, 0.18);
+    --glass-bg: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(var(--manargb), 0.06));
+    --glass-border: rgba(var(--manargb), 0.25);
     --glass-blur: 16px;
 
-    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.1);
-    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.14), 0 1px 2px rgba(0, 0, 0, 0.1);
-    --shadow: 0 2px 8px rgba(0, 0, 0, 0.14), 0 1px 3px rgba(0, 0, 0, 0.1);
-    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.16), 0 2px 4px rgba(0, 0, 0, 0.12);
-    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.18), 0 4px 8px rgba(0, 0, 0, 0.12);
-    --shadow-xl: 0 16px 40px rgba(0, 0, 0, 0.20), 0 6px 12px rgba(0, 0, 0, 0.12);
-    --shadow-2xl: 0 24px 50px rgba(0, 0, 0, 0.24);
+    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.08);
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.10), 0 1px 2px rgba(var(--manargb), 0.06);
+    --shadow: 0 2px 8px rgba(0, 0, 0, 0.10), 0 1px 3px rgba(var(--manargb), 0.08);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.12), 0 2px 4px rgba(var(--manargb), 0.10);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.14), 0 4px 8px rgba(var(--manargb), 0.12);
+    --shadow-xl: 0 16px 40px rgba(0, 0, 0, 0.16), 0 6px 12px rgba(var(--manargb), 0.14);
+    --shadow-2xl: 0 24px 50px rgba(0, 0, 0, 0.18);
 
-    --mana-tint-subtle: rgba(var(--manargb), 0.14);
-    --mana-tint-light: rgba(var(--manargb), 0.22);
-    --mana-tint-medium: rgba(var(--manargb), 0.32);
-    --mana-tint-strong: rgba(var(--manargb), 0.45);
-    --mana-tint-intense: rgba(var(--manargb), 0.60);
+    --mana-tint-subtle: rgba(var(--manargb), 0.08);
+    --mana-tint-light: rgba(var(--manargb), 0.14);
+    --mana-tint-medium: rgba(var(--manargb), 0.22);
+    --mana-tint-strong: rgba(var(--manargb), 0.32);
+    --mana-tint-intense: rgba(var(--manargb), 0.45);
 
-    --bg-tinted: rgba(var(--manargb), 0.10);
-    --card-tinted-bg: rgba(var(--manargb), 0.08);
-    --accent-tinted: rgba(var(--manargb), 0.14);
+    --bg-tinted: rgba(var(--manargb), 0.18);
+    --card-tinted-bg: rgba(var(--manargb), 0.27);
+    --accent-tinted: rgba(var(--manargb), 0.32);
 
-    --border-tinted: rgba(var(--manargb), 0.40);
-    --border-tinted-subtle: rgba(var(--manargb), 0.28);
-    --border-tinted-strong: rgba(var(--manargb), 0.55);
+    --border-tinted: rgba(var(--manargb), 0.35);
+    --border-tinted-subtle: rgba(var(--manargb), 0.22);
+    --border-tinted-strong: rgba(var(--manargb), 0.50);
 
-    --shadow-tinted-sm: 0 1px 3px rgba(0, 0, 0, 0.10), 0 2px 8px rgba(var(--manargb), 0.14);
-    --shadow-tinted: 0 2px 6px rgba(0, 0, 0, 0.12), 0 4px 16px rgba(var(--manargb), 0.18);
-    --shadow-tinted-md: 0 4px 8px rgba(0, 0, 0, 0.14), 0 8px 24px rgba(var(--manargb), 0.22);
-    --shadow-tinted-lg: 0 6px 12px rgba(0, 0, 0, 0.14), 0 12px 36px rgba(var(--manargb), 0.26);
-    --shadow-tinted-xl: 0 8px 16px rgba(0, 0, 0, 0.16), 0 20px 50px rgba(var(--manargb), 0.30);
+    --shadow-tinted-sm: 0 1px 3px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(var(--manargb), 0.12);
+    --shadow-tinted: 0 2px 6px rgba(0, 0, 0, 0.10), 0 4px 16px rgba(var(--manargb), 0.16);
+    --shadow-tinted-md: 0 4px 8px rgba(0, 0, 0, 0.12), 0 8px 24px rgba(var(--manargb), 0.20);
+    --shadow-tinted-lg: 0 6px 12px rgba(0, 0, 0, 0.12), 0 12px 36px rgba(var(--manargb), 0.24);
+    --shadow-tinted-xl: 0 8px 16px rgba(0, 0, 0, 0.14), 0 20px 50px rgba(var(--manargb), 0.28);
 
-    --glow-sm: 0 0 12px rgba(var(--manargb), 0.30);
-    --glow: 0 0 20px rgba(var(--manargb), 0.35), 0 0 40px rgba(var(--manargb), 0.18);
-    --glow-lg: 0 0 30px rgba(var(--manargb), 0.40), 0 0 60px rgba(var(--manargb), 0.22);
+    --glow-sm: 0 0 12px rgba(var(--manargb), 0.25);
+    --glow: 0 0 20px rgba(var(--manargb), 0.30), 0 0 40px rgba(var(--manargb), 0.15);
+    --glow-lg: 0 0 30px rgba(var(--manargb), 0.35), 0 0 60px rgba(var(--manargb), 0.20);
 
-    --bg-radial-top: rgba(var(--manargb), 0.12);
-    --bg-radial-bottom: rgba(var(--manargb), 0.06);
-    --bg-gradient-opacity: 0.18;
-    --bg-dot-color: rgba(var(--manargb), 0.20);
+    --bg-radial-top: rgba(var(--manargb), 0.18);
+    --bg-radial-bottom: rgba(var(--manargb), 0.08);
+    --bg-gradient-opacity: 0.25;
+    --bg-dot-color: rgba(var(--manargb), 0.15);
 
-    --hover-overlay: rgba(var(--manargb), 0.12);
-    --active-overlay: rgba(var(--manargb), 0.20);
-    --focus-ring: rgba(var(--manargb), 0.40);
+    --hover-overlay: rgba(var(--manargb), 0.10);
+    --active-overlay: rgba(var(--manargb), 0.18);
+    --focus-ring: rgba(var(--manargb), 0.35);
     --focus-ring-width: 3px;
 
     --text-primary: #0a0a0b;
@@ -89,21 +89,26 @@
     --gradient-mid: var(--mana-color);
     --gradient-end: var(--mana-color);
 
-    --table-row-alt: rgba(0, 0, 0, 0.04);
-    --table-border: rgba(0, 0, 0, 0.12);
-    --table-header-bg: rgba(0, 0, 0, 0.06);
+    --table-row-alt: rgba(var(--manargb), 0.04);
+    --table-border: rgba(var(--manargb), 0.15);
+    --table-header-bg: rgba(var(--manargb), 0.08);
 
-    --header-bg: rgba(255, 255, 255, 0.95);
-    --header-border: rgba(0, 0, 0, 0.12);
+    --header-bg: rgba(255, 255, 255, 0.92);
+    --header-border: rgba(var(--manargb), 0.18);
 
-    --nav-bg: rgba(255, 255, 255, 0.98);
-    --nav-border: rgba(0, 0, 0, 0.10);
-    --nav-active-bg: rgba(var(--manargb), 0.12);
-    --nav-hover-bg: rgba(0, 0, 0, 0.05);
-    
-    --filter-item-hover: rgba(0, 0, 0, 0.08);
+    --nav-bg: rgba(255, 255, 255, 0.96);
+    --nav-border: rgba(var(--manargb), 0.15);
+    --nav-active-bg: rgba(var(--manargb), 0.14);
+    --nav-hover-bg: rgba(var(--manargb), 0.08);
+
+    --filter-item-hover: rgba(var(--manargb), 0.10);
     --filter-item-active: rgba(var(--manargb), 0.18);
-    --divider-color: rgba(0, 0, 0, 0.12);
+    --divider-color: rgba(var(--manargb), 0.15);
+
+    --sidebar-bg: rgba(var(--manargb), 0.08);
+    --page-gradient: radial-gradient(ellipse 100% 60% at 50% -10%, rgba(var(--manargb), 0.22), transparent 60%);
+    --page-pattern-color: rgba(var(--manargb), 0.03);
+    --page-pattern-size: 24px;
   }
 
   .dark {
@@ -188,10 +193,13 @@
     --nav-border: rgba(255, 255, 255, 0.08);
     --nav-active-bg: rgba(var(--manargb), 0.15);
     --nav-hover-bg: rgba(255, 255, 255, 0.05);
-    
+
     --filter-item-hover: rgba(255, 255, 255, 0.06);
     --filter-item-active: rgba(var(--manargb), 0.2);
     --divider-color: rgba(255, 255, 255, 0.1);
+
+    --sidebar-bg: rgba(var(--manargb), 0.03);
+    --page-gradient: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(var(--manargb), 0.12), transparent 50%);
   }
 
   /* MANA COLOR DEFINITIONS - LIGHT MODE */
@@ -327,6 +335,38 @@
     user-select: text;
   }
 
+  /* Light mode page gradient overlay */
+  body::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--page-gradient);
+    pointer-events: none;
+    z-index: -2;
+  }
+
+  /* Subtle dot pattern for light mode */
+  body::after {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: radial-gradient(var(--page-pattern-color) 1px, transparent 1px);
+    background-size: var(--page-pattern-size) var(--page-pattern-size);
+    pointer-events: none;
+    z-index: -1;
+    opacity: 0.6;
+  }
+
+  .dark body::after {
+    opacity: 0;
+  }
+
   /* Ensure text is selectable everywhere except specific UI elements */
   p, span, div, h1, h2, h3, h4, h5, h6, li, td, th, label, a {
     -webkit-user-select: text;
@@ -420,6 +460,66 @@
 .card-tinted-glass:hover {
   border-color: var(--border-tinted-strong);
   box-shadow: var(--shadow-tinted-md);
+}
+
+/* Glass card with subtle mana tint - great for light mode */
+.card-glass {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(var(--manargb), 0.04));
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(var(--manargb), 0.18);
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s ease;
+}
+
+.card-glass:hover {
+  border-color: rgba(var(--manargb), 0.30);
+  box-shadow: var(--shadow-tinted);
+}
+
+.dark .card-glass {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.06), rgba(var(--manargb), 0.04));
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.dark .card-glass:hover {
+  border-color: rgba(var(--manargb), 0.25);
+}
+
+/* Sidebar with tinted background */
+.sidebar-tinted {
+  background: linear-gradient(180deg, rgba(var(--manargb), 0.12) 0%, rgba(var(--manargb), 0.06) 100%);
+  border-right: 1px solid rgba(var(--manargb), 0.18);
+  box-shadow: inset -8px 0 16px -8px rgba(var(--manargb), 0.08);
+}
+
+.dark .sidebar-tinted {
+  background: rgba(0, 0, 0, 0.2);
+  border-right-color: rgba(255, 255, 255, 0.06);
+  box-shadow: none;
+}
+
+/* Light mode card enhancements */
+.card-mana-wash {
+  background: linear-gradient(135deg,
+    rgba(255, 255, 255, 0.98) 0%,
+    rgba(var(--manargb), 0.08) 50%,
+    rgba(var(--manargb), 0.12) 100%
+  );
+  border: 1px solid rgba(var(--manargb), 0.20);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.06),
+    0 4px 16px rgba(var(--manargb), 0.10),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.dark .card-mana-wash {
+  background: linear-gradient(135deg,
+    rgba(30, 30, 36, 0.95) 0%,
+    rgba(var(--manargb), 0.06) 100%
+  );
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 /* Buttons */
@@ -1006,4 +1106,107 @@ input[type="radio"] {
   .hover\:scale-110:active {
     transform: scale(0.98);
   }
+}
+
+/* ========================================
+   LIGHT MODE ENHANCEMENTS
+   ======================================== */
+
+/* Enhanced table styling for light mode */
+html:not(.dark) table {
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: var(--radius);
+}
+
+html:not(.dark) table th {
+  background: linear-gradient(180deg,
+    rgba(var(--manargb), 0.08) 0%,
+    rgba(var(--manargb), 0.05) 100%
+  ) !important;
+  border-bottom: 1px solid rgba(var(--manargb), 0.15) !important;
+}
+
+html:not(.dark) table tbody tr:nth-child(even) {
+  background: rgba(var(--manargb), 0.05);
+}
+
+html:not(.dark) table tbody tr:nth-child(odd) {
+  background: rgba(255, 255, 255, 0.6);
+}
+
+html:not(.dark) table tbody tr:hover {
+  background: rgba(var(--manargb), 0.07) !important;
+}
+
+/* Enhanced inputs for light mode */
+html:not(.dark) input[type="text"],
+html:not(.dark) input[type="search"],
+html:not(.dark) select,
+html:not(.dark) textarea {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(var(--manargb), 0.15) !important;
+}
+
+html:not(.dark) input:focus,
+html:not(.dark) select:focus,
+html:not(.dark) textarea:focus {
+  background: rgba(255, 255, 255, 1);
+  border-color: rgba(var(--manargb), 0.35) !important;
+  box-shadow: 0 0 0 2px rgba(var(--manargb), 0.10) !important;
+}
+
+/* Light mode panel/aside backgrounds */
+html:not(.dark) aside {
+  background: linear-gradient(180deg,
+    rgba(var(--manargb), 0.08) 0%,
+    rgba(var(--manargb), 0.04) 100%
+  ) !important;
+  border-radius: 0 1rem 1rem 0;
+  border-right: 1px solid rgba(var(--manargb), 0.12) !important;
+  box-shadow: 4px 0 12px rgba(var(--manargb), 0.03);
+}
+
+/* Enhanced card borders for light mode */
+html:not(.dark) .rounded-2xl[class*="border"],
+html:not(.dark) .rounded-xl[class*="border"] {
+  border-color: rgba(var(--manargb), 0.18) !important;
+}
+
+/* Light mode header with stronger tint */
+html:not(.dark) .site-header,
+html:not(.dark) header[class*="sticky"] {
+  background: linear-gradient(180deg,
+    rgba(255, 255, 255, 0.96) 0%,
+    rgba(var(--manargb), 0.08) 100%
+  ) !important;
+  border-bottom-color: rgba(var(--manargb), 0.18) !important;
+}
+
+/* Mana-tinted scrollbar for light mode */
+html:not(.dark) ::-webkit-scrollbar-thumb {
+  background: rgba(var(--manargb), 0.30);
+}
+
+html:not(.dark) ::-webkit-scrollbar-thumb:hover {
+  background: rgba(var(--manargb), 0.45);
+}
+
+html:not(.dark) ::-webkit-scrollbar-track {
+  background: rgba(var(--manargb), 0.08);
+}
+
+/* Light mode cards should have visible mana tint */
+html:not(.dark) .bg-card,
+html:not(.dark) [class*="bg-card"] {
+  background: linear-gradient(135deg,
+    rgba(255, 255, 255, 0.98) 0%,
+    rgba(var(--manargb), 0.06) 100%
+  );
+}
+
+/* Light mode badges and tags */
+html:not(.dark) .badge-tinted,
+html:not(.dark) [class*="accent-tinted"] {
+  background: rgba(var(--manargb), 0.15) !important;
+  border-color: rgba(var(--manargb), 0.25) !important;
 }

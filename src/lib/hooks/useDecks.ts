@@ -13,12 +13,21 @@ import type { EnhancedDeck, DeckCard } from '@/types/core'
 const DECKS_PER_PAGE = 50
 
 /**
+ * Commander with individual color identity for per-chip coloring
+ */
+export interface CommanderInfo {
+  name: string
+  colors: string[]
+}
+
+/**
  * Lightweight deck type for list views
  */
 export interface LightweightDeck {
   id: string
   name: string
   commanders: string[]
+  commanderInfos?: CommanderInfo[]
   color_identity: string[]
   bracket: number | null
   description: string | null
@@ -66,6 +75,93 @@ function extractCommanders(rawData: Record<string, unknown> | null): string[] {
   return []
 }
 
+type CommanderData = {
+  card?: { name?: string; color_identity?: string[] }
+  name?: string
+  color_identity?: string[]
+}
+
+/**
+ * Extract commanders with their individual color identities
+ * Used for per-chip color tinting in the UI
+ */
+function extractCommanderInfos(rawData: Record<string, unknown> | null): CommanderInfo[] {
+  if (!rawData?.commanders) return []
+
+  const commanders = rawData.commanders
+  const results: CommanderInfo[] = []
+
+  const processCommander = (c: CommanderData) => {
+    const name = c?.card?.name || c?.name
+    const colors = c?.card?.color_identity || c?.color_identity || []
+    if (name) {
+      results.push({ name, colors: Array.isArray(colors) ? colors : [] })
+    }
+  }
+
+  if (Array.isArray(commanders)) {
+    for (const c of commanders) { processCommander(c as CommanderData) }
+  } else if (typeof commanders === 'object') {
+    for (const c of Object.values(commanders as Record<string, CommanderData>)) {
+      processCommander(c)
+    }
+  }
+
+  return results
+}
+
+/**
+ * Extract color identity from Moxfield raw_data
+ * Checks multiple locations and computes from commanders as fallback
+ */
+function extractColorIdentity(rawData: Record<string, unknown> | null): string[] {
+  // Check top-level colorIdentity (RawMoxData format)
+  if (Array.isArray(rawData?.colorIdentity) && rawData.colorIdentity.length > 0) {
+    return rawData.colorIdentity as string[]
+  }
+
+  // Check nested boards.colorIdentity (MoxfieldDeck format)
+  const boards = rawData?.boards as Record<string, unknown> | undefined
+  if (Array.isArray(boards?.colorIdentity) && (boards.colorIdentity as string[]).length > 0) {
+    return boards.colorIdentity as string[]
+  }
+
+  // Fallback: compute from commander cards' color_identity
+  const commanders = rawData?.commanders
+  if (commanders) {
+    const colorSet = new Set<string>()
+
+    // Handle array format
+    if (Array.isArray(commanders)) {
+      for (const c of commanders) {
+        const cmdColors = (c as { card?: { color_identity?: string[] }; color_identity?: string[] })?.card?.color_identity
+          || (c as { color_identity?: string[] })?.color_identity
+        if (Array.isArray(cmdColors)) {
+          for (const color of cmdColors) { colorSet.add(color) }
+        }
+      }
+    }
+    // Handle object format (keyed by card ID)
+    else if (typeof commanders === 'object') {
+      for (const c of Object.values(commanders as Record<string, unknown>)) {
+        const cmdColors = (c as { card?: { color_identity?: string[] }; color_identity?: string[] })?.card?.color_identity
+          || (c as { color_identity?: string[] })?.color_identity
+        if (Array.isArray(cmdColors)) {
+          for (const color of cmdColors) { colorSet.add(color) }
+        }
+      }
+    }
+
+    if (colorSet.size > 0) {
+      // Return in WUBRG order
+      const order = ['W', 'U', 'B', 'R', 'G']
+      return order.filter(c => colorSet.has(c))
+    }
+  }
+
+  return []
+}
+
 /**
  * Hook to fetch decks with infinite scroll pagination
  * Loads decks in batches for better performance
@@ -90,8 +186,9 @@ export function useDecksInfinite() {
 
       const decks = (data || []).map((deck): EnhancedDeck => {
         const rawData = deck.raw_data as Record<string, unknown> | null
-        const colorIdentity = rawData?.colorIdentity as string[] | undefined
+        const colorIdentity = extractColorIdentity(rawData)
         const commanders = extractCommanders(rawData)
+        const commanderInfos = extractCommanderInfos(rawData)
 
         return {
           id: deck.moxfield_id,
@@ -101,8 +198,9 @@ export function useDecksInfinite() {
           name: deck.name,
           deck_title: deck.name,
           commanders,
-          color_identity: Array.isArray(colorIdentity) ? colorIdentity : [],
-          color_string: Array.isArray(colorIdentity) ? colorIdentity.join('') : null,
+          commanderInfos,
+          color_identity: colorIdentity,
+          color_string: colorIdentity.length > 0 ? colorIdentity.join('') : null,
           format: null,
           description: typeof rawData?.description === 'string' ? rawData.description : null,
           view_count: deck.view_count,
@@ -156,7 +254,7 @@ export function useDeckInfo(id: string) {
 
       const deck = data[0]
       const rawData = deck.raw_data as Record<string, unknown> | null
-      const colorIdentity = Array.isArray(rawData?.colorIdentity) ? rawData.colorIdentity as string[] : []
+      const colorIdentity = extractColorIdentity(rawData)
 
       return {
         id: deck.id,

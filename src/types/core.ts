@@ -178,6 +178,14 @@ export type DeckEnhanced = Database['public']['Views']['decks_enhanced']['Row'] 
 }
 
 /**
+ * Commander with individual color identity for per-chip coloring
+ */
+export interface CommanderInfo {
+  name: string
+  colors: string[]
+}
+
+/**
  * Full deck type with all metadata AND card arrays for detail pages.
  * Extends DeckEnhanced with optional card lists.
  * Use getDeckWithCards() helper function to fetch this data.
@@ -193,6 +201,7 @@ export type DeckEnhanced = Database['public']['Views']['decks_enhanced']['Row'] 
  */
 export type EnhancedDeck = DeckEnhanced & {
   commanders?: DecklistCardWithCard[]
+  commanderInfos?: CommanderInfo[]
   mainboard?: DecklistCardWithCard[]
   sideboard?: DecklistCardWithCard[]
   maybeboard?: DecklistCardWithCard[]

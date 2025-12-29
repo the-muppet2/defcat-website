@@ -193,7 +193,7 @@ export default function DesktopDecksPage() {
       {/* Sidebar with tinted styling */}
       <aside
         className={cn(
-          'border-r border-tinted bg-card-tinted backdrop-blur-sm transition-all duration-300',
+          'border-r border-tinted sidebar-tinted backdrop-blur-sm transition-all duration-300',
           showFilters ? 'w-72' : 'w-0 overflow-hidden'
         )}
       >

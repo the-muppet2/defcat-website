@@ -3,13 +3,63 @@
 
 import { ExternalLink, Eye, Heart } from 'lucide-react'
 import Link from '@/components/auth/ProtectedLink'
-import { memo } from 'react'
+import { memo, type CSSProperties } from 'react'
 import { CommanderImage } from '@/components/decks/Commander'
 import { ManaSymbols } from '@/components/decks/ManaSymbols'
 import { cn } from '@/lib/utils'
-import type { Deck } from '@/types/core'
+import type { Deck, CommanderInfo } from '@/types/core'
 import { LightweightDeck } from '@/lib/hooks/useDecks'
 import { MoxfieldDeck } from '@/types'
+
+// RGB values for mana colors (for inline chip styles)
+const MANA_RGB: Record<string, string> = {
+  W: '180, 160, 100',
+  U: '30, 64, 175',
+  B: '109, 40, 217',
+  R: '185, 28, 28',
+  G: '21, 128, 61',
+}
+
+// Get chip style based on commander's color identity
+function getCommanderChipStyle(colors: string[]): CSSProperties {
+  if (!colors || colors.length === 0) {
+    return {}
+  }
+
+  // 5-color: rainbow gradient
+  if (colors.length >= 5) {
+    return {
+      background: 'linear-gradient(135deg, rgba(180,160,100,0.25), rgba(30,64,175,0.25), rgba(109,40,217,0.25), rgba(185,28,28,0.25), rgba(21,128,61,0.25))',
+      borderColor: 'rgba(180, 160, 100, 0.4)',
+      boxShadow: '0 0 8px rgba(180, 160, 100, 0.15)',
+    }
+  }
+
+  // Multi-color: gradient between colors
+  if (colors.length > 1) {
+    const rgbValues = colors.map(c => MANA_RGB[c]).filter(Boolean)
+    const gradientStops = rgbValues.map((rgb, i) => {
+      const percent = (i / (rgbValues.length - 1)) * 100
+      return `rgba(${rgb}, 0.20) ${percent}%`
+    }).join(', ')
+
+    return {
+      background: `linear-gradient(135deg, ${gradientStops})`,
+      borderColor: `rgba(${rgbValues[0]}, 0.35)`,
+      boxShadow: `0 0 6px rgba(${rgbValues[0]}, 0.12)`,
+    }
+  }
+
+  // Single color
+  const rgb = MANA_RGB[colors[0]]
+  if (!rgb) return {}
+
+  return {
+    background: `rgba(${rgb}, 0.18)`,
+    borderColor: `rgba(${rgb}, 0.35)`,
+    boxShadow: `0 0 6px rgba(${rgb}, 0.12)`,
+  }
+}
 
 interface DeckCardProps {
   deck: Deck | LightweightDeck | MoxfieldDeck
@@ -20,13 +70,20 @@ interface DeckCardProps {
 // Helper to normalize deck properties across different types
 function normalizeDeck(deck: Deck | LightweightDeck | MoxfieldDeck) {
   const isMoxfield = 'publicId' in deck
-  
+
   // Extract commanders based on deck type
   let commanders: string[] = []
+  let commanderInfos: CommanderInfo[] = []
+
   if (isMoxfield) {
     const moxDeck = deck as MoxfieldDeck
     if (moxDeck.boards?.commanders?.cards) {
-      commanders = Object.values(moxDeck.boards.commanders.cards).map(c => c.card.name)
+      const cardEntries = Object.values(moxDeck.boards.commanders.cards)
+      commanders = cardEntries.map(c => c.card.name)
+      commanderInfos = cardEntries.map(c => ({
+        name: c.card.name,
+        colors: c.card.color_identity?.map(String) || []
+      }))
     }
   } else {
     const dbDeck = deck as Deck | LightweightDeck
@@ -34,8 +91,13 @@ function normalizeDeck(deck: Deck | LightweightDeck | MoxfieldDeck) {
     if (Array.isArray(cmds)) {
       commanders = cmds.map(c => String(c)).filter(c => c && c !== 'null')
     }
+    // Check for commanderInfos on enhanced deck types
+    const infos = (dbDeck as { commanderInfos?: CommanderInfo[] }).commanderInfos
+    if (Array.isArray(infos)) {
+      commanderInfos = infos
+    }
   }
-  
+
   // Extract color identity based on deck type
   let colorIdentity: string[] = []
   if (isMoxfield) {
@@ -50,18 +112,19 @@ function normalizeDeck(deck: Deck | LightweightDeck | MoxfieldDeck) {
       colorIdentity = [colors]
     }
   }
-  
+
   return {
     id: isMoxfield ? (deck as MoxfieldDeck).publicId : deck.id,
     name: deck.name,
     description: deck.description || null,
     commanders,
+    commanderInfos,
     color_identity: colorIdentity,
     format: isMoxfield ? (deck as MoxfieldDeck).format : (deck as Deck).format || null,
     view_count: isMoxfield ? (deck as MoxfieldDeck).viewCount : (deck as Deck | LightweightDeck).view_count || 0,
     like_count: isMoxfield ? (deck as MoxfieldDeck).likeCount : (deck as Deck | LightweightDeck).like_count || 0,
-    updated_at: isMoxfield 
-      ? (deck as MoxfieldDeck).boards?.lastUpdatedAtUtc 
+    updated_at: isMoxfield
+      ? (deck as MoxfieldDeck).boards?.lastUpdatedAtUtc
       : (deck as Deck | LightweightDeck).updated_at || new Date().toISOString(),
     moxfield_url: isMoxfield ? (deck as MoxfieldDeck).publicUrl : (deck as Deck).moxfield_url || null,
   }
@@ -179,14 +242,24 @@ export const DeckCard = memo(function DeckCard({
               )}
             </div>
 
-            {/* Commanders */}
+            {/* Commanders with per-card color tinting */}
             {normalized.commanders && normalized.commanders.length > 0 && (
               <div className="mb-3 flex flex-wrap gap-2">
-                {normalized.commanders.map((commander: string, idx: number) => (
-                  <span key={idx} className="badge-tinted px-3 py-1 rounded-lg text-sm">
-                    {commander}
-                  </span>
-                ))}
+                {normalized.commanders.map((commander: string, i) => {
+                  const info = normalized.commanderInfos[i]
+                  // Use commander's colors if available, otherwise fall back to deck colors
+                  const colors = info?.colors?.length ? info.colors : normalized.color_identity
+                  const chipStyle = getCommanderChipStyle(colors)
+                  return (
+                    <span
+                      key={commander}
+                      className="px-3 py-1 rounded-lg text-sm border"
+                      style={chipStyle}
+                    >
+                      {commander}
+                    </span>
+                  )
+                })}
               </div>
             )}
 
