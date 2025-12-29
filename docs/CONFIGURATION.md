@@ -150,7 +150,7 @@ Different parts of the site have different access requirements:
 | `/admin` | Moderator role or higher |
 | `/admin/settings` | Moderator+ (Credits tab requires Admin+) |
 | `/admin/users` | Admin role or higher |
-| `/admin/decks` | Admin role or higher |
+| `/admin/decks` | Moderator role or higher |
 
 ---
 
@@ -162,9 +162,8 @@ The system uses a hierarchical role structure. Higher roles inherit all permissi
 |------|-------------|
 | User | Basic site access (anonymous visitors) |
 | Member | Authenticated user access (all Patreon patrons) |
-| Moderator | Admin panel access, site settings |
+| Moderator | Admin panel access, site settings, deck management |
 | Admin | Full admin access including user management and credits |
-| Developer | All access plus technical documentation |
 
 **Changing User Roles:**
 1. Go to [User Management](/admin/users)

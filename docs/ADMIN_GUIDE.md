@@ -72,7 +72,7 @@ Each card shows the number of pending items (if applicable) and provides a direc
 
 ## Deck Management
 
-**Access Required:** Admin or higher
+**Access Required:** Moderator or higher
 
 ### Viewing All Decks
 
@@ -103,20 +103,25 @@ The deck list includes powerful search and filtering capabilities:
 
 ### Assigning Deck Ownership
 
-Deck ownership allows users to manage their own decks (hide from vault, customize title/description). Admins must explicitly assign ownership.
+Deck ownership allows users to manage their own decks (hide from vault, customize title/description). Moderators and admins can assign ownership.
+
+**Visual Indicators:**
+- **Green "Assigned" badge** - Deck is linked to a user profile
+- **Amber "Unassigned" badge** - Deck needs an owner assignment
 
 **Quick Assignment (from deck list):**
-1. Find an unassigned deck (shown with amber "Assign" button)
-2. Click **Assign**
-3. Search for the user by email or Moxfield username
-4. Click on the user from the search results
-5. The deck is immediately assigned and shows a green checkmark
+1. Find an unassigned deck (shown with amber badge)
+2. Click **Assign Owner** button
+3. Type at least 2 characters to search by email or Moxfield username
+4. User search results show: email, Moxfield username, and Patreon tier
+5. Click on the user to assign - changes save immediately
+6. Badge changes to green "Assigned"
 
 **Full Assignment (from edit page):**
 1. Click **Edit** on any deck
 2. Scroll to the "Deck Owner Assignment" section
 3. Search for a user by email or Moxfield username
-4. Select the user from results
+4. Select the user from results (or enter a Profile ID manually)
 5. Click **Save Changes**
 
 **Removing Assignment:**
@@ -124,8 +129,12 @@ Deck ownership allows users to manage their own decks (hide from vault, customiz
 2. Click the **X** next to the assigned user
 3. Click **Save Changes**
 
+**Filtering Unassigned Decks:**
+- Use the **Show Unassigned Only** toggle in the deck list
+- Shows count of unassigned decks (e.g., "15 unassigned")
+
 **Why Assignment Matters:**
-- Users can only edit decks assigned to their `owner_profile_id`
+- Users can only manage decks assigned to their profile
 - Username matching alone is NOT secure (users can change usernames)
 - Assignment creates a permanent link between deck and user profile
 
@@ -164,14 +173,13 @@ To refresh metadata for all decks:
 1. Find the deck in the list
 2. Click the **Edit** button
 3. You can modify:
-   - Deck name
-   - Moxfield ID
-   - Public URL
-   - Format (Commander, Brawl, etc.)
-   - View/like/comment counts
-   - Mainboard and sideboard card counts
-   - Author username
+   - Deck title
+   - Owner's username
+   - Description
+   - Deck owner assignment (link to a user profile)
 4. Click **Save Changes** when done
+
+**Note:** Commanders, view counts, card counts, and other metadata are synced from Moxfield and cannot be manually edited.
 
 ### Viewing a Deck
 
