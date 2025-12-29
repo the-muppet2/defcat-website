@@ -15,8 +15,8 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { GlowingEffect } from '@/components/ui/glowEffect'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { createClient } from '@/lib/supabase/client'
-import { ColorIdentity } from '@/types/colors'
 
 interface PendingSubmission {
   id: string
@@ -27,6 +27,7 @@ interface PendingSubmission {
   patreon_tier: string
   commander: string | null
   color_preference: string | null
+  secondary_color_preference: string | null
   theme: string | null
   bracket: string | null
   budget: string | null
@@ -35,6 +36,75 @@ interface PendingSubmission {
   mystery_deck: boolean
   status: string
   deck_list_url: string | null
+}
+
+// Helper to parse color preference strings
+// Handles: JSON array (new), comma-separated (old), or single string
+// Returns { primary: string[], secondary: string[] }
+function parseColorPreference(colorPref: string | null): { primary: string[]; secondary: string[] } {
+  if (!colorPref) return { primary: [], secondary: [] }
+
+  // Try parsing as JSON array first (new format: '["WUBRG"]' or '["W","U","B"]')
+  if (colorPref.startsWith('[')) {
+    try {
+      const parsed = JSON.parse(colorPref) as string[]
+      const colors = parsed.flatMap(item => {
+        if (item === 'WUBRG') return ['W', 'U', 'B', 'R', 'G']
+        if (/^[WUBRGC]$/.test(item)) return [item]
+        return item.toUpperCase().split('').filter(c => /[WUBRGC]/.test(c))
+      })
+      return { primary: colors, secondary: [] }
+    } catch {
+      // Not valid JSON, fall through to old format handling
+    }
+  }
+
+  // Old format: comma-separated like "W,U,B,R,G" or "WUBRG,G,G" or "B,G,WUBRG"
+  if (colorPref.includes(',')) {
+    const parts = colorPref.split(',').map(c => c.trim().toUpperCase()).filter(Boolean)
+    const wubrgIndex = parts.indexOf('WUBRG')
+
+    // WUBRG found - use it as a split point between primary and secondary
+    if (wubrgIndex !== -1 && parts.length > 1) {
+      if (wubrgIndex === 0) {
+        // WUBRG is first: primary = 5-color, secondary = rest
+        const secondary = parts.slice(1).flatMap(part => {
+          if (/^[WUBRGC]$/.test(part)) return [part]
+          return part.split('').filter(c => /[WUBRGC]/.test(c))
+        })
+        return { primary: ['W', 'U', 'B', 'R', 'G'], secondary }
+      } else {
+        // WUBRG is NOT first: primary = items before, secondary = 5-color
+        const primary = parts.slice(0, wubrgIndex).flatMap(part => {
+          if (/^[WUBRGC]$/.test(part)) return [part]
+          return part.split('').filter(c => /[WUBRGC]/.test(c))
+        })
+        return { primary, secondary: ['W', 'U', 'B', 'R', 'G'] }
+      }
+    }
+
+    // No WUBRG token - expand all as primary
+    const colors = parts.flatMap(part => {
+      if (part === 'WUBRG') return ['W', 'U', 'B', 'R', 'G']
+      if (/^[WUBRGC]$/.test(part)) return [part]
+      return part.split('').filter(c => /[WUBRGC]/.test(c))
+    })
+    return { primary: colors, secondary: [] }
+  }
+
+  // Single value: "WUBRG" or individual letters like "WUB"
+  if (colorPref.toUpperCase() === 'WUBRG') {
+    return { primary: ['W', 'U', 'B', 'R', 'G'], secondary: [] }
+  }
+
+  return { primary: colorPref.toUpperCase().split('').filter(c => /[WUBRGC]/.test(c)), secondary: [] }
+}
+
+// Wrapper for simple color array (for secondary field which is always separate)
+function parseSimpleColorPref(colorPref: string | null): string[] {
+  if (!colorPref) return []
+  const result = parseColorPreference(colorPref)
+  return [...result.primary, ...result.secondary]
 }
 
 interface FinishFormData {
@@ -275,13 +345,31 @@ export function PendingSubmissions() {
       />
       <Card className="card-tinted border-0 relative">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <ClipboardList className="h-5 w-5" />
-            Pending Submissions
-          </CardTitle>
-          <CardDescription>
-            {submissions.length} deck request{submissions.length !== 1 ? 's' : ''} awaiting review
-          </CardDescription>
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <ClipboardList className="h-5 w-5" />
+                Pending Submissions
+              </CardTitle>
+              <CardDescription>
+                {submissions.length} deck request{submissions.length !== 1 ? 's' : ''} awaiting review
+              </CardDescription>
+            </div>
+            <div className="flex items-center gap-4 text-xs text-muted-foreground">
+              <div className="flex items-center gap-1.5">
+                <Play className="h-3.5 w-3.5 text-blue-500" />
+                <span>Start Working</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <CheckCircle className="h-3.5 w-3.5 text-green-500" />
+                <span>Finish + Add Deck</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <XCircle className="h-3.5 w-3.5 text-red-500" />
+                <span>Reject</span>
+              </div>
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           {submissions.length === 0 ? (
@@ -292,6 +380,18 @@ export function PendingSubmissions() {
             </div>
           ) : (
             <div className="space-y-2">
+              {/* Column Headers */}
+              <div className="flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground font-medium border-b border-tinted">
+                <span className="w-14 shrink-0">Status</span>
+                <span className="w-12 shrink-0">Tier</span>
+                <span className="w-52 shrink-0">Email</span>
+                <span className="w-32 shrink-0 hidden sm:block">Moxfield</span>
+                <span className="flex-1 min-w-0 hidden md:block">Commander</span>
+                <span className="w-24 shrink-0 hidden lg:block">Colors</span>
+                <span className="w-24 shrink-0 hidden sm:block text-right">Date</span>
+                <span className="w-6 shrink-0"></span>
+                <span className="w-16 shrink-0 text-right">Actions</span>
+              </div>
               {submissions.map((submission) => {
                 const isExpanded = expandedId === submission.id
                 return (
@@ -300,10 +400,10 @@ export function PendingSubmissions() {
                     className="rounded-lg bg-accent-tinted border border-tinted hover:bg-accent-tinted/80 transition-all overflow-hidden"
                   >
                     {/* Compact Header Row */}
-                    <div className="flex items-center gap-3 p-3">
+                    <div className="flex items-center gap-2 p-3">
                       {/* Status Badge */}
                       <span
-                        className={`text-xs px-2 py-0.5 rounded-full shrink-0 ${
+                        className={`w-14 shrink-0 text-xs px-2 py-0.5 rounded-full text-center ${
                           submission.status === 'pending'
                             ? 'bg-yellow-500/20 text-yellow-400'
                             : submission.status === 'in_progress'
@@ -319,41 +419,70 @@ export function PendingSubmissions() {
                       </span>
 
                       {/* Tier Badge */}
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-400 shrink-0">
+                      <span className="w-12 shrink-0 text-xs px-2 py-0.5 rounded-full bg-purple-500/20 text-purple-400 text-center">
                         {submission.patreon_tier}
                       </span>
 
-                      {/* Main Info */}
-                      <div className="flex-1 min-w-0 flex items-center gap-4">
-                        <span className="font-medium truncate">{submission.email}</span>
-                        {submission.moxfield_username && (
+                      {/* Email */}
+                      <span className="w-52 shrink-0 font-medium truncate">{submission.email}</span>
+
+                      {/* Moxfield */}
+                      <span className="w-32 shrink-0 hidden sm:block truncate">
+                        {submission.moxfield_username ? (
                           <a
-                            href={`https://moxfield.com/users/${submission.moxfield_username}`}
+                            href={`https://moxfield.com/users/${submission.moxfield_username.replace(/^@/, '')}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-sm text-blue-400 hover:text-blue-300 truncate hidden sm:block"
+                            className="text-sm text-blue-400 hover:text-blue-300"
                           >
-                            @{submission.moxfield_username}
+                            @{submission.moxfield_username.replace(/^@/, '')}
                           </a>
+                        ) : (
+                          <span className="text-muted-foreground text-sm">-</span>
                         )}
-                        {submission.commander && (
-                          <span className="text-sm text-muted-foreground truncate hidden md:block">
-                            {submission.commander}
-                          </span>
-                        )}
-                        {submission.color_preference && (
-                          <div className="flex items-center gap-0.5 shrink-0 hidden lg:flex">
-                            {ColorIdentity.getIndividual(submission.color_preference).map(
-                              (symbol, idx) => (
-                                <i key={idx} className={`ms ms-${symbol.toLowerCase()} ms-fw`} />
-                              )
-                            )}
-                          </div>
-                        )}
+                      </span>
+
+                      {/* Commander */}
+                      <span className="flex-1 min-w-0 text-sm text-muted-foreground truncate hidden md:block">
+                        {submission.commander || '-'}
+                      </span>
+
+                      {/* Colors */}
+                      <div className="w-24 shrink-0 hidden lg:flex flex-col gap-0.5">
+                        {(() => {
+                          const parsed = parseColorPreference(submission.color_preference)
+                          const secondaryFromField = parseColorPreference(submission.secondary_color_preference)
+                          const primary = parsed.primary
+                          // Secondary: from old format detection OR from separate field
+                          const secondary = parsed.secondary.length > 0 ? parsed.secondary : secondaryFromField.primary
+
+                          if (primary.length === 0 && secondary.length === 0) {
+                            return <span className="text-muted-foreground text-sm">-</span>
+                          }
+
+                          return (
+                            <>
+                              {primary.length > 0 && (
+                                <div className="flex items-center gap-0.5">
+                                  {primary.map((symbol, idx) => (
+                                    <i key={`p-${idx}`} className={`ms ms-${symbol.toLowerCase()} ms-fw text-sm`} />
+                                  ))}
+                                </div>
+                              )}
+                              {secondary.length > 0 && (
+                                <div className="flex items-center gap-0.5 opacity-60">
+                                  {secondary.map((symbol, idx) => (
+                                    <i key={`s-${idx}`} className={`ms ms-${symbol.toLowerCase()} ms-fw text-xs`} />
+                                  ))}
+                                </div>
+                              )}
+                            </>
+                          )
+                        })()}
                       </div>
 
                       {/* Date */}
-                      <span className="text-xs text-muted-foreground shrink-0 hidden sm:block">
+                      <span className="w-24 shrink-0 text-xs text-muted-foreground text-right hidden sm:block">
                         {new Date(submission.created_at).toLocaleDateString()}
                       </span>
 
@@ -370,52 +499,72 @@ export function PendingSubmissions() {
                       </button>
 
                       {/* Action Buttons */}
-                      <div className="flex gap-1 shrink-0">
+                      <div className="w-16 shrink-0 flex gap-1 justify-end">
                         {submission.status !== 'in_progress' ? (
                           <>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="h-8 px-2 text-blue-500 hover:text-blue-400 hover:bg-blue-500/10"
-                              onClick={() => updateStatus(submission.id, 'in_progress')}
-                              disabled={updating === submission.id}
-                            >
-                              {updating === submission.id ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <Play className="h-4 w-4" />
-                              )}
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="h-8 px-2 text-red-500 hover:text-red-400 hover:bg-red-500/10"
-                              onClick={() => updateStatus(submission.id, 'rejected')}
-                              disabled={updating === submission.id}
-                            >
-                              <XCircle className="h-4 w-4" />
-                            </Button>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-8 px-2 text-blue-500 hover:text-blue-400 hover:bg-blue-500/10"
+                                  onClick={() => updateStatus(submission.id, 'in_progress')}
+                                  disabled={updating === submission.id}
+                                >
+                                  {updating === submission.id ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                  ) : (
+                                    <Play className="h-4 w-4" />
+                                  )}
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Start Working</TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-8 px-2 text-red-500 hover:text-red-400 hover:bg-red-500/10"
+                                  onClick={() => updateStatus(submission.id, 'rejected')}
+                                  disabled={updating === submission.id}
+                                >
+                                  <XCircle className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Reject</TooltipContent>
+                            </Tooltip>
                           </>
                         ) : (
                           <>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="h-8 px-2 text-green-500 hover:text-green-400 hover:bg-green-500/10"
-                              onClick={() => openFinishDialog(submission)}
-                              disabled={updating === submission.id}
-                            >
-                              <CheckCircle className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              className="h-8 px-2 text-red-500 hover:text-red-400 hover:bg-red-500/10"
-                              onClick={() => updateStatus(submission.id, 'rejected')}
-                              disabled={updating === submission.id}
-                            >
-                              <XCircle className="h-4 w-4" />
-                            </Button>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-8 px-2 text-green-500 hover:text-green-400 hover:bg-green-500/10"
+                                  onClick={() => openFinishDialog(submission)}
+                                  disabled={updating === submission.id}
+                                >
+                                  <CheckCircle className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Complete</TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-8 px-2 text-red-500 hover:text-red-400 hover:bg-red-500/10"
+                                  onClick={() => updateStatus(submission.id, 'rejected')}
+                                  disabled={updating === submission.id}
+                                >
+                                  <XCircle className="h-4 w-4" />
+                                </Button>
+                              </TooltipTrigger>
+                              <TooltipContent>Reject</TooltipContent>
+                            </Tooltip>
                           </>
                         )}
                       </div>
@@ -429,12 +578,12 @@ export function PendingSubmissions() {
                             <div>
                               <span className="text-muted-foreground">Moxfield: </span>
                               <a
-                                href={`https://moxfield.com/users/${submission.moxfield_username}`}
+                                href={`https://moxfield.com/users/${submission.moxfield_username.replace(/^@/, '')}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-blue-400 hover:text-blue-300"
                               >
-                                {submission.moxfield_username}
+                                {submission.moxfield_username.replace(/^@/, '')}
                               </a>
                             </div>
                           )}
@@ -454,18 +603,37 @@ export function PendingSubmissions() {
                               {submission.commander}
                             </div>
                           )}
-                          {submission.color_preference && (
-                            <div className="flex items-center gap-1">
-                              <span className="text-muted-foreground">Colors: </span>
-                              <div className="flex items-center gap-0.5">
-                                {ColorIdentity.getIndividual(submission.color_preference).map(
-                                  (symbol, idx) => (
-                                    <i key={idx} className={`ms ms-${symbol.toLowerCase()} ms-fw`} />
-                                  )
+                          {(submission.color_preference || submission.secondary_color_preference) && (() => {
+                            const parsed = parseColorPreference(submission.color_preference)
+                            const secondaryFromField = parseColorPreference(submission.secondary_color_preference)
+                            const primary = parsed.primary
+                            const secondary = parsed.secondary.length > 0 ? parsed.secondary : secondaryFromField.primary
+
+                            return (
+                              <>
+                                {primary.length > 0 && (
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-muted-foreground">Primary: </span>
+                                    <div className="flex items-center gap-0.5">
+                                      {primary.map((symbol, idx) => (
+                                        <i key={`p-${idx}`} className={`ms ms-${symbol.toLowerCase()} ms-fw`} />
+                                      ))}
+                                    </div>
+                                  </div>
                                 )}
-                              </div>
-                            </div>
-                          )}
+                                {secondary.length > 0 && (
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-muted-foreground">Secondary: </span>
+                                    <div className="flex items-center gap-0.5">
+                                      {secondary.map((symbol, idx) => (
+                                        <i key={`s-${idx}`} className={`ms ms-${symbol.toLowerCase()} ms-fw`} />
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+                              </>
+                            )
+                          })()}
                           {submission.bracket && (
                             <div>
                               <span className="text-muted-foreground">Bracket: </span>
@@ -474,8 +642,8 @@ export function PendingSubmissions() {
                           )}
                           {submission.budget && (
                             <div>
-                              <span className="text-muted-foreground">Budget: </span>$
-                              {Number(submission.budget).toLocaleString('en-US')}
+                              <span className="text-muted-foreground">Budget: </span>
+                              {submission.budget}
                             </div>
                           )}
                           {submission.coffee_preference && (

@@ -3,7 +3,7 @@ import { BookOpen } from 'lucide-react'
 import { DocumentationView } from '@/components/admin/DocumentationView'
 
 export default async function AdminDocsPage() {
-  await requireAdmin()
+  const auth = await requireAdmin()
 
   return (
     <div className="container mx-auto px-4 py-8" data-page="admin-docs">
@@ -20,7 +20,7 @@ export default async function AdminDocsPage() {
           </div>
         </div>
 
-        <DocumentationView />
+        <DocumentationView userRole={auth.role} />
       </div>
     </div>
   )

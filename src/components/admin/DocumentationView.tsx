@@ -243,7 +243,11 @@ function MarkdownContent({ content }: { content: string }) {
   )
 }
 
-export function DocumentationView() {
+interface DocumentationViewProps {
+  userRole?: string;
+}
+
+export function DocumentationView({ userRole }: DocumentationViewProps) {
   const [docs, setDocs] = useState<Doc[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -251,6 +255,8 @@ export function DocumentationView() {
   const [selectedDiagram, setSelectedDiagram] = useState<string>("");
   const [showBackToTop, setShowBackToTop] = useState(false);
   const { theme } = useTheme();
+
+  const isDeveloper = userRole === 'developer';
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -285,10 +291,16 @@ export function DocumentationView() {
       try {
         const mainFiles = [
           { file: "ADMIN_GUIDE.md", label: "Admin Guide" },
-          { file: "API.md", label: "API Reference" },
           { file: "CONFIGURATION.md", label: "Configuration" },
-          { file: "SCHEMA_REFERENCE.md", label: "Schema Reference" },
         ];
+
+        // Developer-only documentation
+        if (isDeveloper) {
+          mainFiles.push(
+            { file: "API.md", label: "API Reference" },
+            { file: "SCHEMA_REFERENCE.md", label: "Schema Reference" }
+          );
+        }
 
         const mainDocs = await Promise.all(
           mainFiles.map(async ({ file, label }) => {
@@ -304,37 +316,42 @@ export function DocumentationView() {
           })
         );
 
-        const diagramFiles = [
-          "api-routes-middleware.md",
-          "authentication-flow.md",
-          "component-hierarchy.md",
-          "data-flow.md",
-          "database-schema.md",
-          "deployment-architecture.md",
-          "patreon-oauth-flow.md",
-          "system-architecture.md",
-        ];
+        // Developer-only diagrams
+        if (isDeveloper) {
+          const diagramFiles = [
+            "api-routes-middleware.md",
+            "authentication-flow.md",
+            "component-hierarchy.md",
+            "data-flow.md",
+            "database-schema.md",
+            "deployment-architecture.md",
+            "patreon-oauth-flow.md",
+            "system-architecture.md",
+          ];
 
-        const diagramDocs = await Promise.all(
-          diagramFiles.map(async (file) => {
-            const response = await fetch(`/api/docs/diagrams/${file}`);
-            if (!response.ok) throw new Error(`Failed to load ${file}`);
-            const content = await response.text();
-            return {
-              id: file.replace(".md", ""),
-              label: file
-                .replace(".md", "")
-                .split("-")
-                .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-                .join(" "),
-              content,
-              category: "diagram" as const,
-            };
-          })
-        );
+          const diagramDocs = await Promise.all(
+            diagramFiles.map(async (file) => {
+              const response = await fetch(`/api/docs/diagrams/${file}`);
+              if (!response.ok) throw new Error(`Failed to load ${file}`);
+              const content = await response.text();
+              return {
+                id: file.replace(".md", ""),
+                label: file
+                  .replace(".md", "")
+                  .split("-")
+                  .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+                  .join(" "),
+                content,
+                category: "diagram" as const,
+              };
+            })
+          );
 
-        setDocs([...mainDocs, ...diagramDocs]);
-        setSelectedDiagram(diagramDocs[0]?.id || "");
+          setDocs([...mainDocs, ...diagramDocs]);
+          setSelectedDiagram(diagramDocs[0]?.id || "");
+        } else {
+          setDocs(mainDocs);
+        }
       } catch (err) {
         setError(
           err instanceof Error ? err.message : "Failed to load documentation"
@@ -344,7 +361,7 @@ export function DocumentationView() {
       }
     }
     fetchDocs();
-  }, []);
+  }, [isDeveloper]);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && window.location.hash) {
@@ -418,7 +435,7 @@ export function DocumentationView() {
                     {doc.label}
                   </TabsTrigger>
                 ))}
-                <TabsTrigger value="diagrams">Diagrams</TabsTrigger>
+                {isDeveloper && <TabsTrigger value="diagrams">Diagrams</TabsTrigger>}
               </TabsList>
 
               {mainDocs.map(doc => (
@@ -429,32 +446,34 @@ export function DocumentationView() {
                 </TabsContent>
               ))}
 
-              <TabsContent value="diagrams" className="mt-6">
-                <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">
-                  <div className="space-y-1 lg:border-r lg:border-border lg:pr-4">
-                    {diagramDocs.map(diagram => (
-                      <button
-                        key={diagram.id}
-                        onClick={() => setSelectedDiagram(diagram.id)}
-                        className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${selectedDiagram === diagram.id
-                            ? 'bg-primary text-primary-foreground font-medium'
-                            : 'hover:bg-muted text-muted-foreground'
-                          }`}
-                      >
-                        {diagram.label}
-                      </button>
-                    ))}
-                  </div>
+              {isDeveloper && (
+                <TabsContent value="diagrams" className="mt-6">
+                  <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">
+                    <div className="space-y-1 lg:border-r lg:border-border lg:pr-4">
+                      {diagramDocs.map(diagram => (
+                        <button
+                          key={diagram.id}
+                          onClick={() => setSelectedDiagram(diagram.id)}
+                          className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${selectedDiagram === diagram.id
+                              ? 'bg-primary text-primary-foreground font-medium'
+                              : 'hover:bg-muted text-muted-foreground'
+                            }`}
+                        >
+                          {diagram.label}
+                        </button>
+                      ))}
+                    </div>
 
-                  <div className="prose prose-sm dark:prose-invert max-w-none">
-                    {diagramDocs.find(d => d.id === selectedDiagram) && (
-                      <MarkdownContent
-                        content={diagramDocs.find(d => d.id === selectedDiagram)?.content || ''}
-                      />
-                    )}
+                    <div className="prose prose-sm dark:prose-invert max-w-none">
+                      {diagramDocs.find(d => d.id === selectedDiagram) && (
+                        <MarkdownContent
+                          content={diagramDocs.find(d => d.id === selectedDiagram)?.content || ''}
+                        />
+                      )}
+                    </div>
                   </div>
-                </div>
-              </TabsContent>
+                </TabsContent>
+              )}
             </Tabs>
           </CardContent>
         </Card>

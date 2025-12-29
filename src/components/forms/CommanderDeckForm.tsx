@@ -270,7 +270,13 @@ export default function PagedDeckForm() {
             discord_username: formData.discordUsername || '',
             mystery_deck: formData.mysteryDeck === 'yes',
             commander: formData.commander || null,
-            color_preference: formData.colorPreference.join(',') || null,
+            // Store as JSON array for unambiguous parsing (preserves "WUBRG" vs individual letters)
+            color_preference: formData.colorPreference.length > 0
+              ? JSON.stringify(formData.colorPreference)
+              : null,
+            secondary_color_preference: formData.backupColorPreference.length > 0
+              ? JSON.stringify(formData.backupColorPreference)
+              : null,
             theme: formData.theme || null,
             bracket: formData.bracket || null,
             budget: formData.budget || null,
