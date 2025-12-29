@@ -11,8 +11,7 @@ Welcome to the DefCat DeckVault Admin Panel! This guide will help you navigate a
 5. [Submissions Management](#submissions-management)
 6. [Products Management](#products-management)
 7. [Site Settings](#site-settings)
-8. [Documentation](#documentation)
-9. [Common Tasks](#common-tasks)
+8. [Common Tasks](#common-tasks)
 
 ---
 
@@ -28,23 +27,16 @@ Welcome to the DefCat DeckVault Admin Panel! This guide will help you navigate a
 
 The system has a hierarchical role structure:
 
-- **User (Level 0)** - Basic site access - This is for anon web-traffic
-- **Member (Level 1)** - Member privileges - All patrons are Members
-- **Moderator (Level 2)** - Can access dashboard and basic site settings
-- **Admin (Level 3)** - Near-Complete system access including but not limited to:
-   - control over the *display* of: 
-      - content:
-         - decklists
-         - video links
-         - social links
-         - 'About' tab/page content (more on that later)  
-      - products (both physical and digital assets):
-         - digital: credit-system management (submission, roast, adding/removing new types is currently supported but we'd have to develop how to *use* them further down the road, but you could make a.. idk, Cat Credit and dole it out to specific users individually and give it value elsewhere or something)
-         - physical: this encompasses your pre-existing store-based merch links and images and such.  
-      - users: 
-         - role assignment (This refers to **these** roles, not patreon-based tiers)
-         - credits (allocation, distribution, creation, removal)
-- **Developer (Level 4)** - Complete access and full sytem-wide permissions. (This is my role, and exists as a safety net for you - but can be removed upon request)
+- **User** - Basic site access - This is for anon web-traffic
+- **Member** - Member privileges - All patrons are Members
+- **Moderator** - Can access dashboard and basic site settings
+- **Admin** - Near-Complete system access including:
+   - Control over the *display* of:
+      - Content: decklists, video links, social links, 'About' tab/page content
+      - Products (both physical and digital assets):
+         - Digital: credit-system management (submission, roast, adding/removing types)
+         - Physical: store-based merch links and images
+      - Users: role assignment, credits (allocation, distribution, creation, removal)
 
 Higher roles **inherit all permissions from lower** roles.
 
@@ -56,12 +48,12 @@ The dashboard is your central hub for accessing all admin features.
 
 ### Statistics Cards
 
-At the top of the dashboard, you'll see four key metrics. All of them are placeholders and can be removed or changed to w/e. just filing out the page more or less:
+At the top of the dashboard, you'll see four key metrics:
 
 - **Total Decks** - Number of active deck listings in the database
 - **Total Users** - Number of registered user accounts
 - **Active Patrons** - Users with active Patreon subscriptions
-- **Premium Decks** - Number of tier-exclusive decks 
+- **Premium Decks** - Number of tier-exclusive decks
 
 ### Quick Access Cards
 
@@ -72,7 +64,7 @@ Below the statistics, you'll find cards for quick access to major features:
 3. **User Management** - Manage user accounts and roles
 4. **Products** - Configure store product links
 5. **Site Settings** - Configure site-wide settings and credits
-6. **Documentation** - View technical documentation and diagrams
+6. **Documentation** - View architecture diagrams
 
 Each card shows the number of pending items (if applicable) and provides a direct link to that feature.
 
@@ -80,7 +72,7 @@ Each card shows the number of pending items (if applicable) and provides a direc
 
 ## Deck Management
 
-**Access Required:** Admin or Developer
+**Access Required:** Admin or higher
 
 ### Viewing All Decks
 
@@ -90,7 +82,54 @@ From the main Deck Management page, you'll see a list of all decks with:
 - Commander(s) with color identity badges
 - View count
 - Moxfield ID
-- Action buttons (View, Edit)
+- Owner assignment status (assigned or unassigned)
+- Action buttons (View, Edit, Assign)
+
+### Searching and Filtering Decks
+
+The deck list includes powerful search and filtering capabilities:
+
+**Search Bar:**
+- Search by deck name
+- Search by commander name
+- Search by Moxfield ID
+- Search by color identity (e.g., "WUB" for Esper)
+- Search by author username
+
+**Filters:**
+- **Show Unassigned Only** - Toggle to show only decks without an assigned owner
+- The filter shows a count of unassigned decks (e.g., "15 unassigned")
+- Results count updates dynamically as you filter
+
+### Assigning Deck Ownership
+
+Deck ownership allows users to manage their own decks (hide from vault, customize title/description). Admins must explicitly assign ownership.
+
+**Quick Assignment (from deck list):**
+1. Find an unassigned deck (shown with amber "Assign" button)
+2. Click **Assign**
+3. Search for the user by email or Moxfield username
+4. Click on the user from the search results
+5. The deck is immediately assigned and shows a green checkmark
+
+**Full Assignment (from edit page):**
+1. Click **Edit** on any deck
+2. Scroll to the "Deck Owner Assignment" section
+3. Search for a user by email or Moxfield username
+4. Select the user from results
+5. Click **Save Changes**
+
+**Removing Assignment:**
+1. Go to deck edit page
+2. Click the **X** next to the assigned user
+3. Click **Save Changes**
+
+**Why Assignment Matters:**
+- Users can only edit decks assigned to their `owner_profile_id`
+- Username matching alone is NOT secure (users can change usernames)
+- Assignment creates a permanent link between deck and user profile
+
+**Note:** Decks created from user submissions are **automatically assigned** to the submitter when completed. Manual assignment is only needed for decks imported from Moxfield bookmarks or when reassigning ownership.
 
 ### Importing a Single Deck
 
@@ -142,7 +181,7 @@ Click the **View** button to see the deck as users see it on the front-end.
 
 ## User Management
 
-**Access Required:** Admin or Developer
+**Access Required:** Admin or higher
 
 ### Searching for Users
 
@@ -167,11 +206,7 @@ For each user, you can see:
 
 1. Find the user in the list
 2. Click the role dropdown on the right side of their card
-3. Select the new role:
-   - User
-   - Admin
-   - Moderator
-   - Developer (only if you're a Developer)
+3. Select the new role: User, Admin, or Moderator
 4. The change is applied immediately
 
 ### Adding a New User
@@ -193,7 +228,7 @@ For each user, you can see:
 
 ## Submissions Management
 
-**Access Required:** Admin or Developer
+**Access Required:** Admin or higher
 
 ### Viewing Pending Submissions
 
@@ -233,13 +268,31 @@ You have two action options:
 
 2. **Reject** - Marks submission as "rejected"
    - Use this if the submission can't be fulfilled
-   - Consider adding notes about why (future feature)
+
+### Finishing Submissions (Automatic Ownership)
+
+When you finish a deck submission by importing the completed deck:
+
+1. The system **automatically links ownership** to the submitter's profile
+2. No manual assignment is required - the user who submitted the request becomes the deck owner
+3. The submitter can immediately manage their deck from their profile page
+
+**How it works:**
+- The submission stores the user's profile ID when they submit
+- When you finish/import the deck, ownership is automatically set to that user
+- The user gains the ability to hide/show the deck, set custom title/description
+
+**Manual Override:**
+- If needed, you can manually assign to a different user after import
+- Go to Deck Management → Edit the deck → Change the owner assignment
+
+This automatic linking ensures users don't need to wait for admin intervention to manage their completed decks.
 
 ---
 
 ## Products Management
 
-**Access Required:** Admin or Developer
+**Access Required:** Admin or higher
 
 Manage the product links that appear in your store (typically linked to Fourthwall).
 
@@ -316,7 +369,7 @@ The settings are organized into categories. Each category has an **Add New** but
 
 ### Credits Tab
 
-**Access Required:** Admin or Developer
+**Access Required:** Admin or higher
 
 Manage the credit system used for deck submissions and roasts.
 
@@ -358,55 +411,6 @@ View and manage credit distribution history:
 
 ---
 
-## Documentation
-
-**Access Required:** Admin or Developer
-
-The Documentation section provides technical diagrams and architecture information.
-
-### Architecture Tab
-
-View the system architecture diagram showing:
-- External services (Patreon, Moxfield, Scryfall APIs)
-- Application layers (Presentation, API, Business Logic, Data)
-- Component relationships
-- Security boundaries
-
-### Database Tab
-
-Explore the database schema with:
-- Entity relationship diagram
-- All database tables and their relationships
-- Key constraints and indexes
-- Row-level security policies
-
-**Core Tables:**
-- `profiles` - User accounts and authentication
-- `products` - Patreon tier products
-- `decks` - Deck metadata
-- `cards` - MTG card cache
-- `deck_cards` - Cards in each deck
-- `deck_submissions` - User submission requests
-- `site_config` - Site configuration
-
-### Components Tab
-
-See the component hierarchy diagram showing:
-- Layout components (Header, Footer, Navigation)
-- Feature components (Decks, Admin, Auth)
-- Base UI components (shadcn/ui)
-- Magic UI components (Mana symbols, card previews)
-
-### Data Flows Tab
-
-Understand how data flows through the system:
-- Authentication flow sequence
-- Deck submission process
-- Caching strategies
-- Error handling patterns
-
----
-
 ## Common Tasks
 
 ### Task: Import New Decks from Moxfield
@@ -431,13 +435,24 @@ Understand how data flows through the system:
 4. Select "Admin"
 5. Change is applied immediately
 
+### Task: Assign a Deck to a User
+
+1. Go to **Deck Management**
+2. Use **Show Unassigned Only** filter to find unassigned decks
+3. Find the deck by searching for name or commander
+4. Click the **Assign** button on the deck
+5. Search for the user by email or Moxfield username
+6. Click on the user to assign ownership
+7. User can now manage their deck from their profile
+
 ### Task: Process a Pending Submission
 
 1. Go to **Submissions Management**
-2. Review submission details
+2. Review submission details (commander preference, colors, budget, theme)
 3. Click **Start** when you begin working on it
-4. (Outside admin panel) Build the deck
-5. (Future feature) Mark as completed
+4. Build the deck on Moxfield based on user preferences
+5. Complete the submission by importing the finished deck
+6. **Ownership is automatically linked** - the submitter can immediately manage their deck from their profile
 
 ### Task: Add a New Product to the Store
 
@@ -452,7 +467,7 @@ Understand how data flows through the system:
 
 ### Task: Add a New Video Link to the Site
 
-1. Go to **Site Settings** → Site Settings Tab
+1. Go to **Site Settings** > Site Settings Tab
 2. Click **Add New** in the Videos section
 3. Enter:
    - Key: `video_feature_3`
@@ -463,7 +478,7 @@ Understand how data flows through the system:
 
 ### Task: Configure Monthly Credit Distribution
 
-1. Go to **Site Settings** → Credits Tab
+1. Go to **Site Settings** > Credits Tab
 2. Click **Benefits Matrix** sub-section
 3. Set credit amounts for each tier:
    - Enter numbers in the matrix
@@ -488,7 +503,6 @@ Understand how data flows through the system:
 - **Be careful with roles** - Only assign Admin role to trusted individuals
 - **Don't share credentials** - Each admin should have their own account
 - **Review submissions carefully** - Check for inappropriate content or spam
-- **Use Developer Tools responsibly** - Reset tier spoofing after testing
 
 ### Content Management
 
@@ -501,7 +515,7 @@ Understand how data flows through the system:
 **Problem: Can't access admin panel**
 - Check your user role (must be Moderator+)
 - Try logging out and back in
-- Contact a Developer to verify your role
+- Contact an Admin to verify your role
 
 **Problem: Deck import fails**
 - Verify Moxfield URL is correct
@@ -526,12 +540,11 @@ Understand how data flows through the system:
 If you encounter issues or have questions:
 
 1. Check this guide first
-2. Review the Documentation section for technical details
-3. Contact the development team
-4. Check the GitHub repository for known issues
+2. Contact the development team
+3. Check the GitHub repository for known issues
 
 ---
 
-**Last Updated:** 2025-11-01
+**Last Updated:** 2025-12-29
 
-**Version:** 1.0.0
+**Version:** 1.2.0

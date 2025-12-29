@@ -1,654 +1,205 @@
 # Configuration Guide
 
-Complete configuration reference for DefCat DeckVault.
-
-## Environment Variables
-
-All environment variables should be defined in `.env.local` for local development and in your hosting provider's environment configuration for production.
-
-### Supabase Configuration
-
-#### `NEXT_PUBLIC_SUPABASE_URL`
-- **Required:** Yes
-- **Type:** String (URL)
-- **Description:** Your Supabase project URL
-- **Example:** `https://abcdefghijk.supabase.co`
-- **How to get:** Supabase Dashboard → Project Settings → API → Project URL
-
-#### `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- **Required:** Yes
-- **Type:** String (JWT)
-- **Description:** Supabase anonymous/public API key
-- **Example:** `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...`
-- **How to get:** Supabase Dashboard → Project Settings → API → Project API keys → anon public
-- **Note:** Safe to expose in client-side code (prefix: `NEXT_PUBLIC_`)
-
-#### `SUPABASE_SERVICE_ROLE_KEY`
-- **Required:** Yes
-- **Type:** String (JWT)
-- **Description:** Supabase service role key (bypasses RLS)
-- **Example:** `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...`
-- **How to get:** Supabase Dashboard → Project Settings → API → Project API keys → service_role
-- **⚠️ Security:** NEVER expose this key to the client. Server-side only.
-
-#### `POSTGRES_PASSWORD`
-- **Required:** Yes (for migrations)
-- **Type:** String
-- **Description:** PostgreSQL database password
-- **How to get:** Supabase Dashboard → Project Settings → Database → Password
-- **Usage:** Used by migration scripts (`bun run db:up`)
+Overview of DefCat DeckVault configuration options managed through the Admin Panel.
 
 ---
 
-### Patreon OAuth Configuration
+## Site Settings
 
-#### `PATREON_CLIENT_ID`
-- **Required:** Yes
-- **Type:** String
-- **Description:** Patreon OAuth application client ID
-- **How to get:**
-  1. Go to [Patreon Developers Portal](https://www.patreon.com/portal/registration/register-clients)
-  2. Create a new client
-  3. Copy the Client ID
+**Access:** [Admin Panel > Site Settings](/admin/settings)
 
-#### `PATREON_CLIENT_SECRET`
-- **Required:** Yes
-- **Type:** String
-- **Description:** Patreon OAuth application client secret
-- **How to get:** Patreon Developers Portal → Your Client → Client Secret
-- **⚠️ Security:** Never commit this to version control
+The Site Settings tab allows you to manage site-wide configuration values organized into three categories.
 
-#### `PATREON_REDIRECT_URI`
-- **Required:** Yes
-- **Type:** String (URL)
-- **Description:** OAuth callback URL (must match Patreon app settings exactly)
-- **Development:** `http://localhost:8888/auth/patreon-callback`
-- **Production:** `https://your-domain.com/auth/patreon-callback`
-- **Note:** Must be registered in Patreon app settings
+### Videos Configuration
 
-#### `CREATOR_ACCESS_TOKEN`
-- **Required:** Yes
-- **Type:** String
-- **Description:** Patreon creator access token for API calls
-- **How to get:** Patreon Developers Portal → Your Client → Creator's Access Token
-- **Usage:** Fetching campaign/membership data
+Configure YouTube video links that appear across the site (featured videos, tutorials, etc.).
 
-#### `CREATOR_REFRESH_TOKEN`
-- **Required:** Yes
-- **Type:** String
-- **Description:** Patreon creator refresh token
-- **How to get:** Patreon Developers Portal → Your Client → Creator's Refresh Token
-- **Usage:** Refreshing expired access tokens
+**Adding a Video:**
+1. Go to [Site Settings](/admin/settings)
+2. Click the **Videos** tab
+3. Click **Add Video Link**
+4. Enter:
+   - **Key:** Identifier like `youtube_featured_1` or `tutorial_deck_building`
+   - **Value:** The full YouTube URL or video ID
+   - **Description:** What this video is for
+5. Click **Create**
+6. Click **Save Configuration**
 
----
+**Tip:** You can use either the full YouTube URL or just the video ID (the part after `?v=`).
 
-### Site Configuration
+### Social Links Configuration
 
-#### `NEXT_PUBLIC_SITE_URL`
-- **Required:** Yes
-- **Type:** String (URL)
-- **Description:** Public URL of your application
-- **Development:** `http://localhost:8888`
-- **Production:** `https://your-domain.com`
-- **Usage:** OAuth redirects, email links, absolute URLs
+Configure social media profile URLs displayed in site footer and navigation.
 
-#### `APP_NAME`
-- **Required:** No
-- **Type:** String
-- **Default:** `DefCatDB`
-- **Description:** Application name for display and logs
+**Common Social Keys:**
+- `twitter_url` - Twitter/X profile link
+- `discord_url` - Discord server invite link
+- `patreon_url` - Patreon page link
+- `youtube_url` - YouTube channel link
+- `moxfield_url` - Moxfield profile link
+
+**Adding a Social Link:**
+1. Go to [Site Settings](/admin/settings)
+2. Click the **Social** tab
+3. Click **Add Social Link**
+4. Enter the key, full URL, and description
+5. Click **Save Configuration**
+
+### General Configuration
+
+Miscellaneous site settings and metadata.
+
+**Common General Keys:**
+- `site_title` - Site name displayed in browser tabs
+- `site_description` - Meta description for SEO
+- `maintenance_mode` - Set to `true` to enable maintenance mode
+- `announcement_banner` - Text for site-wide announcement banner
 
 ---
 
-### External Services
+## Credit System
 
-#### `RESEND_API_KEY`
-- **Required:** Yes (for email notifications)
-- **Type:** String
-- **Description:** Resend API key for sending emails
-- **How to get:**
-  1. Sign up at [Resend](https://resend.com/)
-  2. Create an API key
-- **Usage:** Submission confirmations, notifications
+**Access:** [Admin Panel > Site Settings > Credits Tab](/admin/settings) (Admin+ only)
 
----
+The credit system controls user access to deck submissions and other premium features.
 
-### Patreon API Configuration
+### Credit Types
 
-#### `PATREON_API_Version`
-- **Required:** No
-- **Type:** String
-- **Default:** `2`
-- **Description:** Patreon API version to use
-- **Options:** `1`, `2`
-- **Recommendation:** Use `2` (latest)
+View and manage the different types of credits available in the system.
 
----
+**Default Credit Types:**
+- **Deck Credits** - Used for deck submission requests
+- **Roast Credits** - Used for deck roast/critique requests
 
-## Configuration Files
+**Adding a Credit Type:**
+1. Go to [Site Settings > Credits](/admin/settings)
+2. Click **Add Credit Type**
+3. Enter:
+   - **Display Name:** Human-readable name (e.g., "Review Credits")
+   - **ID:** Auto-generated from display name
+   - **Description:** What this credit is used for
+4. Click **Add Credit Type**
 
-### `next.config.ts`
+### Tier Benefits Matrix
 
-Next.js configuration with Turbopack and image optimization.
+Configure how many credits each Patreon tier receives during monthly distribution.
 
-```typescript
-const nextConfig: NextConfig = {
-  // Image configuration for remote patterns
-  images: {
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'paerhoqoypdezkqhzimk.supabase.co',
-        pathname: '/storage/v1/object/public/**',
-      },
-    ],
-  },
+**How It Works:**
+- Rows = Patreon tiers (Citizen, Knight, Emissary, Duke, Wizard, ArchMage)
+- Columns = Credit types (Deck Credits, Roast Credits, etc.)
+- Values = Number of credits granted per month
 
-  // TypeScript configuration
-  typescript: {
-    ignoreBuildErrors: true, // ⚠️ Remove in production
-  },
+**Editing Benefits:**
+1. Go to [Site Settings > Credits](/admin/settings)
+2. Find the **Tier Benefits Matrix** section
+3. Enter the credit amount in each tier/type cell
+4. Changes auto-save when you modify a value
 
-  // Source maps (disabled to prevent 404s)
-  productionBrowserSourceMaps: false,
-}
-```
+**Example Configuration:**
 
-**Key Settings:**
-- `images.remotePatterns`: Whitelist for Next.js Image component
-- `typescript.ignoreBuildErrors`: Should be `false` in production
-- `productionBrowserSourceMaps`: Disabled to reduce bundle size
+| Tier | Deck Credits | Roast Credits |
+|------|-------------|---------------|
+| Citizen | 0 | 0 |
+| Knight | 0 | 1 |
+| Emissary | 1 | 1 |
+| Duke | 1 | 2 |
+| Wizard | 2 | 2 |
+| ArchMage | 3 | 3 |
 
----
+### Distribution Manager
 
-### `tsconfig.json`
+View credit distribution history and trigger manual distributions.
 
-TypeScript compiler configuration with path aliases.
+**Distribution History:**
+- Shows past distributions with dates and status
+- Displays which tiers received credits
+- Tracks automatic monthly distributions
 
-```json
-{
-  "compilerOptions": {
-    "paths": {
-      "@/*": ["./src/*"],
-      "@/components/*": ["./src/components/*"],
-      "@/lib/*": ["./src/lib/*"],
-      "@/hooks/*": ["./src/lib/hooks/*"],
-      "@/types/*": ["./src/types/*"],
-      "@/app/*": ["./src/app/*"],
-      "@/context/*": ["./src/lib/contexts/*"],
-      "@/styles/*": ["./src/styles/*"],
-      "@/emails/*": ["./src/emails/*"]
-    }
-  }
-}
-```
-
-**Path Aliases:**
-- `@/*` → `./src/*` (general imports)
-- `@/components/*` → `./src/components/*`
-- `@/lib/*` → `./src/lib/*`
-- `@/hooks/*` → `./src/lib/hooks/*`
-- `@/types/*` → `./src/types/*`
-
----
-
-### `biome.json`
-
-Biome linting and formatting configuration.
-
-```json
-{
-  "linter": {
-    "enabled": true,
-    "rules": {
-      "recommended": true
-    }
-  },
-  "formatter": {
-    "enabled": true,
-    "indentStyle": "space",
-    "indentWidth": 2,
-    "lineWidth": 100
-  }
-}
-```
-
-**Key Settings:**
-- Recommended rules enabled by default
-- 2-space indentation
-- 100-character line width
-
----
-
-### `vitest.config.ts`
-
-Vitest testing configuration.
-
-```typescript
-{
-  test: {
-    environment: 'jsdom',
-    globals: true,
-    setupFiles: ['./src/test/setup.ts'],
-    coverage: {
-      provider: 'v8',
-      thresholds: {
-        lines: 85,
-        functions: 85,
-        branches: 85,
-        statements: 85,
-      },
-    },
-  },
-}
-```
-
-**Key Settings:**
-- `jsdom` environment for React component testing
-- 85% coverage thresholds (aspirational)
-- Global test utilities enabled
-
----
-
-### `tailwind.config.ts`
-
-Tailwind CSS configuration with custom theme.
-
-```typescript
-{
-  content: [
-    './src/**/*.{js,ts,jsx,tsx,mdx}',
-  ],
-  theme: {
-    extend: {
-      colors: {
-        // Custom MTG mana colors
-        mana: {
-          white: '#F9FAF4',
-          blue: '#0E68AB',
-          black: '#150B00',
-          red: '#D3202A',
-          green: '#00733E',
-          colorless: '#CAC5C0',
-        },
-      },
-    },
-  },
-}
-```
-
----
-
-## Database Configuration
-
-### Supabase Connection
-
-The application uses three distinct Supabase clients:
-
-1. **Browser Client** (`src/lib/supabase/client.ts`)
-   - Uses `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - Respects Row Level Security (RLS)
-
-2. **Server Client** (`src/lib/supabase/server.ts`)
-   - Uses `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - Respects RLS
-   - Handles server-side session management
-
-3. **Admin Client** (`src/lib/supabase/admin.ts`)
-   - Uses `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`
-   - **Bypasses RLS** - use with caution
-
-### Migration Configuration
-
-Migrations are managed via Supabase CLI:
-
-```bash
-# Create new migration
-bun run db:new "migration_name"
-
-# Apply migrations
-bun run db:up
-
-# Generate types
-bun run db:types
-```
-
-**Configuration in `scripts/migrate.sh`:**
-- Reads `.env.local` for credentials
-- Uses `POSTGRES_PASSWORD` for authentication
-- Applies migrations to remote Supabase project
-
----
-
-## TanStack Query Configuration
-
-Configured in `src/lib/contexts/Providers.tsx`:
-
-```typescript
-new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 5 * 60 * 1000,      // 5 minutes
-      gcTime: 10 * 60 * 1000,         // 10 minutes
-      retry: 2,
-      refetchOnWindowFocus: true,
-      refetchOnMount: false,
-      refetchOnReconnect: true,
-    },
-  },
-})
-```
-
-**Key Settings:**
-- `staleTime`: How long data is considered fresh (5 min)
-- `gcTime`: How long to keep cached data (10 min)
-- `retry`: Number of retry attempts on error
-- `refetchOnWindowFocus`: Refetch when user returns to tab
-
-**Custom Query Configurations:**
-
-**Auth Session:**
-```typescript
-queryKey: ['auth-session']
-staleTime: 5 * 60 * 1000  // 5 minutes
-```
-
-**Deck Data:**
-```typescript
-queryKey: ['decks']
-staleTime: Infinity  // Never refetch (data updates weekly)
-```
-
-**Infinite Scroll:**
-```typescript
-queryKey: ['decks-infinite']
-initialPageParam: 0
-getNextPageParam: (lastPage) => lastPage.nextPage
-```
+**Manual Distribution:**
+Use this if automatic distribution fails or needs to be triggered early.
 
 ---
 
 ## Patreon Tier Configuration
 
-Tier thresholds are defined in `src/lib/api/patreon.ts`:
+Tiers are determined by the user's monthly pledge amount on Patreon:
 
-```typescript
-function determineTier(pledgeAmountCents: number): PatreonTier {
-  if (pledgeAmountCents >= 25000) return 'ArchMage'  // $250
-  if (pledgeAmountCents >= 16500) return 'Wizard'    // $165
-  if (pledgeAmountCents >= 5000)  return 'Duke'      // $50
-  if (pledgeAmountCents >= 3000)  return 'Emissary'  // $30
-  if (pledgeAmountCents >= 1000)  return 'Knight'    // $10
-  return 'Citizen'  // $2 (default)
-}
-```
+| Tier | Monthly Pledge | Typical Benefits |
+|------|---------------|------------------|
+| Citizen | $2+ | Basic site access |
+| Knight | $10+ | Basic access + minor credits |
+| Emissary | $30+ | Access to premium decks |
+| Duke | $50+ | Full deck access + credits |
+| Wizard | $165+ | Enhanced credits |
+| ArchMage | $250+ | Maximum credits |
 
-**To modify tier thresholds:**
-1. Edit `src/lib/api/patreon.ts`
-2. Update `determineTier()` function
-3. Sync with Patreon campaign tiers
-4. Update database `tier_benefits` table
+**Note:** Actual credit amounts per tier are configured in the [Benefits Matrix](/admin/settings) and can be adjusted at any time.
 
 ---
 
-## Credit System Configuration
+## Route Access Control
 
-Credits are stored in the database as JSONB and configured per tier:
+Different parts of the site have different access requirements:
 
-### Database Tables
-
-**`credit_types`**
-```sql
-CREATE TABLE credit_types (
-  id TEXT PRIMARY KEY,
-  display_name TEXT NOT NULL,
-  description TEXT,
-  is_active BOOLEAN DEFAULT true
-);
-```
-
-**`tier_benefits`**
-```sql
-CREATE TABLE tier_benefits (
-  tier_id TEXT,
-  credit_type_id TEXT,
-  amount INTEGER NOT NULL,
-  PRIMARY KEY (tier_id, credit_type_id)
-);
-```
-
-**`user_credits`**
-```sql
-CREATE TABLE user_credits (
-  user_id UUID PRIMARY KEY,
-  credits JSONB DEFAULT '{}'::jsonb,
-  last_granted JSONB DEFAULT '{}'::jsonb,
-  created_at TIMESTAMP DEFAULT NOW(),
-  updated_at TIMESTAMP DEFAULT NOW()
-);
-```
-
-### Adding New Credit Types
-
-1. **Insert into `credit_types`:**
-   ```sql
-   INSERT INTO credit_types (id, display_name, description)
-   VALUES ('review', 'Deck Review', 'Professional deck review service');
-   ```
-
-2. **Configure benefits per tier:**
-   ```sql
-   INSERT INTO tier_benefits (tier_id, credit_type_id, amount)
-   VALUES
-     ('knight', 'review', 1),
-     ('duke', 'review', 3),
-     ('wizard', 'review', 5);
-   ```
-
-3. **No code changes needed** - the system dynamically reads from the database.
+| Route | Required Access |
+|-------|----------------|
+| `/` (Home) | Public |
+| `/decks` | Public (list and details) |
+| `/profile` | Any authenticated user |
+| `/submit` | User with available deck credits |
+| `/admin` | Moderator role or higher |
+| `/admin/settings` | Moderator+ (Credits tab requires Admin+) |
+| `/admin/users` | Admin role or higher |
+| `/admin/decks` | Admin role or higher |
 
 ---
 
-## Middleware Configuration
+## User Roles
 
-Route protection is configured in `proxy.ts`:
+The system uses a hierarchical role structure. Higher roles inherit all permissions from lower roles.
 
-```typescript
-const PROTECTED_ROUTES = [
-  { path: '/admin', minimumRole: 'admin' },
-  { path: '/profile', minimumRole: 'user' },
-  { path: '/decks/submission', minimumRole: 'user' },
-]
+| Role | Access Level |
+|------|-------------|
+| User | Basic site access (anonymous visitors) |
+| Member | Authenticated user access (all Patreon patrons) |
+| Moderator | Admin panel access, site settings |
+| Admin | Full admin access including user management and credits |
+| Developer | All access plus technical documentation |
 
-const PUBLIC_ROUTES = [
-  '/',
-  '/auth/login',
-  '/auth/callback',
-  '/about',
-  '/decks',
-  '/api/health',
-  '/api/metrics',
-]
-```
-
-**To protect new routes:**
-1. Edit `proxy.ts`
-2. Add to `PROTECTED_ROUTES` array with minimum role
-3. Middleware automatically enforces on next deployment
+**Changing User Roles:**
+1. Go to [User Management](/admin/users)
+2. Search for the user by email
+3. Click the role dropdown on their card
+4. Select the new role
 
 ---
 
-## Email Configuration (Resend)
+## Troubleshooting
 
-Email templates are in `src/emails/`:
+### Login Issues
+- Ensure your Patreon account is linked correctly
+- Try logging out and back in to refresh your tier
+- Clear browser cookies and try again
+- Contact an admin if your tier isn't updating
 
-**Deck Submission Confirmation:**
-```typescript
-// src/emails/deck-sub-confirmation.tsx
-export function DeckSubmissionEmail({
-  deckName,
-  submissionId,
-}) {
-  return (
-    <Html>
-      <Body>
-        <h1>Deck Submission Received</h1>
-        <p>Your deck "{deckName}" has been submitted.</p>
-        <p>Submission ID: {submissionId}</p>
-      </Body>
-    </Html>
-  )
-}
-```
+### Access Denied
+- Verify your Patreon subscription is active
+- Check that you meet the tier requirement for the content
+- Try refreshing the page after a recent tier upgrade
+- Your tier syncs automatically - wait a few minutes after upgrading
 
-**Sending emails:**
-```typescript
-import { render } from '@react-email/render'
-import { Resend } from 'resend'
+### Credit Issues
+- Credits are distributed monthly based on your tier at distribution time
+- If credits are missing, contact an admin to check distribution history
+- Admins can manually adjust user credits in [User Management](/admin/users)
 
-const resend = new Resend(process.env.RESEND_API_KEY)
-
-await resend.emails.send({
-  from: 'DefCat <noreply@defcat.com>',
-  to: userEmail,
-  subject: 'Submission Received',
-  html: render(DeckSubmissionEmail({ ... })),
-})
-```
+### Configuration Not Saving
+- Ensure you click **Save Configuration** after making changes
+- Check for validation errors on individual fields
+- Try refreshing the page and re-entering the value
 
 ---
 
-## Deployment Configuration
+**Last Updated:** 2025-12-29
 
-### Netlify
-
-**Build settings:**
-```toml
-# netlify.toml
-[build]
-  command = "npm run build"
-  publish = ".next"
-```
-
-**Environment Variables in Netlify:**
-1. Go to Site Settings → Build & Deploy → Environment
-2. Add all variables from `.env.local`
-3. Deploy
-
-### Vercel (Alternative)
-
-1. Connect GitHub repository
-2. Framework Preset: Next.js
-3. Add environment variables in Project Settings
-4. Deploy automatically on push to main
-
----
-
-## Security Configuration
-
-### CORS
-
-CORS is configured in API routes:
-
-```typescript
-headers: {
-  'Access-Control-Allow-Origin': process.env.NEXT_PUBLIC_SITE_URL,
-  'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-}
-```
-
-### Content Security Policy
-
-Add to `next.config.ts`:
-
-```typescript
-async headers() {
-  return [
-    {
-      source: '/(.*)',
-      headers: [
-        {
-          key: 'X-Frame-Options',
-          value: 'DENY',
-        },
-        {
-          key: 'X-Content-Type-Options',
-          value: 'nosniff',
-        },
-      ],
-    },
-  ]
-}
-```
-
----
-
-## Troubleshooting Configuration
-
-### Port Conflicts
-
-**Error:** `Port 8888 already in use`
-
-**Solution:**
-```bash
-# Change port in package.json
-"dev": "next dev --port 3000"
-
-# Or kill process on port
-lsof -ti:8888 | xargs kill -9
-```
-
-### Environment Variables Not Loading
-
-**Error:** `undefined` values for environment variables
-
-**Solution:**
-1. Ensure `.env.local` exists in project root
-2. Restart dev server after changing env vars
-3. Check for typos in variable names
-4. Verify `NEXT_PUBLIC_` prefix for client-side vars
-
-### Supabase Connection Issues
-
-**Error:** `Failed to fetch` or `Invalid API key`
-
-**Solution:**
-1. Verify `NEXT_PUBLIC_SUPABASE_URL` format: `https://xxx.supabase.co`
-2. Check API keys match your project
-3. Ensure service role key is not exposed to client
-4. Test connection with Supabase CLI: `supabase db remote`
-
-### Patreon OAuth Redirect Mismatch
-
-**Error:** `redirect_uri_mismatch`
-
-**Solution:**
-1. Ensure `PATREON_REDIRECT_URI` exactly matches Patreon app settings
-2. Include port number if using localhost (`:8888`)
-3. Use HTTPS in production
-4. Check for trailing slashes
-
----
-
-## Configuration Checklist
-
-Before deploying to production:
-
-- [ ] All environment variables set in hosting provider
-- [ ] `NEXT_PUBLIC_SITE_URL` points to production domain
-- [ ] `PATREON_REDIRECT_URI` registered with Patreon
-- [ ] `typescript.ignoreBuildErrors` set to `false`
-- [ ] Hardcoded admin bypasses removed
-- [ ] Database migrations applied
-- [ ] RLS policies tested
-- [ ] CORS configured for production domain
-- [ ] Security headers enabled
-- [ ] Rate limiting configured
-- [ ] Error tracking (Sentry) setup
-- [ ] Monitoring and alerts configured
-
----
-
-**Last Updated:** 2025-10-31
-**Version:** 0.1.0
+**Version:** 2.0.0
