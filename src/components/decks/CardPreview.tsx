@@ -51,7 +51,7 @@ export const CardPreview = memo(function CardPreview({ card, quantity }: { card:
         const rect = commanderEl.getBoundingClientRect()
         const containerCenter = rect.left + rect.width / 2
         setPreviewPosition({
-          top: rect.bottom + 16, // 16px gap below commander images
+          top: rect.bottom + 24, // gap below commander images
           left: containerCenter, // center of commander images
         })
       }
@@ -72,7 +72,7 @@ export const CardPreview = memo(function CardPreview({ card, quantity }: { card:
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
-      <div className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-accent/50 transition-all cursor-pointer group border border-transparent hover:border-border">
+      <div className="flex items-center gap-3 px-4 py-3 rounded-lg bg-card hover:bg-accent/50 transition-all cursor-pointer group border border-tinted-subtle shadow-sm hover:shadow-tinted-sm hover:border-tinted hover:-translate-y-0.5">
         <span className="font-mono text-muted-foreground text-sm w-8 flex-shrink-0 font-semibold">
           {quantity}×
         </span>
@@ -93,10 +93,9 @@ export const CardPreview = memo(function CardPreview({ card, quantity }: { card:
           style={{
             top: `${previewPosition.top}px`,
             left: `${previewPosition.left}px`,
-            scale: '1.2',
           }}
         >
-          <div className="rounded-xl shadow-2xl overflow-hidden w-[180px] lg:w-[200px] border-2 border-primary">
+          <div className="rounded-xl shadow-2xl overflow-hidden w-[280px] border-2 border-primary">
             <img src={imageUrl} alt={card?.name} className="w-full h-auto block" />
           </div>
         </div>

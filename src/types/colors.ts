@@ -12,7 +12,7 @@ const ManaColorMap = {
   B: 'oklch(0.32 0.36 330.58)',
   R: 'oklch(0.35 0.40 50)',
   G: 'oklch(0.40 0.40 150)',
-
+  C: 'oklch(0.55 0.02 260)',
 
   // Aliases for convenience
   WHITE: 'oklch(0.90 0.40 100)',
@@ -20,6 +20,7 @@ const ManaColorMap = {
   BLACK: 'oklch(0.30 0.36 333.58)',
   RED: 'oklch(0.35 0.40 50)',
   GREEN: 'oklch(0.40 0.40 150)',
+  COLORLESS: 'oklch(0.55 0.02 260)',
 } as const
 
 type ColorInfo = {
@@ -35,6 +36,7 @@ const ColorMapping: Record<string, ColorInfo> = {
   B: { letter: 'B', name: 'Black', className: 'ms ms-b', color: ManaColorMap.B },
   R: { letter: 'R', name: 'Red', className: 'ms ms-r', color: ManaColorMap.R },
   G: { letter: 'G', name: 'Green', className: 'ms ms-g', color: ManaColorMap.G },
+  C: { letter: 'C', name: 'Colorless', className: 'ms ms-c', color: ManaColorMap.C },
 }
 
 const HybridManaMap = {

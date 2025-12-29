@@ -50,7 +50,7 @@ export default async function AdminDashboard() {
 
       {/* Quick Actions with tinted cards */}
       <div className="grid grid-cols-1 mt-10 md:grid-cols-2 gap-6">
-        <div className="relative rounded-2xl border p-2 md:rounded-3xl md:p-3">
+        <div className="relative rounded-2xl border md:rounded-3xl">
           <GlowingEffect
             blur={0}
             borderWidth={3}
@@ -78,7 +78,7 @@ export default async function AdminDashboard() {
           </Card>
         </div>
 
-        <div className="relative rounded-2xl border p-2 md:rounded-3xl md:p-3">
+        <div className="relative rounded-2xl border md:rounded-3xl">
           <GlowingEffect
             blur={1}
             movementDuration={4}
@@ -107,7 +107,7 @@ export default async function AdminDashboard() {
           </Card>
         </div>
 
-        <div className="relative rounded-2xl border p-2 md:rounded-3xl md:p-3">
+        <div className="relative rounded-2xl border md:rounded-3xl">
           <GlowingEffect
             blur={0}
             borderWidth={3}
@@ -134,7 +134,7 @@ export default async function AdminDashboard() {
           </Card>
         </div>
 
-        <div className="relative rounded-2xl border p-2 md:rounded-3xl md:p-3">
+        <div className="relative rounded-2xl border md:rounded-3xl">
           <GlowingEffect
             blur={0}
             borderWidth={3}
@@ -161,7 +161,7 @@ export default async function AdminDashboard() {
           </Card>
         </div>
 
-        <div className="relative rounded-2xl border p-2 md:rounded-3xl md:p-3">
+        <div className="relative rounded-2xl border md:rounded-3xl">
           <GlowingEffect
             blur={0}
             borderWidth={3}
@@ -188,7 +188,7 @@ export default async function AdminDashboard() {
           </Card>
         </div>
 
-        <div className="relative rounded-2xl border p-2 md:rounded-3xl md:p-3">
+        <div className="relative rounded-2xl border md:rounded-3xl">
           <GlowingEffect
             blur={0}
             borderWidth={4}

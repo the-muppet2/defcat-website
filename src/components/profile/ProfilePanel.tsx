@@ -85,7 +85,7 @@ export default function ProfilePanel() {
           ">
             <GlowingEffect
               blur={0.1}
-              borderWidth={5}
+              borderWidth={3}
               spread={60}
               glow={true}
               disabled={false}
@@ -121,7 +121,7 @@ export default function ProfilePanel() {
               <div className="relative rounded-2xl border-2xl">
                 <GlowingEffect
                   blur={0}
-                  borderWidth={5}
+                  borderWidth={3}
                   spread={60}
                   glow={true}
                   disabled={false}
@@ -135,7 +135,7 @@ export default function ProfilePanel() {
               <div className="relative rounded-3xl border-3xl md:rounded-2xl flex-1">
                 <GlowingEffect
                   blur={0}
-                  borderWidth={5}
+                  borderWidth={3}
                   spread={60}
                   glow={true}
                   disabled={false}
@@ -179,7 +179,7 @@ export default function ProfilePanel() {
                 <div className="relative rounded-3xl border-3xl flex flex-col flex-1">
                   <GlowingEffect
                     blur={0}
-                    borderWidth={5}
+                    borderWidth={3}
                     spread={60}
                     glow={true}
                     disabled={false}
@@ -212,7 +212,7 @@ export default function ProfilePanel() {
                 <div className="relative border-3xl rounded-3xl flex flex-col flex-1">
                   <GlowingEffect
                     blur={0}
-                    borderWidth={5}
+                    borderWidth={3}
                     spread={60}
                     glow={true}
                     disabled={false}
@@ -245,7 +245,7 @@ export default function ProfilePanel() {
                 <div className="relative border border-3xl rounded-3xl flex flex-col flex-1">
                   <GlowingEffect
                     blur={0}
-                    borderWidth={5}
+                    borderWidth={3}
                     spread={60}
                     glow={true}
                     disabled={false}

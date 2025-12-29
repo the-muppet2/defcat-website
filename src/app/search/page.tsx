@@ -197,6 +197,32 @@ export default function ExampleHomePage() {
                       </button>
                     )
                   })}
+                  {/* 5-Color option */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (selectedColors.includes('WUBRG')) {
+                        setSelectedColors(selectedColors.filter((c) => c !== 'WUBRG'))
+                      } else {
+                        setSelectedColors([...selectedColors, 'WUBRG'])
+                      }
+                    }}
+                    className={cn(
+                      'transition-all duration-300 rounded-full p-2 flex items-center gap-0.5',
+                      selectedColors.includes('WUBRG')
+                        ? 'ring-2 ring-[var(--mana-color)] bg-accent-tinted'
+                        : 'hover:bg-accent-tinted/50'
+                    )}
+                    title="5-Color"
+                  >
+                    {['W', 'U', 'B', 'R', 'G'].map((c) => (
+                      <i
+                        key={c}
+                        className={ColorIdentity.getClassName(c)}
+                        style={{ fontSize: '14px' }}
+                      />
+                    ))}
+                  </button>
                 </div>
               </div>
 

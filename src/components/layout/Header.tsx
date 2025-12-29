@@ -238,7 +238,7 @@ export function Header({
                     title={`${remainingSubmissions} deck submission${remainingSubmissions !== 1 ? 's' : ''} remaining`}
                   >
                     <Sparkles className="h-5 w-5" style={{ color: 'var(--mana-color)' }} />
-                    <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-white">
+                    <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-amber-500 text-[10px] font-bold text-black">
                       {remainingSubmissions}
                     </span>
                   </Link>

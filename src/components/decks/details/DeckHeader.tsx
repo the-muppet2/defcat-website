@@ -15,22 +15,18 @@ export function DeckHeader({ deck, cards }: DeckHeaderProps) {
   const colorIdentity = deck.color_identity || []
 
   return (
-    <div className="relative">
-      {/* Glow effect layer */}
-      <div className="absolute inset-[-3px] pointer-events-none">
-        <GlowingEffect
-          blur={0}
-          borderWidth={3}
-          spread={80}
-          glow={true}
-          disabled={false}
-          proximity={64}
-          inactiveZone={0.01}
-        />
-      </div>
-
+    <div className="relative rounded-2xl z-0">
+      <GlowingEffect
+        blur={0}
+        borderWidth={3}
+        spread={80}
+        glow={true}
+        disabled={false}
+        proximity={64}
+        inactiveZone={0.01}
+      />
       {/* Content card */}
-      <div className="relative bg-card border-3 border-border rounded-2xl shadow-xl">
+      <div className="relative bg-mana-subtle border-2 border-tinted-subtle rounded-2xl shadow-xl">
         <div className="p-6 md:p-8">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="space-y-3">

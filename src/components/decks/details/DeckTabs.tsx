@@ -22,7 +22,7 @@ export function DeckTabs({ deck, cards, selectedType, onTypeSelect }: DeckTabsPr
   const [activeTab, setActiveTab] = useState<'list' | 'visual' | 'stats'>('list')
 
   return (
-    <div className="relative rounded-2xl border translate-z(0) md:rounded-3xl">
+    <div className="relative rounded-2xl border z-0 md:rounded-3xl">
       <GlowingEffect
         blur={0}
         borderWidth={3}
@@ -32,9 +32,9 @@ export function DeckTabs({ deck, cards, selectedType, onTypeSelect }: DeckTabsPr
         proximity={64}
         inactiveZone={0.01}
       />
-      <div className="bg-card border-2 rounded-2xl shadow-xl relative">
+      <div className="bg-mana-subtle border-2 border-tinted-subtle rounded-2xl shadow-xl relative">
         {/* Tab Navigation */}
-        <div className="border-b border-border bg-accent/30">
+        <div className="border-b border-border bg-accent/30 rounded-t-2xl">
           <div className="flex items-center justify-between px-4 md:px-6 gap-2">
             <div className="flex items-center min-w-0">
               {[

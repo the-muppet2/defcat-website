@@ -543,13 +543,17 @@
 }
 
 .btn-tinted-primary {
-  background: var(--mana-color);
-  color: white;
+  background: var(--mana-color-deep, var(--mana-color)) !important;
+  color: white !important;
   border: none;
   font-weight: 600;
   box-shadow: var(--shadow-tinted);
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.15);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
   transition: all 0.15s ease;
+}
+
+.dark .btn-tinted-primary {
+  background: var(--mana-color) !important;
 }
 
 .btn-tinted-primary:hover {

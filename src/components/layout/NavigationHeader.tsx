@@ -18,7 +18,7 @@ export function NavigationHeader() {
     <>
       <TutorialModal isOpen={showTutorial} onClose={() => setShowTutorial(false)} />
 
-      <header className="sticky top-0 w-full glass-tinted-strong shadow-tinted-lg z-50">
+      <header className="sticky top-0 w-full glass-tinted-strong shadow-tinted-lg z-[100]">
         <div className="container flex h-16 items-center justify-between">
           {/* Tutorial Button (Top Left) */}
           <Button

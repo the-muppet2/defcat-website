@@ -20,8 +20,8 @@ export function DeckDetailLayout({ deck, cards }: DeckDetailLayoutProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
-      <div className="container mx-auto max-w-[1600px] space-y-6">
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto max-w-[1600px] space-y-6 py-6">
         {/* Commander Header - Full Width Above Columns */}
         <DeckHeader deck={deck} cards={cards} />
 
@@ -39,10 +39,7 @@ export function DeckDetailLayout({ deck, cards }: DeckDetailLayoutProps) {
 
           {/* Sidebar - Right Side (1/3) */}
           <div id="deck-sidebar">
-            <DeckSidebar
-              deck={deck}
-              cards={cards}
-            />
+            <DeckSidebar cards={cards} />
           </div>
         </div>
       </div>
