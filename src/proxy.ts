@@ -113,22 +113,46 @@ export async function proxy(request: NextRequest) {
     }
   )
 
-  const { data: { user } } = await supabase.auth.getUser()
+  // Log cookies present in request for debugging
+  const allCookies = request.cookies.getAll()
+  const authCookies = allCookies.filter(c => c.name.includes('auth') || c.name.includes('sb-'))
+  logger.debug('Request cookies', {
+    requestId,
+    pathname,
+    totalCookies: allCookies.length,
+    authCookieNames: authCookies.map(c => c.name)
+  })
+
+  const { data: { user }, error: userError } = await supabase.auth.getUser()
 
   // Not authenticated - let through, client-side overlay will handle it
   if (!user) {
-    logger.debug('Unauthenticated user on protected route', { requestId, pathname })
+    logger.info('Unauthenticated user on protected route', {
+      requestId,
+      pathname,
+      error: userError?.message,
+      authCookiesPresent: authCookies.length > 0
+    })
     response.headers.set('X-Request-ID', requestId)
     response.headers.set('X-Auth-Required', 'true')
     return response
   }
 
   // Get user profile with tier and role
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from('profiles')
     .select('role, patreon_tier')
     .eq('id', user.id)
     .single<{ role: string | null; patreon_tier: string | null }>()
+
+  if (profileError) {
+    logger.warn('Failed to fetch profile', {
+      requestId,
+      pathname,
+      userId: user.id,
+      error: profileError.message
+    })
+  }
 
   const userRole = profile?.role || 'user'
   const userTier = (profile?.patreon_tier as PatreonTier) || null
@@ -157,12 +181,15 @@ export async function proxy(request: NextRequest) {
   logger.info('Access check', {
     requestId,
     pathname,
+    userId: user.id,
+    userRole,
     userTier,
     userTierRank,
     requiredTier,
     requiredTierRank,
     hasSufficientTier,
-    hasBypassRole
+    hasBypassRole,
+    profileFound: !!profile
   })
 
   // Tier check - let through, client-side overlay will handle it

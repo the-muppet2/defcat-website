@@ -31,7 +31,9 @@ function LoginContent() {
     const errorMessages: Record<string, string> = {
       no_code: 'No authorization code received from Patreon',
       no_email: 'Could not retrieve email from Patreon account',
+      lookup_failed: 'Failed to lookup user account',
       user_lookup_failed: 'Failed to lookup or create user account',
+      recovery_failed: 'Failed to recover user account',
       user_creation_failed: 'Failed to create user account',
       profile_update_failed: 'Failed to update user profile',
       password_setup_failed: 'Failed to setup user authentication',

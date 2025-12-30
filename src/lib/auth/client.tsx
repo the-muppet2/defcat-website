@@ -2,8 +2,6 @@
  * Client-Side Authentication
  * React context and hooks for client components
  */
-/** biome-ignore-all lint/suspicious/noAssignInExpressions: <explanation> */
-/** biome-ignore-all lint/suspicious/noImplicitAnyLet: <explanation> */
 
 'use client'
 
@@ -43,20 +41,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     queryFn: async (): Promise<AuthState> => {
       const supabase = createClient()
 
-      // Get user - suppress OAuth validation errors for custom Patreon OAuth
-      let session
+      // Get user via getUser() instead of getSession()
+      // getUser() makes a server request that includes cookies, working even with httpOnly cookies
+      // getSession() reads cookies directly which fails if they're httpOnly
+      let user: User | null = null
       try {
-        const { data: sessionData } = await supabase.auth.getSession()
-        session = sessionData.session
-      } catch (err: any) {
-        if (err?.code === 'unexpected_failure' && err?.message?.includes('oauth_client_id')) {
-          console.warn('Custom OAuth in use, skipping native OAuth validation')
-        } else {
-          console.error('Error getting session:', err)
-        }
+        const { data: userData } = await supabase.auth.getUser()
+        user = userData?.user ?? null
+      } catch {
+        // Auth fetch failed - user is not authenticated
       }
-
-      const user = session?.user ?? null
 
       if (!user) {
         return {

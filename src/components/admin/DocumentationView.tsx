@@ -1,7 +1,7 @@
 /** biome-ignore-all lint/a11y/useButtonType: <explanation> */
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import {
   Card,
   CardContent,
@@ -14,18 +14,27 @@ import { ArrowUp, BookOpen, Loader2, Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { useRef } from "react";
-import mermaid from "mermaid";
 import { Button } from "../ui/button";
 import { useTheme } from "next-themes";
 
-// Initialize mermaid
-if (typeof window !== "undefined") {
-  mermaid.initialize({
-    startOnLoad: false,
-    theme: "neutral",
-    securityLevel: "loose",
-  });
+// Lazy load mermaid - only when diagrams are needed
+let mermaidInstance: typeof import("mermaid").default | null = null;
+async function getMermaid(theme: string = "neutral") {
+  if (!mermaidInstance) {
+    const m = await import("mermaid");
+    mermaidInstance = m.default;
+    mermaidInstance.initialize({
+      startOnLoad: false,
+      theme: theme === "dark" ? "dark" : "neutral",
+      securityLevel: "loose",
+      flowchart: {
+        defaultRenderer: "elk",
+        curve: "basis",
+        useMaxWidth: true,
+      },
+    });
+  }
+  return mermaidInstance;
 }
 
 interface Doc {
@@ -50,14 +59,14 @@ function MermaidDiagram({ chart }: { chart: string }) {
 
   useEffect(() => {
     if (ref.current) {
-      mermaid
-        .render(id.current, chart)
-        .then(({ svg }) => {
+      getMermaid()
+        .then((mermaid) => mermaid.render(id.current, chart))
+        .then(({ svg }: { svg: string }) => {
           if (ref.current) {
             ref.current.innerHTML = svg;
           }
         })
-        .catch((err) => {
+        .catch((err: Error) => {
           console.error("Mermaid render error:", err);
           if (ref.current) {
             ref.current.innerHTML = `<pre class="text-destructive">Error rendering diagram</pre>`;
@@ -265,8 +274,8 @@ export function DocumentationView({ userRole }: DocumentationViewProps) {
   const isDeveloper = userRole === 'developer';
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      mermaid.initialize({
+    if (typeof window !== 'undefined' && mermaidInstance) {
+      mermaidInstance.initialize({
         startOnLoad: false,
         theme: theme === "dark" ? "dark" : "neutral",
         securityLevel: 'loose',
@@ -275,7 +284,7 @@ export function DocumentationView({ userRole }: DocumentationViewProps) {
           curve: 'basis',
           useMaxWidth: true
         }
-      })
+      });
     }
   }, [theme]);
 

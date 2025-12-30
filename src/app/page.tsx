@@ -1,14 +1,11 @@
 // app/page.tsx
-/** biome-ignore-all lint/performance/noImgElement: <explanation> */
-'use client'
-
 import { LogIn, Sparkles } from 'lucide-react'
 import Link from 'next/link'
-import { LightRays } from '@/components/layout/LightRays'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
+import { LightRaysClient } from '@/components/layout/LightRaysClient'
 
 export default function LandingPage() {
-
   return (
     <div className="min-h-screen relative overflow-hidden bg-background">
       {/* Ocean gradient background */}
@@ -20,22 +17,21 @@ export default function LandingPage() {
         }}
       />
 
-      {/* Logo background - LCP optimized */}
-      <img
+      {/* Logo background - LCP optimized with Next.js Image */}
+      <Image
         src="/defcat_logo.png"
-        alt=""
-        fetchPriority="high"
-        className="absolute inset-0 w-full h-full object-contain object-[center_70%] pointer-events-none "
-        style={{
-          objectFit: 'contain',
-        }}
+        alt="DefCat Logo"
+        fill
+        priority
+        sizes="100vw"
+        className="object-contain object-[center_70%] pointer-events-none"
       />
 
       {/* Overlay gradient for better content visibility */}
       <div className="absolute inset-0 bg-gradient-to-b from-background/10 via-background/20 to-background pointer-events-none" />
 
-      {/* Ocean Light Rays - GPU accelerated */}
-      <LightRays count={32} color="var(--mana-color)" />
+      {/* Ocean Light Rays - reduced count for performance */}
+      <LightRaysClient count={12} color="var(--mana-color)" />
 
       <div className="relative" style={{ zIndex: 10 }}>
         <section className="min-h-screen flex flex-col px-6">
@@ -83,33 +79,6 @@ export default function LandingPage() {
             </div>
           </div>
         </section>
-
-        <style jsx global>{`
-        @keyframes jumbo-animate {
-          0% { background-position: 0% 50%; }
-          50% { background-position: 100% 50%; }
-          100% { background-position: 0% 50%; }
-        }
-
-        .jumbo-background {
-          background: linear-gradient(
-            -45deg,
-            var(--gradient-color-1),
-            var(--gradient-color-2),
-            var(--gradient-color-3),
-            var(--gradient-color-4),
-            var(--gradient-color-1)
-          );
-          background-size: 400% 400%;
-          filter: blur(60px) saturate(150%);
-          animation: jumbo-animate 20s ease infinite;
-          transition: all 0.8s ease-in-out;
-        }
-
-        .dark .jumbo-background {
-          filter: blur(80px) saturate(200%) brightness(0.8);
-        }
-      `}</style>
       </div>
     </div>
   )

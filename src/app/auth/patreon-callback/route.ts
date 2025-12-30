@@ -6,6 +6,7 @@
 /** biome-ignore-all lint/complexity/noExcessiveCognitiveComplexity: Its not that complex, chill out */
 
 import { NextResponse } from 'next/server'
+import { createServerClient } from '@supabase/ssr'
 import { exchangeCodeForToken, fetchPatreonMembership } from '@/lib/api/patreon'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { logger } from '@/lib/observability/logger'
@@ -14,9 +15,15 @@ import { userLogins, patreonSyncs } from '@/lib/observability/metrics'
 export async function GET(request: Request) {
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get('code')
-  const origin = requestUrl.origin
 
-  logger.info('OAuth callback initiated', { origin, codePresent: !!code })
+  // Get the real origin from headers (Netlify proxies requests internally)
+  const forwardedHost = request.headers.get('x-forwarded-host') || request.headers.get('host')
+  const forwardedProto = request.headers.get('x-forwarded-proto') || 'https'
+  const origin = forwardedHost
+    ? `${forwardedProto}://${forwardedHost}`
+    : requestUrl.origin
+
+  logger.info('OAuth callback initiated', { origin, forwardedHost, codePresent: !!code })
 
   if (!code) {
     logger.error('OAuth callback failed: no authorization code provided')
@@ -144,8 +151,32 @@ export async function GET(request: Request) {
       return NextResponse.redirect(`${origin}/auth/login?error=password_setup_failed`)
     }
 
-    // Sign in to get session tokens
-    const { data: sessionData, error: signInError } = await adminClient.auth.signInWithPassword({
+    // Create a response that we'll add cookies to
+    const response = NextResponse.redirect(`${origin}/decks`)
+
+    // Track cookies that need to be set
+    const cookiesToSet: Array<{ name: string; value: string; options: Record<string, unknown> }> = []
+
+    // Create a server client that will set cookies on our response
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL ?? '',
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '',
+      {
+        cookies: {
+          getAll() {
+            return []
+          },
+          setAll(cookies) {
+            cookies.forEach(({ name, value, options }) => {
+              cookiesToSet.push({ name, value, options })
+            })
+          },
+        },
+      }
+    )
+
+    // Sign in - this will trigger setAll with the session cookies
+    const { data: sessionData, error: signInError } = await supabase.auth.signInWithPassword({
       email,
       password: userPassword,
     })
@@ -155,7 +186,27 @@ export async function GET(request: Request) {
       return NextResponse.redirect(`${origin}/auth/login?error=signin_failed`)
     }
 
-    logger.info('Session created successfully', { userId, tier, role: userRole })
+    // Check if cookies were collected
+    if (cookiesToSet.length === 0) {
+      logger.error('No cookies collected from signInWithPassword - session may not persist', { userId })
+    }
+
+    // Apply all cookies to the response
+    for (const { name, value, options } of cookiesToSet) {
+      response.cookies.set(name, value, options as Parameters<typeof response.cookies.set>[2])
+    }
+
+    logger.info('Session created with cookies', {
+      userId,
+      tier,
+      role: userRole,
+      cookieCount: cookiesToSet.length,
+      cookies: cookiesToSet.map(c => ({
+        name: c.name,
+        valueLength: c.value.length,
+        options: c.options
+      }))
+    })
 
     userLogins.add(1, {
       tier,
@@ -168,10 +219,7 @@ export async function GET(request: Request) {
       status: 'success',
     })
 
-    const redirectUrl = new URL(`${origin}/auth/callback-success`)
-    redirectUrl.hash = `access_token=${sessionData.session.access_token}&refresh_token=${sessionData.session.refresh_token}`
-
-    return NextResponse.redirect(redirectUrl.toString())
+    return response
   } catch (error) {
     logger.error('OAuth callback failed', error instanceof Error ? error : undefined, {
       origin,

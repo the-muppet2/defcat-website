@@ -30,6 +30,11 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
         <link
+          rel="preload"
+          href="https://cdn.jsdelivr.net/npm/mana-font@latest/css/mana.css"
+          as="style"
+        />
+        <link
           href="https://cdn.jsdelivr.net/npm/mana-font@latest/css/mana.css"
           rel="stylesheet"
           type="text/css"

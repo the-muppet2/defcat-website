@@ -35,13 +35,25 @@ const nextConfig: NextConfig = {
         pathname: '/assets/images/**',
       },
     ],
+    formats: ['image/avif', 'image/webp'],
   },
   typescript: {
-    // Disable type checking during build
     ignoreBuildErrors: true,
   },
-  // Disable source maps in development to prevent Turbopack source map 404s
   productionBrowserSourceMaps: false,
+  experimental: {
+    optimizePackageImports: [
+      '@radix-ui/react-dialog',
+      '@radix-ui/react-dropdown-menu',
+      '@radix-ui/react-tooltip',
+      '@radix-ui/react-popover',
+      '@radix-ui/react-tabs',
+      '@radix-ui/react-select',
+      '@radix-ui/react-navigation-menu',
+      'lucide-react',
+      '@tanstack/react-query',
+    ],
+  },
 }
 
 export default nextConfig

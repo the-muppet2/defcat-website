@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
+import { Suspense, useEffect } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
 // Force dynamic rendering - don't prerender at build time
@@ -9,52 +9,71 @@ export const dynamic = 'force-dynamic'
 
 /**
  * Auth Callback Success Page
- * Handles setting the session from URL hash parameters
+ * Handles setting the session from query params (iOS Safari compatible)
  */
-export default function CallbackSuccessPage() {
+function CallbackHandler() {
   const router = useRouter()
 
   useEffect(() => {
     const setSession = async () => {
-      // Get session data from URL hash
-      const hash = window.location.hash.substring(1)
-      const params = new URLSearchParams(hash)
+      // Small delay to ensure URL is fully updated after redirect
+      await new Promise(resolve => setTimeout(resolve, 100))
 
-      const accessToken = params.get('access_token')
-      const refreshToken = params.get('refresh_token')
+      // Read directly from window.location (useSearchParams doesn't work reliably after server redirects)
+      const url = new URL(window.location.href)
+      let accessToken = url.searchParams.get('access_token')
+      let refreshToken = url.searchParams.get('refresh_token')
+
+      // Fallback to hash for backwards compatibility
+      if (!accessToken || !refreshToken) {
+        const hash = window.location.hash.substring(1)
+        const hashParams = new URLSearchParams(hash)
+        accessToken = hashParams.get('access_token')
+        refreshToken = hashParams.get('refresh_token')
+      }
+
+      // Clear URL immediately to avoid token exposure in browser history
+      if (accessToken && refreshToken) {
+        window.history.replaceState({}, '', '/auth/callback-success')
+      }
 
       if (!accessToken || !refreshToken) {
-        console.error('Missing session tokens in URL')
         router.push('/auth/login?error=session_missing')
         return
       }
 
-      const supabase = createClient()
+      try {
+        const supabase = createClient()
 
-      // Set the session
-      const { error } = await supabase.auth.setSession({
-        access_token: accessToken,
-        refresh_token: refreshToken,
-      })
+        const { error } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken,
+        })
 
-      if (error) {
-        console.error('Failed to set session:', error)
+        if (error) {
+          router.push('/auth/login?error=session_failed')
+          return
+        }
+
+        router.push('/decks')
+        router.refresh()
+      } catch {
         router.push('/auth/login?error=session_failed')
-        return
       }
-
-      console.log('✓ Session set successfully')
-
-      // Redirect to decks and refresh layout to update header
-      router.push('/decks')
-      router.refresh()
     }
 
     setSession()
   }, [router])
 
+  return null
+}
+
+export default function CallbackSuccessPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-background to-muted/20">
+      <Suspense fallback={null}>
+        <CallbackHandler />
+      </Suspense>
       <div className="max-w-md w-full p-8 space-y-6 text-center">
         <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-primary mx-auto" />
         <h1 className="text-2xl font-bold">Completing sign-in...</h1>

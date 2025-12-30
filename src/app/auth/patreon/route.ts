@@ -6,7 +6,14 @@
 import { NextResponse } from 'next/server'
 
 function initiateOAuthFlow(request: Request) {
-  const origin = new URL(request.url).origin
+  const requestUrl = new URL(request.url)
+
+  // Get the real origin from headers (Netlify proxies requests internally)
+  const forwardedHost = request.headers.get('x-forwarded-host') || request.headers.get('host')
+  const forwardedProto = request.headers.get('x-forwarded-proto') || 'https'
+  const origin = forwardedHost
+    ? `${forwardedProto}://${forwardedHost}`
+    : requestUrl.origin
 
   const clientId = process.env.PATREON_CLIENT_ID
 
@@ -18,16 +25,8 @@ function initiateOAuthFlow(request: Request) {
     : process.env.PATREON_REDIRECT_URI
 
   if (!clientId || !redirectUri) {
-    console.error('Missing Patreon OAuth credentials')
-    console.error('Client ID present:', !!clientId)
-    console.error('Redirect URI:', redirectUri)
     return NextResponse.redirect(`${origin}/auth/login?error=config_missing`)
   }
-
-  console.log('🔐 Initiating OAuth flow')
-  console.log('Origin:', origin)
-  console.log('Is localhost:', isLocalhost)
-  console.log('Redirect URI:', redirectUri)
 
   // Build Patreon OAuth URL manually with proper scopes
   const params = new URLSearchParams({
