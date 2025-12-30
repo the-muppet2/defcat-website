@@ -17,13 +17,15 @@ export default function LandingPage() {
         }}
       />
 
-      {/* Logo background - LCP optimized with Next.js Image */}
+      {/* Logo background - optimized WebP with blur placeholder */}
       <Image
-        src="/defcat_logo.png"
+        src="/defcat_logo_optimized.webp"
         alt="DefCat Logo"
         fill
         priority
         sizes="100vw"
+        placeholder="blur"
+        blurDataURL="data:image/webp;base64,UklGRowCAABXRUJQVlA4WAoAAAAQAAAAHwAAKwAAQUxQSFQBAAABkLNtm2k77/fNiW3bTmXbTps6P8BOeicVq1y7jG2jtO2ksjMz31vstfbs8pQRMQGovBTNUeecK4MT1NSMbK3QPHUQAMsf1oGA0GfetLEDagKAOoUIit30m/zWEgKH7fSMLwsL+0MAQNB189XjD834tVXGZAYjjb8uFzbvOXFy77k/JBk9vzSCAIJD9Bb9f2Ou+RCCRT6rVuQwh5EkLXjvQwjBWOy5EwpAoFcZmG7kSDgAUEwwK0sYAi2CYjdDWuT7DjmCVi8YU4ycDYccvZ7mWYBDXovPtJTAqyo5DvMZmWrGWXAZgnpPykDju57QrGo3GcrxIweK3s8ZU8y4AIpsQdMbjClcB0V+Vazh/9KM31qX5DCR0YfgfbDgi/msDqQECNbTjPnGT9OgSByxft+xjavv/T6wfNvWZTMbQpCoyKzZUZGpSHZO1TlAnaqrEJRbFJXNVlA4IBIBAADQBgCdASogACwAPzmKuFWvKSUjKqwB4CcJZADF1BO1+CtBQM+3iH2ZTMnx2/gOWfL33eHyxPnSkUipXTeaTAAA/vV2BcGC01b1Fr3bGUXHqQmWWu/58+FABs7L6R4c9zMd75hXUNnr2EqxMGnxRFD9DEIBMcq17oboLKPONWxJ0quJm2XWhMh8Wt4mIccO26FhFMcohHCWNVpYeG+mZUdrrcoTWzNKgM8YzajeAtAQ+4CNBsDN+IbpNNFAEyzOgu55+ekJw91wb8nINJuWJD4PEJ40o6bZgv40jrDZ36oWn4rQN+JxZCBjPhjGTD//JN/iM7BXMLGpUhuje2Zc429AAAKyLaAAIdVeH3kNYd79ISAA"
         className="object-contain object-[center_70%] pointer-events-none"
       />
 

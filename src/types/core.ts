@@ -59,6 +59,7 @@ export interface DeckCard {
     cmc: number | null
     scryfall_id: string | null
     cached_image_url: string | null
+    layout: string | null
   } | null
 }
 

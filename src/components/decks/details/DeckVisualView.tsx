@@ -23,8 +23,9 @@ const DFC = ['transform', 'modal_dfc', 'reversible_card', 'double_faced_token', 
 
 const VirtualCard = memo(function VirtualCard({ dc, isFlipped, onToggleFlip, onHover }: VirtualCardProps) {
   const cardRef = useRef<HTMLDivElement>(null)
-  const isDFC = (dc.cards?.layout && DFC.includes(dc.cards.layout)) || 
+  const isDFC = (dc.cards?.layout && DFC.includes(dc.cards.layout)) ||
   (dc.cards?.type_line?.includes('//') && !['adventure', 'split', 'flip'].includes(dc.cards?.layout || ''))
+  const isFlipCard = dc.cards?.layout === 'flip'
   const isBattle = dc.cards?.type_line?.toLowerCase().includes('battle')
   const cardName = dc.cards?.name || ''
 
@@ -40,9 +41,12 @@ const VirtualCard = memo(function VirtualCard({ dc, isFlipped, onToggleFlip, onH
   if (!frontImageUrl) return null
 
   // For battles: animate Z rotation (90 -> 0) during the Y flip
-  // Front starts at 90deg, back is at 0deg
-  // Include translate to shift position as part of the transform
+  // For flip cards: rotate 180 degrees on Z axis (same image, upside down)
+  // For DFC: Y-axis flip to show different back image
   const getFlipTransform = () => {
+    if (isFlipCard) {
+      return isFlipped ? 'rotateZ(180deg)' : 'rotateZ(0deg)'
+    }
     if (isBattle) {
       return isFlipped
         ? 'rotateY(-180deg) rotateZ(0deg) translate(0px, 0px)'
@@ -70,7 +74,7 @@ const VirtualCard = memo(function VirtualCard({ dc, isFlipped, onToggleFlip, onH
       ref={cardRef}
       className="relative group"
       style={{
-        perspective: '1000px',
+        perspective: isFlipCard ? undefined : '1000px',
         ...battlePadding,
       }}
       onMouseEnter={handleMouseEnter}
@@ -79,16 +83,16 @@ const VirtualCard = memo(function VirtualCard({ dc, isFlipped, onToggleFlip, onH
       <div
         className="relative rounded-lg border-2 border-border hover:border-primary shadow-lg"
         style={{
-          transformStyle: 'preserve-3d',
+          transformStyle: isFlipCard ? undefined : 'preserve-3d',
           transform: getFlipTransform(),
-          transition: 'transform 0.7s cubic-bezier(0.4, 0.0, 0.2, 1)',
+          transition: 'transform 0.5s ease-in-out',
           transformOrigin: 'center center',
         }}
       >
         {/* Front Face */}
         <div
           className="relative w-full flex items-center justify-center"
-          style={{
+          style={isFlipCard ? {} : {
             backfaceVisibility: 'hidden',
             WebkitBackfaceVisibility: 'hidden',
           }}
@@ -131,6 +135,7 @@ const VirtualCard = memo(function VirtualCard({ dc, isFlipped, onToggleFlip, onH
         {/* DFC Flip Button - inside the transform container so it stays on the card */}
         {isDFC && (
           <button
+            type="button"
             onClick={() => onToggleFlip(cardName)}
             className="absolute bg-black/70 backdrop-blur-sm rounded-full w-7 h-7 flex items-center justify-center shadow-lg hover:bg-black/90 transition-colors cursor-pointer z-20"
             style={{
@@ -146,6 +151,25 @@ const VirtualCard = memo(function VirtualCard({ dc, isFlipped, onToggleFlip, onH
           </button>
         )}
       </div>
+
+      {/* Flip Card Button - outside transform so it stays fixed while card rotates */}
+      {isFlipCard && (
+        <button
+          type="button"
+          onClick={() => onToggleFlip(cardName)}
+          className="absolute bg-black/70 backdrop-blur-sm rounded-full w-7 h-7 flex items-center justify-center shadow-lg hover:bg-black/90 transition-colors cursor-pointer z-30"
+          style={{
+            top: '8px',
+            left: '8px',
+          }}
+          title={isFlipped ? 'Show normal orientation' : 'Flip card upside down'}
+        >
+          <i
+            className="ms ms-ability-duels-dfc text-white"
+            style={{ fontSize: '16px' }}
+          />
+        </button>
+      )}
     </div>
   )
 })

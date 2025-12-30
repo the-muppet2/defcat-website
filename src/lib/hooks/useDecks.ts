@@ -325,7 +325,8 @@ export function useDecklist(moxfieldId: string | undefined) {
             type_line,
             cmc,
             scryfall_id,
-            cached_image_url
+            cached_image_url,
+            layout
           )
         `)
         .eq('moxfield_deck_id', moxfieldId)

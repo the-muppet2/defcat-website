@@ -119,7 +119,8 @@ export async function getDeckCards(
         color_identity,
         colors,
         oracle_text,
-        rarity
+        rarity,
+        layout
       )
     `
     )
@@ -164,7 +165,8 @@ export async function getAllDeckCards(moxfieldId: string): Promise<{
         color_identity,
         colors,
         oracle_text,
-        rarity
+        rarity,
+        layout
       )
     `
     )
