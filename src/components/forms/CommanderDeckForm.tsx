@@ -20,6 +20,7 @@ import {
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { useAuth, useSubmissionEligibility } from '@/lib/auth/client'
+import { useDeckSubmission } from '@/lib/hooks/useDeckSubmission'
 import { createClient } from '@/lib/supabase/client'
 import { ColorIdentity } from '@/types/colors'
 import { defCatBracketOptions } from '@/types/core'
@@ -29,6 +30,7 @@ const MAX_QUEUED = 3
 export default function PagedDeckForm() {
   const auth = useAuth()
   const { isEligible, remainingSubmissions } = useSubmissionEligibility()
+  const { submitDeck, error: submissionError } = useDeckSubmission()
   const [currentStep, setCurrentStep] = useState(1)
   const [isLoading, setIsLoading] = useState(true)
   const [showSuccess, setShowSuccess] = useState(false)
@@ -255,46 +257,34 @@ export default function PagedDeckForm() {
           return
         }
 
-        const supabase = createClient()
-        const submissionStatus = isDraft ? 'draft' : willBeQueued ? 'queued' : 'pending'
+        // Map form data to API format (API expects mysteryDeck as 'yes'/'no' string)
+        const submissionData = {
+          submissionType: 'deck' as const,
+          patreonUsername: auth.user.email?.split('@')[0] || '',
+          email: formData.email || '',
+          discordUsername: formData.discordUsername || '',
+          mysteryDeck: formData.mysteryDeck || 'no',
+          commander: formData.commander || undefined,
+          colorPreference: formData.colorPreference.length > 0
+            ? JSON.stringify(formData.colorPreference)
+            : '',
+          theme: formData.theme || undefined,
+          bracket: formData.bracket || '',
+          budget: formData.budget || '',
+          coffee: formData.coffee || '',
+          idealDate: formData.idealDate || undefined,
+        }
 
-        const { error } = await supabase
-          .from('deck_submissions')
-          .insert({
-            user_id: auth.user.id,
-            patreon_id: auth.user.user_metadata?.patreon_id || '',
-            patreon_tier: auth.profile.tier || '',
-            patreon_username: auth.user.email?.split('@')[0] || '',
-            email: formData.email || '',
-            moxfield_username: formData.moxfieldUsername || '',
-            discord_username: formData.discordUsername || '',
-            mystery_deck: formData.mysteryDeck === 'yes',
-            commander: formData.commander || null,
-            // Store as JSON array for unambiguous parsing (preserves "WUBRG" vs individual letters)
-            color_preference: formData.colorPreference.length > 0
-              ? JSON.stringify(formData.colorPreference)
-              : null,
-            secondary_color_preference: formData.backupColorPreference.length > 0
-              ? JSON.stringify(formData.backupColorPreference)
-              : null,
-            theme: formData.theme || null,
-            bracket: formData.bracket || null,
-            budget: formData.budget || null,
-            coffee_preference: formData.coffee || null,
-            ideal_date: formData.idealDate || null,
-            status: submissionStatus,
-          })
-          .select()
-          .single()
+        const success = await submitDeck(submissionData, isDraft)
 
-        if (error) {
-          console.error('Submission error:', error)
-          let errorMessage = 'Failed to submit deck request. Please try again.'
+        if (!success) {
+          console.error('Submission error:', submissionError)
+          let errorMessage = submissionError || 'Failed to submit deck request. Please try again.'
 
-          if (error.message?.includes('Draft limit reached')) {
-            errorMessage = error.message
-          } else if (error.message?.includes('Monthly submission limit')) {
-            errorMessage = error.message
+          if (errorMessage.includes('Draft limit reached')) {
+            // Keep as is
+          } else if (errorMessage.includes('Monthly submission limit')) {
+            // Keep as is
           }
 
           setErrors({ submit: errorMessage })
@@ -993,10 +983,10 @@ export default function PagedDeckForm() {
               ? "Your deck submission has been added to your queue!"
               : "Your deck is in the build queue and will be started soon!"}
           </p>
-          {!willBeQueued && remainingSubmissions > 1 && (
+          {!willBeQueued && remainingSubmissions > 0 && (
             <p className="success-meta">
-              You have {remainingSubmissions - 1} credit
-              {remainingSubmissions - 1 !== 1 && 's'} remaining this month.
+              You have {remainingSubmissions} credit
+              {remainingSubmissions !== 1 && 's'} remaining this month.
             </p>
           )}
           <button className="btn btn-primary" onClick={resetForm}>

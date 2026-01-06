@@ -28,11 +28,10 @@ function getResendClient() {
 }
 
 // Validation helper
-function validateSubmission(data: any): data is DeckSubmissionFormData {
+function validateSubmission(data: any): { valid: boolean; missingField?: string } {
   const required = [
     'patreonUsername',
     'email',
-    'discordUsername',
     'colorPreference',
     'bracket',
     'budget',
@@ -41,22 +40,22 @@ function validateSubmission(data: any): data is DeckSubmissionFormData {
 
   for (const field of required) {
     if (!data[field] || typeof data[field] !== 'string' || data[field].trim() === '') {
-      return false
+      return { valid: false, missingField: field }
     }
   }
 
   // Validate email format
   const emailRegex = /^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/
   if (!emailRegex.test(data.email)) {
-    return false
+    return { valid: false, missingField: 'email (invalid format)' }
   }
 
   // Validate mysteryDeck is a string ('yes' or 'no')
   if (typeof data.mysteryDeck !== 'string' || !['yes', 'no'].includes(data.mysteryDeck)) {
-    return false
+    return { valid: false, missingField: `mysteryDeck (got: ${typeof data.mysteryDeck} = ${data.mysteryDeck})` }
   }
 
-  return true
+  return { valid: true }
 }
 
 // Get color identity name for email
@@ -148,11 +147,10 @@ export async function POST(request: NextRequest) {
       currentMonth.setHours(0, 0, 0, 0)
       const monthString = currentMonth.toISOString().split('T')[0]
 
-      const { data: credits, error: creditsError } = await supabase
+      const { data: userCredits, error: creditsError } = await supabase
         .from('user_credits')
-        .select('deck_credits')
+        .select('credits, last_granted')
         .eq('user_id', user.id)
-        .eq('credits_month', monthString)
         .single()
 
       if (creditsError && creditsError.code !== 'PGRST116') {
@@ -169,7 +167,57 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      const deckCredits = credits?.deck_credits ?? 0
+      // Extract deck credits from JSONB structure
+      const credits = userCredits?.credits as { deck?: number; roast?: number } | null
+      const lastGranted = userCredits?.last_granted as { deck?: string; roast?: string } | null
+
+      // Check if credits need to be refreshed for current month
+      const lastDeckGrant = lastGranted?.deck
+      const needsRefresh = !lastDeckGrant || lastDeckGrant < monthString
+
+      // Get tier credit allocation
+      const tierCredits: Record<string, number> = {
+        'Duke': 1,
+        'Wizard': 2,
+        'ArchMage': 3,
+      }
+      const monthlyAllocation = tierCredits[profile.patreon_tier] ?? 0
+
+      let deckCredits = credits?.deck ?? 0
+
+      logger.info('Credit check', {
+        userId: user.id,
+        rawCredits: userCredits?.credits,
+        credits,
+        lastGranted,
+        lastDeckGrant,
+        monthString,
+        needsRefresh,
+        monthlyAllocation,
+        deckCredits,
+        tier: profile.patreon_tier,
+      })
+
+      // If credits need refresh, reset to monthly allocation
+      if (needsRefresh && monthlyAllocation > 0) {
+        const newCredits = { ...credits, deck: monthlyAllocation }
+        const newLastGranted = { ...lastGranted, deck: monthString }
+
+        const { error: refreshError } = await supabase
+          .from('user_credits')
+          .upsert({
+            user_id: user.id,
+            credits: newCredits,
+            last_granted: newLastGranted,
+            updated_at: new Date().toISOString(),
+          })
+
+        if (refreshError) {
+          logger.error('Failed to refresh deck credits', refreshError, { userId: user.id })
+        } else {
+          deckCredits = monthlyAllocation
+        }
+      }
 
       if (deckCredits <= 0) {
         return NextResponse.json<SubmissionResponse>(
@@ -185,14 +233,14 @@ export async function POST(request: NextRequest) {
       }
 
       // Deduct a deck credit
+      const updatedCredits = { ...credits, deck: deckCredits - 1 }
       const { error: deductError } = await supabase
         .from('user_credits')
         .update({
-          deck_credits: deckCredits - 1,
+          credits: updatedCredits,
           updated_at: new Date().toISOString(),
         })
         .eq('user_id', user.id)
-        .eq('credits_month', monthString)
 
       if (deductError) {
         logger.error('Failed to deduct deck credit', deductError, { userId: user.id, creditsRemaining: deckCredits - 1 })
@@ -210,17 +258,21 @@ export async function POST(request: NextRequest) {
     }
 
     // Skip validation for drafts
-    if (!isDraft && !validateSubmission(body)) {
-      return NextResponse.json<SubmissionResponse>(
-        {
-          success: false,
-          error: {
-            message: 'Invalid submission data. Please check all required fields.',
-            code: 'VALIDATION_ERROR',
+    if (!isDraft) {
+      const validation = validateSubmission(body)
+      if (!validation.valid) {
+        logger.error('Validation failed', undefined, { missingField: validation.missingField, body })
+        return NextResponse.json<SubmissionResponse>(
+          {
+            success: false,
+            error: {
+              message: `Invalid submission data. Missing or invalid field: ${validation.missingField}`,
+              code: 'VALIDATION_ERROR',
+            },
           },
-        },
-        { status: 400 }
-      )
+          { status: 400 }
+        )
+      }
     }
 
     // Convert mysteryDeck string to boolean
@@ -258,16 +310,26 @@ export async function POST(request: NextRequest) {
 
       // If credit was deducted, try to refund it
       if (!isDraft) {
-        const currentMonth = new Date()
-        currentMonth.setDate(1)
-        currentMonth.setHours(0, 0, 0, 0)
-        const monthString = currentMonth.toISOString().split('T')[0]
+        try {
+          const { data: currentCredits } = await supabase
+            .from('user_credits')
+            .select('credits')
+            .eq('user_id', user.id)
+            .single()
 
-        await supabase.rpc('refund_credit', {
-          p_user_id: user.id,
-          p_submission_type: 'deck',
-          p_submission_month: monthString,
-        })
+          if (currentCredits?.credits) {
+            const refundedCredits = {
+              ...currentCredits.credits,
+              deck: ((currentCredits.credits as { deck?: number }).deck ?? 0) + 1,
+            }
+            await supabase
+              .from('user_credits')
+              .update({ credits: refundedCredits, updated_at: new Date().toISOString() })
+              .eq('user_id', user.id)
+          }
+        } catch (refundError) {
+          logger.error('Failed to refund deck credit', refundError instanceof Error ? refundError : undefined, { userId: user.id })
+        }
       }
 
       // Check if it's a submission limit error from the trigger

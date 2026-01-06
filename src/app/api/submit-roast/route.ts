@@ -147,11 +147,10 @@ export async function POST(request: NextRequest) {
       currentMonth.setHours(0, 0, 0, 0)
       const monthString = currentMonth.toISOString().split('T')[0]
 
-      const { data: credits, error: creditsError } = await supabase
+      const { data: userCredits, error: creditsError } = await supabase
         .from('user_credits')
-        .select('roast_credits')
+        .select('credits, last_granted')
         .eq('user_id', user.id)
-        .eq('credits_month', monthString)
         .single()
 
       if (creditsError && creditsError.code !== 'PGRST116') {
@@ -168,7 +167,39 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      const roastCredits = credits?.roast_credits ?? 0
+      // Extract roast credits from JSONB structure
+      const credits = userCredits?.credits as { deck?: number; roast?: number } | null
+      const lastGranted = userCredits?.last_granted as { deck?: string; roast?: string } | null
+
+      // Check if credits need to be refreshed for current month
+      const lastRoastGrant = lastGranted?.roast
+      const needsRefresh = !lastRoastGrant || lastRoastGrant < monthString
+
+      // Roast credits: 1 per month for eligible tiers
+      const monthlyAllocation = 1
+
+      let roastCredits = credits?.roast ?? 0
+
+      // If credits need refresh, reset to monthly allocation
+      if (needsRefresh) {
+        const newCredits = { ...credits, roast: monthlyAllocation }
+        const newLastGranted = { ...lastGranted, roast: monthString }
+
+        const { error: refreshError } = await supabase
+          .from('user_credits')
+          .upsert({
+            user_id: user.id,
+            credits: newCredits,
+            last_granted: newLastGranted,
+            updated_at: new Date().toISOString(),
+          })
+
+        if (refreshError) {
+          logger.error('Failed to refresh roast credits', refreshError, { userId: user.id })
+        } else {
+          roastCredits = monthlyAllocation
+        }
+      }
 
       if (roastCredits <= 0) {
         return NextResponse.json<SubmissionResponse>(
@@ -184,14 +215,14 @@ export async function POST(request: NextRequest) {
       }
 
       // Deduct a roast credit
+      const updatedCredits = { ...credits, roast: roastCredits - 1 }
       const { error: deductError } = await supabase
         .from('user_credits')
         .update({
-          roast_credits: roastCredits - 1,
+          credits: updatedCredits,
           updated_at: new Date().toISOString(),
         })
         .eq('user_id', user.id)
-        .eq('credits_month', monthString)
 
       if (deductError) {
         logger.error('Failed to deduct roast credit', deductError, { userId: user.id, creditsRemaining: roastCredits - 1 })
@@ -242,16 +273,26 @@ export async function POST(request: NextRequest) {
 
       // If credit was deducted, try to refund it
       if (!isPrivileged) {
-        const currentMonth = new Date()
-        currentMonth.setDate(1)
-        currentMonth.setHours(0, 0, 0, 0)
-        const monthString = currentMonth.toISOString().split('T')[0]
+        try {
+          const { data: currentCredits } = await supabase
+            .from('user_credits')
+            .select('credits')
+            .eq('user_id', user.id)
+            .single()
 
-        await supabase.rpc('refund_credit', {
-          p_user_id: user.id,
-          p_submission_type: 'roast',
-          p_submission_month: monthString,
-        })
+          if (currentCredits?.credits) {
+            const refundedCredits = {
+              ...currentCredits.credits,
+              roast: ((currentCredits.credits as { roast?: number }).roast ?? 0) + 1,
+            }
+            await supabase
+              .from('user_credits')
+              .update({ credits: refundedCredits, updated_at: new Date().toISOString() })
+              .eq('user_id', user.id)
+          }
+        } catch (refundError) {
+          logger.error('Failed to refund roast credit', refundError instanceof Error ? refundError : undefined, { userId: user.id })
+        }
       }
 
       return NextResponse.json<SubmissionResponse>(

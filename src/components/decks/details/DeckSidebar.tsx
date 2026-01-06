@@ -24,7 +24,11 @@ export function DeckSidebar({ cards }: DeckSidebarProps) {
     <div className="space-y-6">
       {/* Commander Card Images */}
       {commanderCards.length > 0 && (
-        <div id="commander-images" className="relative rounded-xl border max-w-[300px] z-0">
+        <div
+          id="commander-images"
+          className="relative rounded-xl border z-0"
+          style={{ width: commanderCards.length > 1 ? '600px' : '300px', maxWidth: '100%' }}
+        >
           <GlowingEffect
             blur={0}
             borderWidth={3}

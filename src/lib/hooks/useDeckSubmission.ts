@@ -1,5 +1,6 @@
 // hooks/useDeckSubmission.ts
 
+import { useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { DeckSubmissionFormData, SubmissionResponse } from '@/types/form'
@@ -26,6 +27,7 @@ export function useDeckSubmission(): UseSubmissionReturn {
     submissionNumber: null,
   })
 
+  const queryClient = useQueryClient()
   const supabase = createClient()
 
   const submitDeck = async (data: DeckSubmissionFormData, isDraft = false): Promise<boolean> => {
@@ -72,6 +74,9 @@ export function useDeckSubmission(): UseSubmissionReturn {
           throw new Error(result.error?.message || 'Failed to submit deck')
         }
       }
+
+      // Invalidate auth cache to refresh credits
+      await queryClient.invalidateQueries({ queryKey: ['auth-session'] })
 
       setState({
         isLoading: false,
