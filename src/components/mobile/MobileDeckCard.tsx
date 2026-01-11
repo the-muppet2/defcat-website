@@ -91,7 +91,7 @@ export const MobileDeckCard = memo(function MobileDeckCard({
         <div className="p-4">
           {/* Deck Name */}
           <h3 className="font-bold text-lg line-clamp-2 mb-1.5 leading-tight">
-            {deck.deck_title}
+            {deck.name}
           </h3>
 
           {/* Commander Name */}
@@ -119,21 +119,6 @@ export const MobileDeckCard = memo(function MobileDeckCard({
           </div>
         </div>
       </Link>
-
-      {/* Quick Actions Footer - Outside Link */}
-      {deck.moxfield_url && (
-        <div className="flex items-center gap-2 px-4 py-3 bg-accent/30 border-t border-border/50">
-          <a
-            href={deck.moxfield_url}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg bg-accent hover:bg-accent-tinted/50 text-sm font-semibold text-foreground transition-smooth active:scale-98 touch-target elevation-1 active:elevation-0"
-          >
-            <ExternalLink className="h-4 w-4" />
-            Moxfield
-          </a>
-        </div>
-      )}
     </div>
   )
 })

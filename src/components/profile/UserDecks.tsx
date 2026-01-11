@@ -106,7 +106,7 @@ export function UserDecks({ moxfieldUsername }: UserDecksProps) {
       // Now fetch full deck data for all matched IDs
       const { data: enhancedData, error: enhancedError } = await supabase
         .from('decks_enhanced')
-        .select('id, name, format, view_count, like_count, comment_count, mainboard_count, last_updated_at, public_id, moxfield_id, player_username, deck_title, commanders, color_string, description')
+        .select('id, name, format, view_count, like_count, comment_count, mainboard_count, last_updated_at, public_id, moxfield_id, player_username, user_title, commanders, color_string, description')
         .in('id', deckIds)
         .order('last_updated_at', { ascending: false })
 
@@ -139,12 +139,13 @@ export function UserDecks({ moxfieldUsername }: UserDecksProps) {
         const deckSetting = settingsMap[deckId]
 
         // Apply user overrides to deck title/description
-        const displayTitle = deckSetting?.user_title || deck.deck_title || deck.name
+        // user_title from moxfield_decks takes priority, then user_title from view, then name
+        const displayTitle = deckSetting?.user_title || deck.user_title || deck.name
         const displayDescription = deckSetting?.user_description || deck.description
 
         transformedDecks.push({
           ...deck,
-          deck_title: displayTitle,
+          user_title: displayTitle,
           description: displayDescription,
         } as EnhancedDeck)
 
@@ -297,7 +298,7 @@ export function UserDecks({ moxfieldUsername }: UserDecksProps) {
                 <div className="flex items-center justify-between w-full pr-4">
                   <div className="flex items-center gap-2">
                     {isHidden && <EyeOff className="h-4 w-4 text-muted-foreground" />}
-                    <span className="font-medium">{deck.deck_title || deck.name}</span>
+                    <span className="font-medium">{deck.user_title || deck.name}</span>
                   </div>
                   {deck.color_string && (
                     <span className="text-xs text-muted-foreground font-mono">

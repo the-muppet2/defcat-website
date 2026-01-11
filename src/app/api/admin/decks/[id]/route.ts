@@ -9,10 +9,10 @@ interface Commander {
 }
 
 interface UpdateDeckBody {
-  name: string
-  owner: string
+  name?: string
+  owner?: string
   description?: string
-  commanders: Commander[]
+  commanders?: Commander[]
   owner_profile_id?: string | null
 }
 
@@ -23,7 +23,10 @@ function getSupabaseClient() {
   )
 }
 
-async function verifyAdminAccess(request: NextRequest): Promise<{ success: true; userId: string } | { success: false; response: NextResponse }> {
+async function verifyAdminAccess(request: NextRequest): Promise<{ success: true; userId: string } | {
+  success:
+  false; response: NextResponse
+}> {
   const authHeader = request.headers.get('authorization')
   if (!authHeader) {
     return {
@@ -80,7 +83,7 @@ export async function PATCH(
 ) {
   try {
     const { id } = await context.params
-    
+
     // Verify admin access
     const authResult = await verifyAdminAccess(request)
     if (!authResult.success) {
@@ -90,115 +93,136 @@ export async function PATCH(
     const supabase = getSupabaseClient()
     const body: UpdateDeckBody = await request.json()
 
-    const { name, owner, commanders, owner_profile_id } = body
+    const { name, owner, commanders, owner_profile_id, description } = body
 
-    // Validate required fields
-    if (!name || !owner || !commanders || commanders.length === 0) {
+    // Check if this is a partial update (only owner_profile_id)
+    const isPartialOwnerUpdate = owner_profile_id !== undefined && !name && !owner && !commanders
+
+    if (isPartialOwnerUpdate) {
+      // Simple partial update - just update owner_profile_id
+      const { data: updatedDeck, error: updateError } = await supabase
+        .from('moxfield_decks')
+        .update({
+          owner_profile_id: owner_profile_id || null,
+        })
+        .eq('moxfield_id', id)
+        .select()
+        .single()
+
+      if (updateError) {
+        console.error('Error updating deck owner:', updateError)
+        return NextResponse.json(
+          { error: 'Failed to update deck owner' },
+          { status: 500 }
+        )
+      }
+
+      return NextResponse.json({
+        success: true,
+        data: updatedDeck,
+        partialUpdate: true,
+      })
+    }
+
+    // Full update - validate required fields
+    if (!name || !owner) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: 'Missing required fields: name and owner are required for full update' },
         { status: 400 }
       )
     }
 
-    // Ensure all commander cards exist in cards table
+    // If commanders are provided, ensure cards exist in cards table
     const newCardIds: string[] = []
-    
-    for (const commander of commanders) {
-      if (!commander.scryfall_id) {
-        return NextResponse.json(
-          { error: `Missing scryfall_id for commander: ${commander.name}` },
-          { status: 400 }
-        )
-      }
 
-      // Check if card exists
-      const { data: existingCard } = await supabase
-        .from('cards')
-        .select('id, scryfall_id, cached_image_url')
-        .eq('scryfall_id', commander.scryfall_id)
-        .single()
-
-      if (!existingCard) {
-        // Fetch card data from Scryfall
-        const scryfallResponse = await fetch(
-          `https://api.scryfall.com/cards/${commander.scryfall_id}`
-        )
-
-        if (!scryfallResponse.ok) {
+    if (commanders && commanders.length > 0) {
+      for (const commander of commanders) {
+        if (!commander.scryfall_id) {
           return NextResponse.json(
-            { error: `Failed to fetch card data for: ${commander.name}` },
-            { status: 500 }
+            { error: `Missing scryfall_id for commander: ${commander.name}` },
+            { status: 400 }
           )
         }
 
-        const cardData = await scryfallResponse.json()
-
-        // Create card entry
-        const { data: newCard, error: insertError } = await supabase
+        // Check if card exists
+        const { data: existingCard } = await supabase
           .from('cards')
-          .insert({
-            id: cardData.id,
-            name: cardData.name,
-            scryfall_id: cardData.id,
-            mana_cost: cardData.mana_cost,
-            cmc: cardData.cmc,
-            type_line: cardData.type_line,
-            oracle_text: cardData.oracle_text,
-            colors: cardData.colors,
-            color_identity: cardData.color_identity,
-            rarity: cardData.rarity,
-            set_code: cardData.set,
-            set_name: cardData.set_name,
-            image_url: cardData.image_uris?.normal,
-            prices: cardData.prices,
-          })
-          .select('id')
+          .select('id, scryfall_id, cached_image_url')
+          .eq('scryfall_id', commander.scryfall_id)
           .single()
 
-        if (insertError) {
-          console.error('Error inserting card:', insertError)
-          return NextResponse.json(
-            { error: `Failed to create card entry for: ${commander.name}` },
-            { status: 500 }
+        if (!existingCard) {
+          // Fetch card data from Scryfall
+          const scryfallResponse = await fetch(
+            `https://api.scryfall.com/cards/${commander.scryfall_id}`
           )
-        }
 
-        newCardIds.push(newCard.id)
-      } else if (!existingCard.cached_image_url) {
-        newCardIds.push(existingCard.id)
+          if (!scryfallResponse.ok) {
+            return NextResponse.json(
+              { error: `Failed to fetch card data for: ${commander.name}` },
+              { status: 500 }
+            )
+          }
+
+          const cardData = await scryfallResponse.json()
+
+          // Create card entry
+          const { data: newCard, error: insertError } = await supabase
+            .from('cards')
+            .insert({
+              id: cardData.id,
+              name: cardData.name,
+              scryfall_id: cardData.id,
+              mana_cost: cardData.mana_cost,
+              cmc: cardData.cmc,
+              type_line: cardData.type_line,
+              oracle_text: cardData.oracle_text,
+              colors: cardData.colors,
+              color_identity: cardData.color_identity,
+              rarity: cardData.rarity,
+              set_code: cardData.set,
+              set_name: cardData.set_name,
+              image_url: cardData.image_uris?.normal,
+              prices: cardData.prices,
+            })
+            .select('id')
+            .single()
+
+          if (insertError) {
+            console.error('Error inserting card:', insertError)
+            return NextResponse.json(
+              { error: `Failed to create card entry for: ${commander.name}` },
+              { status: 500 }
+            )
+          }
+
+          newCardIds.push(newCard.id)
+        } else if (!existingCard.cached_image_url) {
+          newCardIds.push(existingCard.id)
+        }
       }
     }
 
-    // Get current deck data to preserve other fields
-    const { data: currentDeck } = await supabase
-      .from('moxfield_decks')
-      .select('raw_data')
-      .eq('moxfield_id', id)
-      .single()
+    // Build update object - only update proper columns, NEVER touch raw_data
+    const updateData: Record<string, unknown> = {
+      name,
+      author_username: owner,
+    }
 
-    const rawData = currentDeck?.raw_data || {}
+    // Only update owner_profile_id if explicitly provided
+    if (owner_profile_id !== undefined) {
+      updateData.owner_profile_id = owner_profile_id || null
+    }
 
-    // Update commanders in raw_data
-    const updatedRawData = {
-      ...rawData,
-      commanders: commanders.map(c => ({
-        card: {
-          name: c.name,
-          id: c.scryfall_id,
-        }
-      })),
+    // If description is provided, store in user_description (not raw_data)
+    if (description !== undefined) {
+      updateData.user_description = description || null
     }
 
     // Update the deck
     const { data: updatedDeck, error: updateError } = await supabase
       .from('moxfield_decks')
-      .update({
-        name,
-        author_username: owner,
-        raw_data: updatedRawData,
-        owner_profile_id: owner_profile_id || null,
-        updated_at: new Date().toISOString(),
-      })
+      .update(updateData)
       .eq('moxfield_id', id)
       .select()
       .single()
@@ -214,7 +238,7 @@ export async function PATCH(
     if (newCardIds.length > 0) {
       const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
       const cacheUrl = `${supabaseUrl}/functions/v1/cache-images`
-      
+
       fetch(cacheUrl, {
         method: 'POST',
         headers: {
@@ -231,9 +255,9 @@ export async function PATCH(
     return NextResponse.json({
       success: true,
       data: updatedDeck,
-      newCardsCreated: commanders.filter(c => 
+      newCardsCreated: commanders ? commanders.filter(c =>
         newCardIds.includes(c.scryfall_id)
-      ).length,
+      ).length : 0,
       imageCacheTriggered: newCardIds.length > 0,
     })
   } catch (error) {

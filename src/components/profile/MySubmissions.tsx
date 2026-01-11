@@ -46,7 +46,7 @@ export function MySubmissions() {
         'id, created_at, status, commander, color_preference, bracket, mystery_deck, submission_type, updated_at'
       )
       .eq('user_id', auth.user.id)
-      .in('status', ['pending', 'queued', 'in_progress', 'completed', 'cancelled'])
+      .in('status', ['pending', 'queued', 'in_progress'])
       .order('created_at', { ascending: false })
 
     if (!error && data) {

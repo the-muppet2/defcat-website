@@ -188,6 +188,48 @@ export type Database = {
         }
         Relationships: []
       }
+      deck_process_queue: {
+        Row: {
+          attempts: number | null
+          claimed_at: string | null
+          claimed_by: string | null
+          created_at: string | null
+          deck_name: string | null
+          last_error: string | null
+          moxfield_deck_id: string
+          priority: number | null
+          processed_at: string | null
+          public_id: string
+          status: string | null
+        }
+        Insert: {
+          attempts?: number | null
+          claimed_at?: string | null
+          claimed_by?: string | null
+          created_at?: string | null
+          deck_name?: string | null
+          last_error?: string | null
+          moxfield_deck_id: string
+          priority?: number | null
+          processed_at?: string | null
+          public_id: string
+          status?: string | null
+        }
+        Update: {
+          attempts?: number | null
+          claimed_at?: string | null
+          claimed_by?: string | null
+          created_at?: string | null
+          deck_name?: string | null
+          last_error?: string | null
+          moxfield_deck_id?: string
+          priority?: number | null
+          processed_at?: string | null
+          public_id?: string
+          status?: string | null
+        }
+        Relationships: []
+      }
       deck_submissions: {
         Row: {
           bracket: string | null
@@ -310,13 +352,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "decklist_cards_card_id_fkey"
-            columns: ["card_id"]
-            isOneToOne: false
-            referencedRelation: "cards_with_dashes"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "decklist_cards_moxfield_deck_id_fkey"
             columns: ["moxfield_deck_id"]
             isOneToOne: false
@@ -328,13 +363,6 @@ export type Database = {
             columns: ["moxfield_deck_id"]
             isOneToOne: false
             referencedRelation: "decks_enhanced"
-            referencedColumns: ["moxfield_id"]
-          },
-          {
-            foreignKeyName: "decklist_cards_moxfield_deck_id_fkey"
-            columns: ["moxfield_deck_id"]
-            isOneToOne: false
-            referencedRelation: "decks_parsed"
             referencedColumns: ["moxfield_id"]
           },
           {
@@ -389,27 +417,30 @@ export type Database = {
         }
         Relationships: []
       }
-      edgecases: {
+      image_cache_queue: {
         Row: {
-          added_by: string | null
-          date_added: string | null
-          id: number
-          preserve_as: string
-          string_to_preserve: string
+          attempts: number | null
+          card_id: string
+          created_at: string | null
+          last_error: string | null
+          processed_at: string | null
+          status: string | null
         }
         Insert: {
-          added_by?: string | null
-          date_added?: string | null
-          id?: number
-          preserve_as: string
-          string_to_preserve: string
+          attempts?: number | null
+          card_id: string
+          created_at?: string | null
+          last_error?: string | null
+          processed_at?: string | null
+          status?: string | null
         }
         Update: {
-          added_by?: string | null
-          date_added?: string | null
-          id?: number
-          preserve_as?: string
-          string_to_preserve?: string
+          attempts?: number | null
+          card_id?: string
+          created_at?: string | null
+          last_error?: string | null
+          processed_at?: string | null
+          status?: string | null
         }
         Relationships: []
       }
@@ -508,6 +539,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "moxfield_decks_owner_profile_id_fkey"
+            columns: ["owner_profile_id"]
+            isOneToOne: false
+            referencedRelation: "users_enhanced"
+            referencedColumns: ["profile_id"]
           },
         ]
       }
@@ -650,37 +688,17 @@ export type Database = {
             foreignKeyName: "tier_benefits_tier_id_fkey"
             columns: ["tier_id"]
             isOneToOne: false
+            referencedRelation: "tier_benefit_matrix"
+            referencedColumns: ["tier_id"]
+          },
+          {
+            foreignKeyName: "tier_benefits_tier_id_fkey"
+            columns: ["tier_id"]
+            isOneToOne: false
             referencedRelation: "tiers"
             referencedColumns: ["id"]
           },
         ]
-      }
-      tier_credit_config: {
-        Row: {
-          created_at: string | null
-          deck_credits: number | null
-          is_active: boolean | null
-          roast_credits: number | null
-          tier: string
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          deck_credits?: number | null
-          is_active?: boolean | null
-          roast_credits?: number | null
-          tier: string
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          deck_credits?: number | null
-          is_active?: boolean | null
-          roast_credits?: number | null
-          tier?: string
-          updated_at?: string | null
-        }
-        Relationships: []
       }
       tiers: {
         Row: {
@@ -796,90 +814,99 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "user_credits_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "users_enhanced"
+            referencedColumns: ["profile_id"]
+          },
         ]
       }
     }
     Views: {
-      cards_with_dashes: {
-        Row: {
-          id: string | null
-          name: string | null
-          rarity: string | null
-          type_line: string | null
-        }
-        Insert: {
-          id?: string | null
-          name?: string | null
-          rarity?: string | null
-          type_line?: string | null
-        }
-        Update: {
-          id?: string | null
-          name?: string | null
-          rarity?: string | null
-          type_line?: string | null
-        }
-        Relationships: []
-      }
       deck_list_view: {
         Row: {
+          author_name: string | null
           author_username: string | null
           color_string: string | null
+          commanders_count: number | null
+          comment_count: number | null
           created_at: string | null
           format: string | null
           id: number | null
+          is_legal: boolean | null
           last_updated_at: string | null
           like_count: number | null
           mainboard_count: number | null
           moxfield_id: string | null
           name: string | null
-          primary_commander: string | null
           public_id: string | null
           public_url: string | null
-          total_price: number | null
+          sideboard_count: number | null
           view_count: number | null
+          visibility: string | null
         }
         Insert: {
+          author_name?: string | null
           author_username?: string | null
           color_string?: never
+          commanders_count?: number | null
+          comment_count?: number | null
           created_at?: string | null
           format?: string | null
           id?: number | null
+          is_legal?: boolean | null
           last_updated_at?: string | null
           like_count?: number | null
           mainboard_count?: number | null
           moxfield_id?: string | null
           name?: string | null
-          primary_commander?: never
           public_id?: string | null
           public_url?: string | null
-          total_price?: never
+          sideboard_count?: number | null
           view_count?: number | null
+          visibility?: string | null
         }
         Update: {
+          author_name?: string | null
           author_username?: string | null
           color_string?: never
+          commanders_count?: number | null
+          comment_count?: number | null
           created_at?: string | null
           format?: string | null
           id?: number | null
+          is_legal?: boolean | null
           last_updated_at?: string | null
           like_count?: number | null
           mainboard_count?: number | null
           moxfield_id?: string | null
           name?: string | null
-          primary_commander?: never
           public_id?: string | null
           public_url?: string | null
-          total_price?: never
+          sideboard_count?: number | null
           view_count?: number | null
+          visibility?: string | null
+        }
+        Relationships: []
+      }
+      deck_process_queue_stats: {
+        Row: {
+          avg_attempts: number | null
+          count: number | null
+          newest: string | null
+          oldest: string | null
+          status: string | null
         }
         Relationships: []
       }
       decks_enhanced: {
         Row: {
+          author: string | null
           author_display_name: string | null
-          auto_bracket: number | null
-          bookmark_count: number | null
+          author_name: string | null
+          author_username: string | null
           bracket: number | null
           cards_fetched_at: string | null
           color_identity: Json | null
@@ -888,9 +915,7 @@ export type Database = {
           commanders_count: number | null
           comment_count: number | null
           created_at: string | null
-          deck_title: string | null
           description: string | null
-          event_date: string | null
           fetched_at: string | null
           format: string | null
           has_primer: boolean | null
@@ -899,63 +924,130 @@ export type Database = {
           is_shared: boolean | null
           last_updated_at: string | null
           like_count: number | null
-          main_card_id: string | null
           mainboard_count: number | null
           moxfield_id: string | null
           moxfield_url: string | null
           name: string | null
+          owner_profile_id: string | null
           player_username: string | null
           public_id: string | null
           public_url: string | null
+          raw_data: Json | null
           sideboard_count: number | null
           total_cards: number | null
           updated_at: string | null
+          user_description: string | null
+          user_hidden: boolean | null
+          user_title: string | null
           view_count: number | null
           visibility: string | null
         }
-        Relationships: []
-      }
-      decks_parsed: {
-        Row: {
-          author_name: string | null
-          author_username: string | null
-          cards_fetched_at: string | null
-          commanders_count: number | null
-          comment_count: number | null
-          created_at: string | null
-          deck_title: string | null
-          event_date: string | null
-          event_date_std: string | null
-          fetched_at: string | null
-          format: string | null
-          id: number | null
-          is_legal: boolean | null
-          last_updated_at: string | null
-          like_count: number | null
-          mainboard_count: number | null
-          moxfield_id: string | null
-          original_name: string | null
-          player_username: string | null
-          public_id: string | null
-          public_url: string | null
-          sideboard_count: number | null
-          view_count: number | null
-          visibility: string | null
+        Insert: {
+          author?: never
+          author_display_name?: never
+          author_name?: string | null
+          author_username?: string | null
+          bracket?: never
+          cards_fetched_at?: string | null
+          color_identity?: never
+          color_string?: never
+          commanders?: never
+          commanders_count?: number | null
+          comment_count?: number | null
+          created_at?: string | null
+          description?: never
+          fetched_at?: string | null
+          format?: string | null
+          has_primer?: never
+          id?: number | null
+          is_legal?: boolean | null
+          is_shared?: never
+          last_updated_at?: string | null
+          like_count?: number | null
+          mainboard_count?: number | null
+          moxfield_id?: string | null
+          moxfield_url?: never
+          name?: string | null
+          owner_profile_id?: string | null
+          player_username?: never
+          public_id?: string | null
+          public_url?: string | null
+          raw_data?: Json | null
+          sideboard_count?: number | null
+          total_cards?: never
+          updated_at?: never
+          user_description?: string | null
+          user_hidden?: boolean | null
+          user_title?: string | null
+          view_count?: number | null
+          visibility?: string | null
         }
-        Relationships: []
+        Update: {
+          author?: never
+          author_display_name?: never
+          author_name?: string | null
+          author_username?: string | null
+          bracket?: never
+          cards_fetched_at?: string | null
+          color_identity?: never
+          color_string?: never
+          commanders?: never
+          commanders_count?: number | null
+          comment_count?: number | null
+          created_at?: string | null
+          description?: never
+          fetched_at?: string | null
+          format?: string | null
+          has_primer?: never
+          id?: number | null
+          is_legal?: boolean | null
+          is_shared?: never
+          last_updated_at?: string | null
+          like_count?: number | null
+          mainboard_count?: number | null
+          moxfield_id?: string | null
+          moxfield_url?: never
+          name?: string | null
+          owner_profile_id?: string | null
+          player_username?: never
+          public_id?: string | null
+          public_url?: string | null
+          raw_data?: Json | null
+          sideboard_count?: number | null
+          total_cards?: never
+          updated_at?: never
+          user_description?: string | null
+          user_hidden?: boolean | null
+          user_title?: string | null
+          view_count?: number | null
+          visibility?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "moxfield_decks_owner_profile_id_fkey"
+            columns: ["owner_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "moxfield_decks_owner_profile_id_fkey"
+            columns: ["owner_profile_id"]
+            isOneToOne: false
+            referencedRelation: "users_enhanced"
+            referencedColumns: ["profile_id"]
+          },
+        ]
       }
       mox_decks: {
         Row: {
           author_name: string | null
           author_username: string | null
-          cards_fetched_at: string | null
+          color_string: string | null
           commanders_count: number | null
           comment_count: number | null
           created_at: string | null
-          deck_title: string | null
           event_date: string | null
-          event_date_std: string | null
-          fetched_at: string | null
           format: string | null
           id: number | null
           is_legal: boolean | null
@@ -963,13 +1055,68 @@ export type Database = {
           like_count: number | null
           mainboard_count: number | null
           moxfield_id: string | null
-          original_name: string | null
+          name: string | null
           player_username: string | null
           public_id: string | null
           public_url: string | null
           sideboard_count: number | null
+          user_description: string | null
+          user_hidden: boolean | null
+          user_title: string | null
           view_count: number | null
           visibility: string | null
+        }
+        Insert: {
+          author_name?: string | null
+          author_username?: string | null
+          color_string?: never
+          commanders_count?: number | null
+          comment_count?: number | null
+          created_at?: string | null
+          event_date?: never
+          format?: string | null
+          id?: number | null
+          is_legal?: boolean | null
+          last_updated_at?: string | null
+          like_count?: number | null
+          mainboard_count?: number | null
+          moxfield_id?: string | null
+          name?: string | null
+          player_username?: never
+          public_id?: string | null
+          public_url?: string | null
+          sideboard_count?: number | null
+          user_description?: string | null
+          user_hidden?: boolean | null
+          user_title?: string | null
+          view_count?: number | null
+          visibility?: string | null
+        }
+        Update: {
+          author_name?: string | null
+          author_username?: string | null
+          color_string?: never
+          commanders_count?: number | null
+          comment_count?: number | null
+          created_at?: string | null
+          event_date?: never
+          format?: string | null
+          id?: number | null
+          is_legal?: boolean | null
+          last_updated_at?: string | null
+          like_count?: number | null
+          mainboard_count?: number | null
+          moxfield_id?: string | null
+          name?: string | null
+          player_username?: never
+          public_id?: string | null
+          public_url?: string | null
+          sideboard_count?: number | null
+          user_description?: string | null
+          user_hidden?: boolean | null
+          user_title?: string | null
+          view_count?: number | null
+          visibility?: string | null
         }
         Relationships: []
       }
@@ -978,6 +1125,29 @@ export type Database = {
           benefits: Json | null
           sort_order: number | null
           tier: string | null
+          tier_id: string | null
+        }
+        Relationships: []
+      }
+      users_enhanced: {
+        Row: {
+          attributed_decks: number[] | null
+          completed_submissions: Json | null
+          deck_credits: number | null
+          decks_owned_count: number | null
+          draft_submissions: Json | null
+          email: string | null
+          finished_submissions: Json | null
+          moxfield_username: string | null
+          patreon_tier: string | null
+          pending_submissions: Json | null
+          profile_created_at: string | null
+          profile_id: string | null
+          recent_decks: Json | null
+          rejected_submissions: Json | null
+          roast_credits: number | null
+          role: string | null
+          submissions_count: number | null
         }
         Relationships: []
       }
@@ -1015,6 +1185,14 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      claim_cache_batch: { Args: { batch_size?: number }; Returns: Json }
+      claim_deck_batch: {
+        Args: { batch_size?: number; worker_id?: string }
+        Returns: Json
+      }
+      cleanup_deck_queue: { Args: { older_than_hours?: number }; Returns: Json }
+      complete_cache_batch: { Args: { card_ids: string[] }; Returns: Json }
+      complete_deck_batch: { Args: { deck_ids: string[] }; Returns: Json }
       consume_credit: {
         Args: { p_amount?: number; p_credit_type: string; p_user_id: string }
         Returns: number
@@ -1026,7 +1204,17 @@ export type Database = {
           user_id: string
         }[]
       }
+      enqueue_cards_for_caching: { Args: { card_ids: string[] }; Returns: Json }
+      enqueue_decks_for_processing: { Args: { decks: Json }; Returns: Json }
       exec_sql: { Args: { query: string }; Returns: Json }
+      fail_cache_batch: {
+        Args: { card_ids: string[]; error_msg: string }
+        Returns: Json
+      }
+      fail_deck_batch: {
+        Args: { deck_ids: string[]; error_msg: string }
+        Returns: Json
+      }
       get_tier_monthly_credits: {
         Args: { tier: string }
         Returns: {
@@ -1056,6 +1244,7 @@ export type Database = {
         Args: { attempt_time: string; card_id: string; error_msg: string }
         Returns: undefined
       }
+      is_admin_user: { Args: never; Returns: boolean }
       parse_date: { Args: { p_text: string }; Returns: string }
       parse_date_from_string: { Args: { p_text: string }; Returns: string }
       parse_date_string: { Args: { p_text: string }; Returns: string }
@@ -1108,14 +1297,6 @@ export type Database = {
           parsed_user: string
         }[]
       }
-      parse7: {
-        Args: { deck_name: string }
-        Returns: {
-          deck_title: string
-          parsed_date: string
-          username: string
-        }[]
-      }
       parse8: {
         Args: { deck_name: string }
         Returns: {
@@ -1145,6 +1326,10 @@ export type Database = {
           p_user_id: string
         }
         Returns: boolean
+      }
+      release_stale_deck_claims: {
+        Args: { stale_minutes?: number }
+        Returns: Json
       }
       search_docs: {
         Args: {

@@ -71,14 +71,8 @@ export default function PagedDeckForm() {
           return
         }
 
-        if (!isEligible) {
-          const eligibleTiers = ['Duke', 'Wizard', 'ArchMage']
-          if (!eligibleTiers.includes(auth.profile.tier)) {
-            setTierError('Deck submissions require Duke, Wizard, or ArchMage tier.')
-            setIsLoading(false)
-            return
-          }
-        }
+        // Note: isEligible is based on credits > 0, not tier
+        // Users with credits can submit regardless of current tier (credits are always honored)
 
         const supabase = createClient()
         const { data: submissions, error: countError } = await supabase

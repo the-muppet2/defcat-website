@@ -125,22 +125,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const isDraft = body.isDraft === true
 
-    // Check tier requirements (skip for drafts and privileged users)
+    // Check credits and tier requirements (skip for drafts)
     if (!isDraft) {
-      const eligibleTiers = ['Duke', 'Wizard', 'ArchMage']
-      if (!eligibleTiers.includes(profile.patreon_tier)) {
-        return NextResponse.json<SubmissionResponse>(
-          {
-            success: false,
-            error: {
-              message: 'Your Patreon tier does not permit deck submissions. Please upgrade your tier to submit a deck.',
-              code: 'INSUFFICIENT_TIER',
-            },
-          },
-          { status: 403 }
-        )
-      }
-
       // Check deck credits for current month
       const currentMonth = new Date()
       currentMonth.setDate(1)
@@ -175,7 +161,8 @@ export async function POST(request: NextRequest) {
       const lastDeckGrant = lastGranted?.deck
       const needsRefresh = !lastDeckGrant || lastDeckGrant < monthString
 
-      // Get tier credit allocation
+      // Get tier credit allocation (only for eligible tiers)
+      const eligibleTiers = ['Duke', 'Wizard', 'ArchMage']
       const tierCredits: Record<string, number> = {
         'Duke': 1,
         'Wizard': 2,
@@ -198,7 +185,7 @@ export async function POST(request: NextRequest) {
         tier: profile.patreon_tier,
       })
 
-      // If credits need refresh, reset to monthly allocation
+      // If credits need refresh AND user has eligible tier, grant new credits
       if (needsRefresh && monthlyAllocation > 0) {
         const newCredits = { ...credits, deck: monthlyAllocation }
         const newLastGranted = { ...lastGranted, deck: monthString }
@@ -219,7 +206,21 @@ export async function POST(request: NextRequest) {
         }
       }
 
+      // Credits are honored regardless of current tier - if user has credits, they can submit
       if (deckCredits <= 0) {
+        // Only show tier error if user doesn't have credits AND isn't eligible for new ones
+        if (!eligibleTiers.includes(profile.patreon_tier)) {
+          return NextResponse.json<SubmissionResponse>(
+            {
+              success: false,
+              error: {
+                message: 'You have no deck credits remaining. Upgrade to Duke tier or higher to earn monthly credits.',
+                code: 'NO_CREDITS',
+              },
+            },
+            { status: 429 }
+          )
+        }
         return NextResponse.json<SubmissionResponse>(
           {
             success: false,

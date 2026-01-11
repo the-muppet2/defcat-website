@@ -50,21 +50,6 @@ const DeckRow = memo(function DeckRow({ deck }: { deck: EnhancedDeck }) {
       <td className="py-4 px-4 text-right text-sm text-muted-foreground">
         {deck.updated_at ? new Date(deck.updated_at).toLocaleDateString() : '-'}
       </td>
-      <td className="py-4 px-4 text-center">
-        <a
-          href={deck.moxfield_url || '#'}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 text-[var(--mana-color)] hover:brightness-110 transition-all"
-        >
-          <ExternalLink className="h-4 w-4" />
-        </a>
-      </td>
-      <td className="py-4 px-4 text-center">
-        <div className="flex items-center justify-center gap-2">
-          {deck.moxfield_url && <RoastButton moxfieldUrl={deck.moxfield_url} variant="icon-only" />}
-        </div>
-      </td>
     </tr>
   )
 })
@@ -512,9 +497,6 @@ export default function DesktopDecksPage() {
                             </div>
                           )}
                         </button>
-                      </th>
-                      <th className="text-center py-3 px-4 text-sm font-semibold text-muted-foreground">
-                        Link
                       </th>
                       <th className="text-center py-3 px-4 text-sm font-semibold text-muted-foreground">
                         Actions
