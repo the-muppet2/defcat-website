@@ -4,6 +4,7 @@
 /node_modules
 /react-email
 /supabase
+/scripts
 /files
 /decks
 /.netlify

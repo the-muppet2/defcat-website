@@ -6,7 +6,7 @@
 
 import { ChevronDown, ChevronUp, ExternalLink, Filter, X, Shuffle, Loader2 } from 'lucide-react'
 import Link from '@/components/auth/ProtectedLink'
-import { memo, useMemo, useState } from 'react'
+import { memo, useEffect, useMemo, useState } from 'react'
 import { ManaSymbols } from '@/components/decks/ManaSymbols'
 import { RoastButton } from '@/components/decks/RoastButton'
 import { useDecksInfinite } from '@/lib/hooks/useDecks'
@@ -67,6 +67,15 @@ export default function DesktopDecksPage() {
   >('view_count')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
   const [showFilters, setShowFilters] = useState(true)
+
+  const hasActiveFilters = !!(searchQuery || selectedColors.length > 0 || selectedBracket)
+
+  // Auto-fetch all remaining pages when filters are active
+  useEffect(() => {
+    if (hasActiveFilters && hasNextPage && !isFetchingNextPage) {
+      fetchNextPage()
+    }
+  }, [hasActiveFilters, hasNextPage, isFetchingNextPage, fetchNextPage])
 
   const filteredDecks = useMemo(() => {
     let filtered = [...decks]
@@ -384,8 +393,13 @@ export default function DesktopDecksPage() {
               )}
               <h1 className="text-2xl font-bold">Decklist Database</h1>
             </div>
-            <div className="text-sm text-muted-foreground">
-              {filteredDecks.length} / {totalDecks} decks
+            <div className="text-sm text-muted-foreground flex items-center gap-2">
+              {hasActiveFilters
+                ? `${filteredDecks.length} matching / ${decks.length} loaded`
+                : `${decks.length} / ${totalDecks} decks`}
+              {hasActiveFilters && isFetchingNextPage && (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              )}
             </div>
           </div>
         </header>

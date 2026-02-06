@@ -1,6 +1,9 @@
 [build]
-  command = "npm run build"
+  command = "npm run build"  # Using npm for WSL compatibility
   publish = ".next"
+
+[functions]
+  node_bundler = "esbuild"
 
   ## Uncomment to use this redirect for Single Page Applications like create-react-app.
   ## Not needed for static site generators.

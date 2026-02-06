@@ -341,10 +341,6 @@ export function UserDecks({ moxfieldUsername }: UserDecksProps) {
                         {deck.comment_count?.toLocaleString() || 0}
                       </span>
                     </div>
-                    <div>
-                      <span className="text-muted-foreground">Cards:</span>
-                      <span className="ml-2 font-medium">{deck.mainboard_count || 0}</span>
-                    </div>
                   </div>
 
                   {deck.last_updated_at && (

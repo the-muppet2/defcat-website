@@ -96,7 +96,6 @@ export function ProfileEditForm({
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           className="bg-accent-tinted border-tinted"
-          required
         />
       </div>
 
