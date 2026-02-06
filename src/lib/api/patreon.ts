@@ -105,14 +105,20 @@ export async function fetchPatreonMembership(
   // Extract Discord ID from social connections
   const discordId = data.data.attributes.social_connections?.discord?.user_id || null
 
-  logger.debug('Patreon membership data retrieved', {
-    patreonId: data.data.id,
-    patronStatus: data.included?.[0]?.attributes.patron_status,
-    hasDiscordLinked: !!discordId,
-  })
-
   // Extract user ID
   const patreonId = data.data.id
+
+  logger.info('Patreon membership data retrieved', {
+    patreonId,
+    includedCount: data.included?.length ?? 0,
+    memberships: data.included?.map((item) => ({
+      id: item.id,
+      type: item.type,
+      patronStatus: item.attributes.patron_status,
+      pledgeCents: item.attributes.currently_entitled_amount_cents,
+    })),
+    hasDiscordLinked: !!discordId,
+  })
 
   // Find active membership
   const activeMembership = data.included?.find(
@@ -125,6 +131,24 @@ export async function fetchPatreonMembership(
   // Determine tier from pledge amount
   const pledgeAmountCents = activeMembership?.attributes.currently_entitled_amount_cents || 0
   const tier = determineTier(pledgeAmountCents)
+
+  // Warn on known Patreon API bug: active patron but $0 entitled
+  if (
+    activeMembership?.attributes.patron_status === 'active_patron' &&
+    activeMembership.attributes.currently_entitled_amount_cents === 0
+  ) {
+    logger.warn('Patreon API bug detected: active_patron with $0 entitled amount', {
+      patreonId,
+      membershipId: activeMembership.id,
+    })
+  }
+
+  logger.info('Patreon tier determined', {
+    patreonId,
+    pledgeAmountCents,
+    tier,
+    patronStatus: activeMembership?.attributes.patron_status ?? 'no_membership',
+  })
 
   return { tier, patreonId, discordId }
 }

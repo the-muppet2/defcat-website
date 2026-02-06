@@ -33,7 +33,7 @@ function initiateOAuthFlow(request: Request) {
     response_type: 'code',
     client_id: clientId,
     redirect_uri: redirectUri,
-    scope: 'identity identity[email] identity.memberships',
+    scope: 'identity identity[email]',
   })
 
   const patreonAuthUrl = `https://www.patreon.com/oauth2/authorize?${params.toString()}`

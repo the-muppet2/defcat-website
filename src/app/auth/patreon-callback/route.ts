@@ -121,17 +121,45 @@ export async function GET(request: Request) {
       .maybeSingle()
 
     const userRole = existingProfile?.role || 'user'
-    
-    // Update/create profile (including Discord ID from Patreon social connections)
-    const { error: upsertError } = await adminClient.from('profiles').upsert({
+
+    // Fetch tier_locked separately so a missing column doesn't break the role query
+    let tierLocked = false
+    try {
+      const { data: lockData } = await adminClient
+        .from('profiles')
+        .select('tier_locked')
+        .eq('id', userId)
+        .maybeSingle()
+      tierLocked = lockData?.tier_locked === true
+    } catch {
+      // tier_locked column may not exist yet if migration hasn't been applied
+      logger.debug('tier_locked column not available, defaulting to unlocked')
+    }
+
+    // Always log the Patreon-detected tier for admin visibility
+    logger.info('Patreon tier sync', {
+      userId,
+      patreonTier: tier,
+      tierLocked,
+      action: tierLocked ? 'skipped (tier_locked)' : 'applied',
+    })
+
+    // Build upsert object - only include patreon_tier when NOT locked
+    const upsertData: Record<string, unknown> = {
       id: userId,
       email,
       patreon_id: patreonId,
-      patreon_tier: tier,
       discord_id: discordId,
       role: userRole,
       updated_at: new Date().toISOString(),
-    })
+    }
+
+    if (!tierLocked) {
+      upsertData.patreon_tier = tier
+    }
+
+    // Update/create profile (including Discord ID from Patreon social connections)
+    const { error: upsertError } = await adminClient.from('profiles').upsert(upsertData)
 
     if (upsertError) {
       logger.error('Failed to update user profile', upsertError, { userId })

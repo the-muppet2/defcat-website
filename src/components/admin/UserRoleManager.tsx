@@ -1,6 +1,6 @@
 'use client'
 
-import { AlertCircle, CheckCircle2, Coins, Search, UserPlus, X } from 'lucide-react'
+import { AlertCircle, CheckCircle2, Coins, Lock, Search, Unlock, UserPlus, X } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -22,6 +22,7 @@ interface User {
   email: string
   role: string | null
   patreon_tier: string | null
+  tier_locked: boolean
   created_at: string | null
   deck_credits?: number
   roast_credits?: number
@@ -64,7 +65,7 @@ export function UserRoleManager({ currentUserRole }: UserRoleManagerProps) {
     try {
       const { data: profilesData, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, email, role, patreon_tier, patreon_id, created_at')
+        .select('id, email, role, patreon_tier, tier_locked, patreon_id, created_at')
         .order('email', { ascending: true })
         .limit(200)
 
@@ -184,6 +185,45 @@ export function UserRoleManager({ currentUserRole }: UserRoleManagerProps) {
       setMessage({
         type: 'error',
         text: err instanceof Error ? err.message : 'Failed to update tier',
+      })
+    } finally {
+      setUpdating(false)
+    }
+  }
+
+  const handleUnlockTier = async (userId: string) => {
+    setUpdating(true)
+    setMessage(null)
+
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession()
+      if (!session) {
+        throw new Error('Not authenticated')
+      }
+
+      const response = await fetch('/api/admin/users/unlock-tier', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ userId }),
+      })
+
+      const result = await response.json()
+
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Failed to unlock tier')
+      }
+
+      setMessage({ type: 'success', text: result.message })
+      await loadUsers()
+    } catch (err) {
+      setMessage({
+        type: 'error',
+        text: err instanceof Error ? err.message : 'Failed to unlock tier',
       })
     } finally {
       setUpdating(false)
@@ -683,23 +723,40 @@ export function UserRoleManager({ currentUserRole }: UserRoleManagerProps) {
                   </div>
 
                   <div className="flex items-center gap-2 mt-3">
-                    <Select
-                      value={user.patreon_tier || 'none'}
-                      onValueChange={(newTier) => handleUpdateTier(user.id, newTier)}
-                      disabled={updating}
-                    >
-                      <SelectTrigger className="flex-1 h-8 text-xs">
-                        <SelectValue placeholder="Tier" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">No Tier</SelectItem>
-                        {PATREON_TIERS.map((tier) => (
-                          <SelectItem key={tier} value={tier}>
-                            {tier}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <div className="flex-1 flex items-center gap-1">
+                      <Select
+                        value={user.patreon_tier || 'none'}
+                        onValueChange={(newTier) => handleUpdateTier(user.id, newTier)}
+                        disabled={updating}
+                      >
+                        <SelectTrigger className="flex-1 h-8 text-xs">
+                          <SelectValue placeholder="Tier" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">No Tier</SelectItem>
+                          {PATREON_TIERS.map((tier) => (
+                            <SelectItem key={tier} value={tier}>
+                              {tier}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {user.tier_locked ? (
+                        <button
+                          type="button"
+                          title="Tier locked - click to unlock (will sync from Patreon on next login)"
+                          onClick={() => handleUnlockTier(user.id)}
+                          disabled={updating}
+                          className="p-1 text-amber-400 hover:text-amber-300 disabled:opacity-50"
+                        >
+                          <Lock className="h-4 w-4" />
+                        </button>
+                      ) : (
+                        <span title="Tier unlocked - syncs from Patreon" className="p-1 text-muted-foreground/40">
+                          <Unlock className="h-4 w-4" />
+                        </span>
+                      )}
+                    </div>
                     <Select
                       value={user.role || 'user'}
                       onValueChange={(newRole) => handleUpdateRole(user.id, newRole)}

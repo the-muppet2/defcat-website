@@ -1,6 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
 import { type NextRequest, NextResponse } from 'next/server'
-import { PATREON_TIERS } from '@/types/core'
 
 export const dynamic = 'force-dynamic'
 
@@ -44,7 +43,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { userId, tier } = await request.json()
+    const { userId } = await request.json()
 
     if (!userId) {
       return NextResponse.json(
@@ -53,17 +52,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (tier && !PATREON_TIERS.includes(tier)) {
-      return NextResponse.json({ success: false, error: 'Invalid tier' }, { status: 400 })
-    }
-
     const { error: updateError } = await supabase
       .from('profiles')
-      .update({
-        patreon_tier: tier || null,
-        tier_locked: true,
-        updated_at: new Date().toISOString(),
-      })
+      .update({ tier_locked: false, updated_at: new Date().toISOString() })
       .eq('id', userId)
 
     if (updateError) {
@@ -72,14 +63,14 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: tier ? `Tier updated to ${tier}` : 'Tier removed',
+      message: 'Tier unlocked - will sync from Patreon on next login',
     })
   } catch (error) {
-    console.error('Failed to update tier:', error)
+    console.error('Failed to unlock tier:', error)
     return NextResponse.json(
       {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to update tier',
+        error: error instanceof Error ? error.message : 'Failed to unlock tier',
       },
       { status: 500 }
     )
