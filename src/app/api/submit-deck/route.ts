@@ -277,7 +277,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Convert mysteryDeck string to boolean
-    const mysteryDeck = body.mysteryDeck === true
+    const mysteryDeck = body.mysteryDeck === 'yes'
 
     // Prepare data for Supabase
     const submissionData = {
@@ -286,11 +286,13 @@ export async function POST(request: NextRequest) {
       patreon_tier: profile.patreon_tier,
       patreon_username: body.patreonUsername?.trim() || null,
       email: body.email?.trim()?.toLowerCase() || null,
+      moxfield_username: body.moxfieldUsername?.trim() || null,
       discord_username: body.discordUsername?.trim() || null,
       submission_type: 'deck' as const,
       mystery_deck: mysteryDeck,
       commander: body.commander?.trim() || null,
       color_preference: body.colorPreference || null,
+      backup_color_preference: body.backupColorPreference || null,
       theme: body.theme?.trim() || null,
       bracket: body.bracket || null,
       budget: body.budget?.trim() || null,
