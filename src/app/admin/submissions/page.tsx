@@ -14,10 +14,10 @@ export default async function SubmissionsPage() {
       <div className="max-w-7xl mx-auto space-y-8">
         <div>
           <h1 className="text-4xl font-bold bg-gradient-to-r from-[var(--gradient-start)] via-[var(--gradient-mid)] to-[var(--gradient-end)] bg-clip-text text-transparent">
-            Deck Submissions
+            Submissions
           </h1>
           <p className="text-muted-foreground mt-2">
-            Review and manage pending deck submission requests
+            Review and manage pending submission requests
           </p>
         </div>
 
