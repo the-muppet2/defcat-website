@@ -58,10 +58,15 @@ export function UserDecks({ moxfieldUsername }: UserDecksProps) {
 
       if (profileId) {
         // Get decks directly owned by this profile
-        const { data: ownedDecks } = await supabase
+        const { data: ownedDecks, error: ownedError } = await supabase
           .from('moxfield_decks')
           .select('id')
           .eq('owner_profile_id', profileId)
+
+        if (ownedError) {
+          console.error('Failed to fetch owned decks:', ownedError.message)
+          throw ownedError
+        }
 
         if (ownedDecks) {
           deckIds = ownedDecks.map(d => d.id)
@@ -69,10 +74,15 @@ export function UserDecks({ moxfieldUsername }: UserDecksProps) {
       }
 
       // Also get decks where author_username matches moxfield_username
-      const { data: authorDecks } = await supabase
+      const { data: authorDecks, error: authorError } = await supabase
         .from('moxfield_decks')
         .select('id')
         .ilike('author_username', moxfieldUsername)
+
+      if (authorError) {
+        console.error('Failed to fetch author decks:', authorError.message)
+        throw authorError
+      }
 
       if (authorDecks) {
         for (const d of authorDecks) {
@@ -83,10 +93,15 @@ export function UserDecks({ moxfieldUsername }: UserDecksProps) {
       }
 
       // Fallback: also check decks_enhanced player_username for legacy deck name parsing
-      const { data: enhancedByName } = await supabase
+      const { data: enhancedByName, error: enhancedByNameError } = await supabase
         .from('decks_enhanced')
         .select('id')
         .ilike('player_username', moxfieldUsername)
+
+      if (enhancedByNameError) {
+        console.error('Failed to fetch decks by player name:', enhancedByNameError.message)
+        throw enhancedByNameError
+      }
 
       if (enhancedByName) {
         for (const d of enhancedByName) {
