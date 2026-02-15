@@ -19,6 +19,7 @@ interface Deck {
   created_at: string
   view_count: number | null
   owner_profile_id: string | null
+  owner_email: string | null
   author_username: string | null
   user_hidden: boolean
 }
@@ -124,7 +125,7 @@ export function DecksList({ decks: initialDecks }: DecksListProps) {
         // Update local state
         setDecks(prev => prev.map(d =>
           d.moxfield_id === deckMoxfieldId
-            ? { ...d, owner_profile_id: userId }
+            ? { ...d, owner_profile_id: userId, owner_email: userEmail }
             : d
         ))
         setMessage({ deckId: deckMoxfieldId, type: 'success', text: `Assigned to ${userEmail}` })
@@ -275,10 +276,17 @@ export function DecksList({ decks: initialDecks }: DecksListProps) {
                       {deck.author_username && <span className="ml-3">Author: {deck.author_username}</span>}
                     </div>
 
-                    {/* Success/Error Message */}
-                    {message?.deckId === deck.moxfield_id && (
-                      <div className={`mt-2 text-xs flex items-center gap-1 ${message.type === 'success' ? 'text-green-400' : 'text-red-400'}`}>
-                        {message.type === 'success' ? <CheckCircle2 className="h-3 w-3" /> : null}
+                    {/* Owner Attribution */}
+                    {deck.owner_email && (
+                      <div className="mt-2 text-xs flex items-center gap-1 text-green-400">
+                        <CheckCircle2 className="h-3 w-3" />
+                        Assigned to {deck.owner_email}
+                      </div>
+                    )}
+
+                    {/* Error Message */}
+                    {message?.deckId === deck.moxfield_id && message.type === 'error' && (
+                      <div className="mt-2 text-xs flex items-center gap-1 text-red-400">
                         {message.text}
                       </div>
                     )}

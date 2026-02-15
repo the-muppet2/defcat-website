@@ -21,7 +21,7 @@ export default async function AdminDecksPage() {
   // Fetch all decks with minimal data including owner info
   const { data: rawDecks, error } = await supabase
     .from('moxfield_decks')
-    .select('id, moxfield_id, public_id, name, raw_data, created_at, view_count, owner_profile_id, author_username, user_hidden')
+    .select('id, moxfield_id, public_id, name, raw_data, created_at, view_count, owner_profile_id, author_username, user_hidden, profiles!owner_profile_id(email)')
     .order('created_at', { ascending: false })
 
   if (error) {
@@ -56,6 +56,7 @@ export default async function AdminDecksPage() {
       created_at: deck.created_at || new Date().toISOString(),
       view_count: deck.view_count,
       owner_profile_id: deck.owner_profile_id || null,
+      owner_email: (deck.profiles as { email: string } | null)?.email || null,
       author_username: deck.author_username || null,
       user_hidden: deck.user_hidden || false,
     }
