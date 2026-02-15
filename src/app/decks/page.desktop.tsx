@@ -8,7 +8,6 @@ import { ChevronDown, ChevronUp, ExternalLink, Filter, X, Shuffle, Loader2 } fro
 import Link from '@/components/auth/ProtectedLink'
 import { memo, useEffect, useMemo, useState } from 'react'
 import { ManaSymbols } from '@/components/decks/ManaSymbols'
-import { RoastButton } from '@/components/decks/RoastButton'
 import { useDecksInfinite } from '@/lib/hooks/useDecks'
 import { cn } from '@/lib/utils'
 import { ColorIdentity } from '@/types/colors'

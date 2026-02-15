@@ -5,7 +5,7 @@
 'use client'
 
 import type { User } from '@supabase/supabase-js'
-import { ClipboardList, LogIn, Sparkles, Menu, X, ArrowLeft } from 'lucide-react'
+import { ClipboardList, Flame, LogIn, Sparkles, Menu, X, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
@@ -19,7 +19,7 @@ import {
   NavigationMenuList,
   navigationMenuTriggerStyle,
 } from '@/components/ui/navigation-menu'
-import { useSubmissionEligibility } from '@/lib/auth/client'
+import { useSubmissionEligibility, useRoastEligibility } from '@/lib/auth/client'
 import { useNavigationHistory } from '@/lib/hooks/useNavigationHistory'
 import { ThemeAnimationType } from '@/lib/hooks/useModeAnimation'
 import { cn } from '@/lib/utils'
@@ -57,6 +57,11 @@ export function Header({
     remainingSubmissions,
     isLoading: submissionLoading,
   } = useSubmissionEligibility()
+  const {
+    isEligible: roastEligible,
+    roastCredits,
+    isLoading: roastLoading,
+  } = useRoastEligibility()
 
   // Track client-side mount to prevent hydration mismatch with navigation history
   useEffect(() => {
@@ -173,8 +178,7 @@ export function Header({
                   </NavigationMenuLink>
                 </NavigationMenuItem>
 
-                {(['Duke', 'Wizard', 'ArchMage'].includes(userTier) ||
-                  ['admin', 'moderator', 'developer'].includes(userRole)) && (
+                {['Duke', 'Wizard', 'ArchMage'].includes(userTier) && (
                   <NavigationMenuItem
                     style={{ border: "rounded 1px solid var(--mana-color)"}}>
                     <NavigationMenuLink asChild>
@@ -187,6 +191,24 @@ export function Header({
                         )}
                       >
                         Submit Deck
+                      </Link>
+                    </NavigationMenuLink>
+                  </NavigationMenuItem>
+                )}
+
+                {['Emissary', 'Duke', 'Wizard', 'ArchMage'].includes(userTier) && (
+                  <NavigationMenuItem
+                    style={{ border: "rounded 1px solid var(--mana-color)"}}>
+                    <NavigationMenuLink asChild>
+                      <Link
+                        href="/decks/roast-submission"
+                        className={cn(
+                          navigationMenuTriggerStyle(),
+                          'hover-tinted',
+                          pathname === '/decks/roast-submission' && 'tinted-accent border border-tinted'
+                        )}
+                      >
+                        Submit Roast
                       </Link>
                     </NavigationMenuLink>
                   </NavigationMenuItem>
@@ -240,6 +262,19 @@ export function Header({
                     <Sparkles className="h-5 w-5" style={{ color: 'var(--mana-color)' }} />
                     <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-amber-500 text-[10px] font-bold text-black">
                       {remainingSubmissions}
+                    </span>
+                  </Link>
+                )}
+                {/* Roast credit indicator */}
+                {!roastLoading && roastCredits > 0 && (
+                  <Link
+                    href="/decks/roast-submission"
+                    className="relative hover-tinted rounded-lg p-2 transition-all"
+                    title={`${roastCredits} roast credit${roastCredits !== 1 ? 's' : ''} remaining`}
+                  >
+                    <Flame className="h-5 w-5 text-orange-500" />
+                    <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-orange-500 text-[10px] font-bold text-white">
+                      {roastCredits}
                     </span>
                   </Link>
                 )}
@@ -319,8 +354,7 @@ export function Header({
               >
                 Store
               </Link>
-              {(['Duke', 'Wizard', 'ArchMage'].includes(userTier) ||
-                ['admin', 'moderator', 'developer'].includes(userRole)) && (
+              {['Duke', 'Wizard', 'ArchMage'].includes(userTier) && (
                 <Link
                   href="/decks/submission"
                   onClick={() => setMobileMenuOpen(false)}
@@ -330,6 +364,18 @@ export function Header({
                   )}
                 >
                   Submit Deck
+                </Link>
+              )}
+              {['Emissary', 'Duke', 'Wizard', 'ArchMage'].includes(userTier) && (
+                <Link
+                  href="/decks/roast-submission"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={cn(
+                    'block px-4 py-3 rounded-lg hover-tinted transition-all',
+                    pathname === '/decks/roast-submission' && 'tinted-accent border border-tinted'
+                  )}
+                >
+                  Submit Roast
                 </Link>
               )}
               </nav>

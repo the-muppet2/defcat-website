@@ -125,118 +125,102 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const isPrivileged = ['admin', 'moderator', 'developer'].includes(profile.role)
-{
-      const eligibleTiers = ['Emissary', 'Duke', 'Wizard', 'ArchMage']
-      if (!eligibleTiers.includes(profile.patreon_tier)) {
-        return NextResponse.json<SubmissionResponse>(
-          {
-            success: false,
-            error: {
-              message: `Roast submissions require Emissary tier ($30/month) or higher. Your current tier: ${profile.patreon_tier}`,
-              code: 'INSUFFICIENT_TIER',
-            },
+    // Check roast credits — possession of a credit is sufficient to submit
+    const currentMonth = new Date()
+    currentMonth.setDate(1)
+    currentMonth.setHours(0, 0, 0, 0)
+    const monthString = currentMonth.toISOString().split('T')[0]
+
+    const { data: userCredits, error: creditsError } = await supabase
+      .from('user_credits')
+      .select('credits, last_granted')
+      .eq('user_id', user.id)
+      .single()
+
+    if (creditsError && creditsError.code !== 'PGRST116') {
+      logger.error('Failed to check user roast credits', creditsError, { userId: user.id })
+      return NextResponse.json<SubmissionResponse>(
+        {
+          success: false,
+          error: {
+            message: 'Unable to check roast credits. Please try again.',
+            code: 'CREDITS_ERROR',
           },
-          { status: 403 }
-        )
-      }
+        },
+        { status: 500 }
+      )
+    }
 
-      // Check roast credits for current month
-      const currentMonth = new Date()
-      currentMonth.setDate(1)
-      currentMonth.setHours(0, 0, 0, 0)
-      const monthString = currentMonth.toISOString().split('T')[0]
+    // Extract roast credits from JSONB structure
+    const credits = userCredits?.credits as { deck?: number; roast?: number } | null
+    const lastGranted = userCredits?.last_granted as { deck?: string; roast?: string } | null
 
-      const { data: userCredits, error: creditsError } = await supabase
+    // Check if credits need to be refreshed for current month
+    const lastRoastGrant = lastGranted?.roast
+    const needsRefresh = !lastRoastGrant || lastRoastGrant < monthString
+
+    // Roast credits: 1 per month for eligible tiers
+    const eligibleTiers = ['Emissary', 'Duke', 'Wizard', 'ArchMage']
+    const monthlyAllocation = eligibleTiers.includes(profile.patreon_tier) ? 1 : 0
+
+    let roastCredits = credits?.roast ?? 0
+
+    // If credits need refresh and user is eligible, reset to monthly allocation
+    if (needsRefresh && monthlyAllocation > 0) {
+      const newCredits = { ...credits, roast: (credits?.roast ?? 0) + monthlyAllocation }
+      const newLastGranted = { ...lastGranted, roast: monthString }
+
+      const { error: refreshError } = await supabase
         .from('user_credits')
-        .select('credits, last_granted')
-        .eq('user_id', user.id)
-        .single()
-
-      if (creditsError && creditsError.code !== 'PGRST116') {
-        logger.error('Failed to check user roast credits', creditsError, { userId: user.id })
-        return NextResponse.json<SubmissionResponse>(
-          {
-            success: false,
-            error: {
-              message: 'Unable to check roast credits. Please try again.',
-              code: 'CREDITS_ERROR',
-            },
-          },
-          { status: 500 }
-        )
-      }
-
-      // Extract roast credits from JSONB structure
-      const credits = userCredits?.credits as { deck?: number; roast?: number } | null
-      const lastGranted = userCredits?.last_granted as { deck?: string; roast?: string } | null
-
-      // Check if credits need to be refreshed for current month
-      const lastRoastGrant = lastGranted?.roast
-      const needsRefresh = !lastRoastGrant || lastRoastGrant < monthString
-
-      // Roast credits: 1 per month for eligible tiers
-      const monthlyAllocation = 1
-
-      let roastCredits = credits?.roast ?? 0
-
-      // If credits need refresh, reset to monthly allocation
-      if (needsRefresh) {
-        const newCredits = { ...credits, roast: monthlyAllocation }
-        const newLastGranted = { ...lastGranted, roast: monthString }
-
-        const { error: refreshError } = await supabase
-          .from('user_credits')
-          .upsert({
-            user_id: user.id,
-            credits: newCredits,
-            last_granted: newLastGranted,
-            updated_at: new Date().toISOString(),
-          })
-
-        if (refreshError) {
-          logger.error('Failed to refresh roast credits', refreshError, { userId: user.id })
-        } else {
-          roastCredits = monthlyAllocation
-        }
-      }
-
-      if (roastCredits <= 0) {
-        return NextResponse.json<SubmissionResponse>(
-          {
-            success: false,
-            error: {
-              message: `You've used all your roast credits for this month. Credits refresh on the 1st of next month.`,
-              code: 'NO_CREDITS',
-            },
-          },
-          { status: 429 }
-        )
-      }
-
-      // Deduct a roast credit
-      const updatedCredits = { ...credits, roast: roastCredits - 1 }
-      const { error: deductError } = await supabase
-        .from('user_credits')
-        .update({
-          credits: updatedCredits,
+        .upsert({
+          user_id: user.id,
+          credits: newCredits,
+          last_granted: newLastGranted,
           updated_at: new Date().toISOString(),
         })
-        .eq('user_id', user.id)
 
-      if (deductError) {
-        logger.error('Failed to deduct roast credit', deductError, { userId: user.id, creditsRemaining: roastCredits - 1 })
-        return NextResponse.json<SubmissionResponse>(
-          {
-            success: false,
-            error: {
-              message: 'Failed to process credit. Please try again.',
-              code: 'CREDIT_DEDUCTION_ERROR',
-            },
-          },
-          { status: 500 }
-        )
+      if (refreshError) {
+        logger.error('Failed to refresh roast credits', refreshError, { userId: user.id })
+      } else {
+        roastCredits = newCredits.roast
       }
+    }
+
+    if (roastCredits <= 0) {
+      return NextResponse.json<SubmissionResponse>(
+        {
+          success: false,
+          error: {
+            message: 'You have no roast credits. Credits are granted monthly to Emissary tier and above.',
+            code: 'NO_CREDITS',
+          },
+        },
+        { status: 429 }
+      )
+    }
+
+    // Deduct a roast credit
+    const updatedCredits = { ...credits, roast: roastCredits - 1 }
+    const { error: deductError } = await supabase
+      .from('user_credits')
+      .update({
+        credits: updatedCredits,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('user_id', user.id)
+
+    if (deductError) {
+      logger.error('Failed to deduct roast credit', deductError, { userId: user.id, creditsRemaining: roastCredits - 1 })
+      return NextResponse.json<SubmissionResponse>(
+        {
+          success: false,
+          error: {
+            message: 'Failed to process credit. Please try again.',
+            code: 'CREDIT_DEDUCTION_ERROR',
+          },
+        },
+        { status: 500 }
+      )
     }
 
     // Prepare data for Supabase
@@ -271,28 +255,26 @@ export async function POST(request: NextRequest) {
     if (dbError) {
       logger.error('Failed to insert roast submission', dbError, { userId: user.id, tier: profile.patreon_tier })
 
-      // If credit was deducted, try to refund it
-      if (!isPrivileged) {
-        try {
-          const { data: currentCredits } = await supabase
-            .from('user_credits')
-            .select('credits')
-            .eq('user_id', user.id)
-            .single()
+      // Credit was deducted, try to refund it
+      try {
+        const { data: currentCredits } = await supabase
+          .from('user_credits')
+          .select('credits')
+          .eq('user_id', user.id)
+          .single()
 
-          if (currentCredits?.credits) {
-            const refundedCredits = {
-              ...currentCredits.credits,
-              roast: ((currentCredits.credits as { roast?: number }).roast ?? 0) + 1,
-            }
-            await supabase
-              .from('user_credits')
-              .update({ credits: refundedCredits, updated_at: new Date().toISOString() })
-              .eq('user_id', user.id)
+        if (currentCredits?.credits) {
+          const refundedCredits = {
+            ...currentCredits.credits,
+            roast: ((currentCredits.credits as { roast?: number }).roast ?? 0) + 1,
           }
-        } catch (refundError) {
-          logger.error('Failed to refund roast credit', refundError instanceof Error ? refundError : undefined, { userId: user.id })
+          await supabase
+            .from('user_credits')
+            .update({ credits: refundedCredits, updated_at: new Date().toISOString() })
+            .eq('user_id', user.id)
         }
+      } catch (refundError) {
+        logger.error('Failed to refund roast credit', refundError instanceof Error ? refundError : undefined, { userId: user.id })
       }
 
       return NextResponse.json<SubmissionResponse>(

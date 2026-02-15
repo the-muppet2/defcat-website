@@ -3,20 +3,15 @@
 
 import { Share2 } from 'lucide-react'
 import { memo, useState } from 'react'
-import { RoastButton } from '@/components/decks/RoastButton'
 import { cn } from '@/lib/utils'
 
 interface MobileActionBarProps {
-  moxfieldUrl?: string
   deckName: string
-  deckOwnerId?: string | null
   className?: string
 }
 
 export const MobileActionBar = memo(function MobileActionBar({
-  moxfieldUrl,
   deckName,
-  deckOwnerId,
   className,
 }: MobileActionBarProps) {
   const [shareSuccess, setShareSuccess] = useState(false)
@@ -68,18 +63,6 @@ export const MobileActionBar = memo(function MobileActionBar({
           <Share2 className="h-5 w-5" />
           {shareSuccess ? 'Copied!' : 'Share'}
         </button>
-
-        {/* Roast Button */}
-        {moxfieldUrl && (
-          <div className="flex-1">
-            <RoastButton
-              moxfieldUrl={moxfieldUrl}
-              variant="mobile"
-              deckOwnerId={deckOwnerId}
-              className="w-full"
-            />
-          </div>
-        )}
       </div>
     </div>
   )

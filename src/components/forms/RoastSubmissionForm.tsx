@@ -1,5 +1,7 @@
 /** biome-ignore-all lint/a11y/noLabelWithoutControl: <explanation> */
 /** biome-ignore-all lint/a11y/useButtonType: <explanation> */
+'use client'
+
 import {
   CheckCircle,
   ChevronLeft,
@@ -12,6 +14,7 @@ import {
   User,
 } from 'lucide-react'
 import { useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { useRoastEligibility } from '@/lib/auth/client'
 import { createClient } from '@/lib/supabase/client'
@@ -40,21 +43,17 @@ const ART_CHOICES = [
   { value: 'mostly', label: 'Mostly' },
 ]
 
-interface RoastSubmissionFormProps {
-  prefilledDeckUrl?: string | null
-}
-
-export default function RoastSubmissionForm({ prefilledDeckUrl }: RoastSubmissionFormProps) {
+export default function RoastSubmissionForm() {
   const eligibility = useRoastEligibility()
+  const queryClient = useQueryClient()
   const [currentStep, setCurrentStep] = useState(1)
   const [showSuccess, setShowSuccess] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [isDeckPrefilled, setIsDeckPrefilled] = useState(!!prefilledDeckUrl)
 
   const [formData, setFormData] = useState({
     preferredName: '',
     deckDescription: '',
-    moxfieldLink: prefilledDeckUrl || '',
+    moxfieldLink: '',
     targetBracket: '',
     artChoicesIntentional: '',
   })
@@ -170,6 +169,7 @@ export default function RoastSubmissionForm({ prefilledDeckUrl }: RoastSubmissio
         return
       }
 
+      await queryClient.invalidateQueries({ queryKey: ['auth-session'] })
       setShowSuccess(true)
       toast.success('Roast request submitted successfully!')
     } catch (error) {
@@ -236,42 +236,20 @@ export default function RoastSubmissionForm({ prefilledDeckUrl }: RoastSubmissio
                 <label htmlFor="moxfieldLink">
                   <LinkIcon className="inline-icon" />
                   Moxfield Link to Deck <span className="required">*</span>
-                  {isDeckPrefilled && (
-                    <span className="ml-2 px-2 py-0.5 text-xs rounded-full bg-primary/20 text-primary font-semibold">
-                      Pre-selected from DefCat
-                    </span>
-                  )}
                 </label>
-                <div className="relative">
-                  <input
-                    type="url"
-                    id="moxfieldLink"
-                    value={formData.moxfieldLink}
-                    onChange={(e) => {
-                      handleInputChange('moxfieldLink', e.target.value)
-                      if (isDeckPrefilled) setIsDeckPrefilled(false)
-                    }}
-                    className={`form-input ${errors.moxfieldLink ? 'error' : ''} ${isDeckPrefilled ? 'bg-primary/5' : ''}`}
-                    placeholder="https://www.moxfield.com/decks/..."
-                    readOnly={isDeckPrefilled}
-                  />
-                  {isDeckPrefilled && (
-                    <button
-                      type="button"
-                      onClick={() => setIsDeckPrefilled(false)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-primary hover:brightness-110 underline transition-all"
-                    >
-                      Edit
-                    </button>
-                  )}
-                </div>
+                <input
+                  type="url"
+                  id="moxfieldLink"
+                  value={formData.moxfieldLink}
+                  onChange={(e) => handleInputChange('moxfieldLink', e.target.value)}
+                  className={`form-input ${errors.moxfieldLink ? 'error' : ''}`}
+                  placeholder="https://www.moxfield.com/decks/..."
+                />
                 {errors.moxfieldLink && (
                   <span className="error-message">{errors.moxfieldLink}</span>
                 )}
                 <p className="step-description" style={{ marginTop: '0.5rem', marginBottom: 0 }}>
-                  {isDeckPrefilled
-                    ? 'This deck was selected from the DefCat collection. Click "Edit" to change it.'
-                    : 'Make sure your deck is set to public on Moxfield'}
+                  Make sure your deck is set to public on Moxfield
                 </p>
               </div>
             </div>
