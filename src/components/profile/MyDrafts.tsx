@@ -28,6 +28,10 @@ interface DraftSubmission {
   color_preference: string | null
   bracket: string | null
   mystery_deck: boolean
+  email: string | null
+  theme: string | null
+  budget: string | null
+  moxfield_username: string | null
 }
 
 export function MyDrafts() {
@@ -50,7 +54,7 @@ export function MyDrafts() {
     const supabase = createClient()
     const { data, error } = await supabase
       .from('deck_submissions')
-      .select('id, created_at, commander, color_preference, bracket, mystery_deck')
+      .select('id, created_at, commander, color_preference, bracket, mystery_deck, email, theme, budget, moxfield_username')
       .eq('user_id', auth.user.id)
       .eq('status', 'draft')
       .order('created_at', { ascending: false })
@@ -121,6 +125,30 @@ export function MyDrafts() {
                   <div>
                     <span className="text-muted-foreground">Bracket:</span>
                     <span className="ml-2 font-medium">{draft.bracket}</span>
+                  </div>
+                )}
+                {draft.moxfield_username && (
+                  <div>
+                    <span className="text-muted-foreground">Moxfield:</span>
+                    <span className="ml-2 font-medium">{draft.moxfield_username}</span>
+                  </div>
+                )}
+                {draft.email && (
+                  <div>
+                    <span className="text-muted-foreground">Email:</span>
+                    <span className="ml-2 font-medium">{draft.email}</span>
+                  </div>
+                )}
+                {draft.theme && (
+                  <div>
+                    <span className="text-muted-foreground">Theme:</span>
+                    <span className="ml-2 font-medium">{draft.theme}</span>
+                  </div>
+                )}
+                {draft.budget && (
+                  <div>
+                    <span className="text-muted-foreground">Budget:</span>
+                    <span className="ml-2 font-medium">{draft.budget}</span>
                   </div>
                 )}
               </div>
