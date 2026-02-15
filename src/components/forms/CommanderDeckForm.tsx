@@ -17,6 +17,7 @@ import {
   Trophy,
   User,
 } from 'lucide-react'
+import { useSearchParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { useAuth, useSubmissionEligibility } from '@/lib/auth/client'
@@ -29,6 +30,8 @@ const MAX_QUEUED = 3
 
 export default function PagedDeckForm() {
   const auth = useAuth()
+  const searchParams = useSearchParams()
+  const draftId = searchParams.get('draft')
   const { isEligible, remainingSubmissions } = useSubmissionEligibility()
   const { submitDeck, error: submissionError } = useDeckSubmission()
   const [currentStep, setCurrentStep] = useState(1)
@@ -37,6 +40,7 @@ export default function PagedDeckForm() {
   const [tierError, setTierError] = useState<string | null>(null)
   const [willBeQueued, setWillBeQueued] = useState(false)
   const [queuedSubmissions, setQueuedSubmissions] = useState(0)
+  const [editingDraftId, setEditingDraftId] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     email: '',
     moxfieldUsername: '',
@@ -105,6 +109,55 @@ export default function PagedDeckForm() {
 
         if (auth.user?.email) {
           setFormData((prev) => ({ ...prev, email: auth.user?.email || '' }))
+        }
+
+        // Rehydrate form from draft if ?draft=<id> is present
+        if (draftId && auth.user) {
+          const { data: draft, error: draftError } = await supabase
+            .from('deck_submissions')
+            .select('*')
+            .eq('id', draftId)
+            .eq('user_id', auth.user.id)
+            .eq('status', 'draft')
+            .single()
+
+          if (!draftError && draft) {
+            setEditingDraftId(draft.id)
+
+            // Parse color preferences back to arrays
+            let colors: string[] = []
+            if (draft.color_preference) {
+              try {
+                colors = JSON.parse(draft.color_preference)
+              } catch {
+                colors = []
+              }
+            }
+            let backupColors: string[] = []
+            if (draft.backup_color_preference) {
+              try {
+                backupColors = JSON.parse(draft.backup_color_preference)
+              } catch {
+                backupColors = []
+              }
+            }
+
+            setFormData((prev) => ({
+              ...prev,
+              email: draft.email || prev.email,
+              moxfieldUsername: draft.moxfield_username || '',
+              discordUsername: draft.discord_username || '',
+              mysteryDeck: draft.mystery_deck ? 'yes' : (draft.commander ? 'no' : ''),
+              commander: draft.commander || '',
+              colorPreference: colors,
+              backupColorPreference: backupColors,
+              theme: draft.theme || '',
+              bracket: draft.bracket || '',
+              budget: draft.budget || '',
+              coffee: draft.coffee_preference || '',
+              idealDate: draft.ideal_date || '',
+            }))
+          }
         }
 
         setIsLoading(false)
@@ -251,16 +304,31 @@ export default function PagedDeckForm() {
           return
         }
 
+        // If editing an existing draft, delete it first so the API creates a fresh row
+        if (editingDraftId) {
+          const supabase = createClient()
+          await supabase
+            .from('deck_submissions')
+            .delete()
+            .eq('id', editingDraftId)
+            .eq('user_id', auth.user.id)
+            .eq('status', 'draft')
+        }
+
         // Map form data to API format (API expects mysteryDeck as 'yes'/'no' string)
         const submissionData = {
           submissionType: 'deck' as const,
           patreonUsername: auth.user.email?.split('@')[0] || '',
           email: formData.email || '',
+          moxfieldUsername: formData.moxfieldUsername || '',
           discordUsername: formData.discordUsername || '',
           mysteryDeck: formData.mysteryDeck || 'no',
           commander: formData.commander || undefined,
           colorPreference: formData.colorPreference.length > 0
             ? JSON.stringify(formData.colorPreference)
+            : '',
+          backupColorPreference: formData.backupColorPreference.length > 0
+            ? JSON.stringify(formData.backupColorPreference)
             : '',
           theme: formData.theme || undefined,
           bracket: formData.bracket || '',
@@ -1097,23 +1165,6 @@ export default function PagedDeckForm() {
                     background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
                     borderColor: '#3b82f6',
                   }}
-                  onClick={() => handleSubmit(true)}
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="animate-spin" style={{ width: 20, height: 20 }} />
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      Save Draft
-                      <Hourglass style={{ width: 20, height: 20 }} />
-                    </>
-                  )}
-                </button>
-                <button
-                  className="btn btn-primary"
                   onClick={() => handleSubmit(false)}
                   disabled={isLoading}
                 >
@@ -1126,6 +1177,27 @@ export default function PagedDeckForm() {
                     <>
                       Submit
                       <CheckCircle style={{ width: 20, height: 20 }} />
+                    </>
+                  )}
+                </button>
+                <button
+                  className="btn btn-primary"
+                  style={{
+                    background: 'transparent',
+                    borderColor: 'var(--border-tinted, #3b82f6)',
+                  }}
+                  onClick={() => handleSubmit(true)}
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="animate-spin" style={{ width: 20, height: 20 }} />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      Save Draft
+                      <Hourglass style={{ width: 20, height: 20 }} />
                     </>
                   )}
                 </button>
