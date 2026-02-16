@@ -199,12 +199,8 @@ export default function PagedDeckForm() {
         }
         break
       case 3:
-        if (
-          formData.mysteryDeck === 'no' &&
-          !formData.commander &&
-          formData.colorPreference.length === 0
-        ) {
-          stepErrors.colorPreference = 'Please select at least one color or specify a commander'
+        if (formData.colorPreference.length === 0) {
+          stepErrors.colorPreference = 'Please select at least one color'
         }
         break
       case 4:
@@ -548,10 +544,7 @@ export default function PagedDeckForm() {
 
             <div className="form-group">
               <label>
-                Primary Color Preference{' '}
-                {formData.mysteryDeck === 'no' && !formData.commander && (
-                  <span className="required">*</span>
-                )}
+                Primary Color Preference <span className="required">*</span>
               </label>
               <div className="grid grid-cols-5 gap-x-6 gap-y-4 justify-items-center">
                 {['W', 'U', 'B', 'R', 'G'].map((colorId) => {
