@@ -25,6 +25,46 @@ interface PatreonSocialConnections {
   } | null
 }
 
+interface PatreonRelationshipRef {
+  data: { id: string; type: string } | null
+}
+
+interface PatreonRelationshipRefList {
+  data: Array<{ id: string; type: string }>
+}
+
+interface PatreonMemberItem {
+  id: string
+  type: 'member'
+  attributes: {
+    currently_entitled_amount_cents: number
+    patron_status: string
+  }
+  relationships?: {
+    campaign?: PatreonRelationshipRef
+    currently_entitled_tiers?: PatreonRelationshipRefList
+  }
+}
+
+interface PatreonTierItem {
+  id: string
+  type: 'tier'
+  attributes: {
+    title: string
+    amount_cents: number
+  }
+}
+
+interface PatreonCampaignItem {
+  id: string
+  type: 'campaign'
+  attributes: {
+    creation_name: string
+  }
+}
+
+type PatreonIncludedItem = PatreonMemberItem | PatreonTierItem | PatreonCampaignItem
+
 interface PatreonMember {
   data: {
     id: string
@@ -40,14 +80,7 @@ interface PatreonMember {
       }
     }
   }
-  included?: Array<{
-    id: string
-    type: string
-    attributes: {
-      currently_entitled_amount_cents: number
-      patron_status: string
-    }
-  }>
+  included?: PatreonIncludedItem[]
 }
 
 /**
@@ -82,7 +115,7 @@ export async function fetchPatreonMembership(
   accessToken: string
 ): Promise<PatreonMembershipResult> {
   const response = await fetch(
-    'https://www.patreon.com/api/oauth2/v2/identity?include=memberships&fields[user]=email,full_name,social_connections&fields[member]=currently_entitled_amount_cents,patron_status',
+    'https://www.patreon.com/api/oauth2/v2/identity?include=memberships,memberships.campaign,memberships.currently_entitled_tiers&fields[user]=email,full_name,social_connections&fields[member]=currently_entitled_amount_cents,patron_status&fields[tier]=title,amount_cents&fields[campaign]=creation_name',
     {
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -108,45 +141,117 @@ export async function fetchPatreonMembership(
   // Extract user ID
   const patreonId = data.data.id
 
+  // Separate included items by type
+  const members = (data.included?.filter((i): i is PatreonMemberItem => i.type === 'member')) ?? []
+  const tiers = (data.included?.filter((i): i is PatreonTierItem => i.type === 'tier')) ?? []
+  const campaigns = (data.included?.filter((i): i is PatreonCampaignItem => i.type === 'campaign')) ?? []
+
   logger.info('Patreon membership data retrieved', {
     patreonId,
-    includedCount: data.included?.length ?? 0,
-    memberships: data.included?.map((item) => ({
-      id: item.id,
-      type: item.type,
-      patronStatus: item.attributes.patron_status,
-      pledgeCents: item.attributes.currently_entitled_amount_cents,
+    members: members.map((m) => ({
+      id: m.id,
+      patronStatus: m.attributes.patron_status,
+      pledgeCents: m.attributes.currently_entitled_amount_cents,
+      campaignId: m.relationships?.campaign?.data?.id,
+    })),
+    tiers: tiers.map((t) => ({
+      id: t.id,
+      title: t.attributes.title,
+      amountCents: t.attributes.amount_cents,
+    })),
+    campaigns: campaigns.map((c) => ({
+      id: c.id,
+      name: c.attributes.creation_name,
     })),
     hasDiscordLinked: !!discordId,
   })
 
-  // Find active membership
-  const activeMembership = data.included?.find(
-    (item) =>
-      item.type === 'member' &&
-      (item.attributes.patron_status === 'active_patron' ||
-        item.attributes.patron_status === 'declined_patron')
+  // Filter to active memberships
+  const activeMembers = members.filter(
+    (m) =>
+      m.attributes.patron_status === 'active_patron' ||
+      m.attributes.patron_status === 'declined_patron'
   )
 
-  // Determine tier from pledge amount
-  const pledgeAmountCents = activeMembership?.attributes.currently_entitled_amount_cents || 0
-  const tier = determineTier(pledgeAmountCents)
+  // Pick the right membership: filter by campaign ID if configured, else use highest pledge
+  const campaignId = process.env.PATREON_CAMPAIGN_ID
+  let activeMembership: PatreonMemberItem | undefined
 
-  // Warn on known Patreon API bug: active patron but $0 entitled
+  if (campaignId) {
+    activeMembership = activeMembers.find(
+      (m) => m.relationships?.campaign?.data?.id === campaignId
+    )
+    if (!activeMembership && activeMembers.length > 0) {
+      logger.warn('No membership found for configured campaign, check PATREON_CAMPAIGN_ID', {
+        patreonId,
+        configuredCampaignId: campaignId,
+        availableCampaignIds: activeMembers.map((m) => m.relationships?.campaign?.data?.id),
+      })
+    }
+  } else {
+    // No campaign ID configured - pick membership with highest pledge
+    activeMembership = activeMembers.sort(
+      (a, b) => b.attributes.currently_entitled_amount_cents - a.attributes.currently_entitled_amount_cents
+    )[0]
+
+    if (activeMembers.length > 1) {
+      logger.warn(
+        'Multiple active memberships found. Set PATREON_CAMPAIGN_ID env var to filter to your campaign.',
+        {
+          patreonId,
+          memberships: activeMembers.map((m) => ({
+            campaignId: m.relationships?.campaign?.data?.id,
+            pledgeCents: m.attributes.currently_entitled_amount_cents,
+          })),
+        }
+      )
+    }
+  }
+
+  // Get pledge amount from membership
+  let pledgeAmountCents = activeMembership?.attributes.currently_entitled_amount_cents || 0
+
+  // Fallback: if $0 but active, check entitled tier objects for amount
   if (
-    activeMembership?.attributes.patron_status === 'active_patron' &&
-    activeMembership.attributes.currently_entitled_amount_cents === 0
+    pledgeAmountCents === 0 &&
+    activeMembership?.attributes.patron_status === 'active_patron'
   ) {
-    logger.warn('Patreon API bug detected: active_patron with $0 entitled amount', {
+    // Find tiers linked to this specific membership (don't fall back to unrelated tiers)
+    const entitledTierIds =
+      activeMembership.relationships?.currently_entitled_tiers?.data?.map((t) => t.id) ?? []
+    const entitledTier = tiers.find((t) => entitledTierIds.includes(t.id))
+
+    if (entitledTier) {
+      pledgeAmountCents = entitledTier.attributes.amount_cents
+      logger.warn('Patreon API $0 bug: using tier amount_cents as fallback', {
+        patreonId,
+        membershipId: activeMembership.id,
+        tierTitle: entitledTier.attributes.title,
+        tierAmountCents: entitledTier.attributes.amount_cents,
+      })
+    } else {
+      logger.warn('Patreon API $0 bug: active_patron with no entitled tier data', {
+        patreonId,
+        membershipId: activeMembership.id,
+      })
+    }
+  }
+
+  if (!activeMembership) {
+    logger.warn('No active Patreon membership found', {
       patreonId,
-      membershipId: activeMembership.id,
+      includedCount: data.included?.length ?? 0,
+      memberStatuses: members.map((m) => m.attributes.patron_status),
     })
   }
+
+  const tier = determineTier(pledgeAmountCents)
 
   logger.info('Patreon tier determined', {
     patreonId,
     pledgeAmountCents,
     tier,
+    campaignId: activeMembership?.relationships?.campaign?.data?.id,
     patronStatus: activeMembership?.attributes.patron_status ?? 'no_membership',
   })
 
