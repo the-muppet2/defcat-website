@@ -126,7 +126,7 @@ export function AuthOverlayProvider({ children }: AuthOverlayProviderProps) {
               {/* Description */}
               <p className="text-muted-foreground text-sm mb-6">
                 {errorType === 'tier'
-                  ? 'This content is available to Duke tier patrons and above.'
+                  ? 'This content is available to Knight tier patrons and above.'
                   : 'You must be logged in to view this content.'
                 }
               </p>

@@ -5,6 +5,7 @@ import { Filter, Search } from 'lucide-react'
 import { memo, useMemo, useState } from 'react'
 import { MobileDeckCard } from './MobileDeckCard'
 import { MobileFilterSheet } from './MobileFilterSheet'
+import { useAuth } from '@/lib/auth/client'
 import type { EnhancedDeck } from '@/types'
 
 interface MobileDeckListProps {
@@ -18,6 +19,8 @@ export const MobileDeckList = memo(function MobileDeckList({
   isLoading = false,
   error = null,
 }: MobileDeckListProps) {
+  const { profile } = useAuth()
+  const userId = profile?.id
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedColors, setSelectedColors] = useState<string[]>([])
   const [invertColors, setInvertColors] = useState(false)
@@ -215,7 +218,7 @@ export const MobileDeckList = memo(function MobileDeckList({
           </div>
         ) : (
           filteredDecks.map((deck) => (
-            <MobileDeckCard key={deck.id} deck={deck} />
+            <MobileDeckCard key={deck.id} deck={deck} isOwned={!!userId && deck.owner_profile_id === userId} />
           ))
         )}
       </div>

@@ -10,7 +10,7 @@ const BYPASS_ROLES = ['admin', 'moderator', 'developer']
 
 // Define protected route patterns and their tier requirements
 const PROTECTED_ROUTES: Array<{ pattern: RegExp; tier: PatreonTier }> = [
-  { pattern: /^\/decks\/[^/]+/, tier: 'Duke' },      // /decks/[id] requires Duke+
+  { pattern: /^\/decks\/[^/]+/, tier: 'Knight' },    // /decks/[id] requires Knight+
   { pattern: /^\/profile\/[^/]+/, tier: 'Citizen' }, // /profile/[id] requires Citizen+
 ]
 
@@ -27,10 +27,10 @@ function isProtectedRoute(pathname: string): boolean {
   return PROTECTED_ROUTES.some(route => route.pattern.test(pathname))
 }
 
-type LinkProps = ComponentProps<typeof NextLink>
+type LinkProps = ComponentProps<typeof NextLink> & { bypass?: boolean }
 
 export function Link(props: LinkProps) {
-  const { onClick, children, href, ...rest } = props
+  const { onClick, children, href, bypass, ...rest } = props
   const { isAuthenticated, profile, isLoading } = useAuth()
   const { showAuthOverlay, showTierOverlay } = useAuthOverlay()
 
@@ -39,8 +39,8 @@ export function Link(props: LinkProps) {
   const requiredTier = getRequiredTier(pathname)
 
   const handleClick = (e: MouseEvent<HTMLAnchorElement>) => {
-    // If not a protected route, proceed normally
-    if (!requiredTier) {
+    // If not a protected route or bypass is set, proceed normally
+    if (!requiredTier || bypass) {
       if (onClick) {
         (onClick as (e: MouseEvent<HTMLAnchorElement>) => void)(e)
       }

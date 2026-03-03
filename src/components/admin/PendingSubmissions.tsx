@@ -1058,8 +1058,8 @@ export function PendingSubmissions() {
                   </div>
                 )}
                 <p className="text-xs text-muted-foreground">
-                  Search for a user to link this deck to their profile. Leave empty to use username
-                  matching.
+                  Search for a user to link this deck to their profile. Leave empty to auto-link to
+                  the submitting user.
                 </p>
               </div>
             </div>

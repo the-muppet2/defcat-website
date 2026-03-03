@@ -11,11 +11,13 @@ import type { EnhancedDeck } from '@/types'
 interface MobileDeckCardProps {
   deck: EnhancedDeck
   className?: string
+  isOwned?: boolean
 }
 
 export const MobileDeckCard = memo(function MobileDeckCard({
   deck,
   className,
+  isOwned,
 }: MobileDeckCardProps) {
   const formattedDate = new Date(deck?.updated_at || Date.now()).toLocaleDateString('en-US', {
     month: 'short',
@@ -55,7 +57,7 @@ export const MobileDeckCard = memo(function MobileDeckCard({
       )}
     >
       {/* Clickable Card Area */}
-      <Link href={`/decks/${deck.id}`} className="block active:scale-98 transition-transform">
+      <Link href={`/decks/${deck.id}`} bypass={isOwned} className="block active:scale-98 transition-transform">
         {/* Commander Image Header */}
         <div className="relative h-36 overflow-hidden">
           <div

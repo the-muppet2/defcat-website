@@ -177,7 +177,7 @@ export function useDecksInfinite() {
 
       const { data, error, count } = await supabase
         .from('moxfield_decks')
-        .select('moxfield_id, public_id, name, public_url, raw_data, view_count, like_count, last_updated_at, author_username, user_hidden', { count: 'exact' })
+        .select('moxfield_id, public_id, name, public_url, raw_data, view_count, like_count, last_updated_at, author_username, user_hidden, owner_profile_id', { count: 'exact' })
         .or('user_hidden.is.null,user_hidden.eq.false')
         .range(from, to)
         .order('view_count', { ascending: false })
@@ -214,6 +214,7 @@ export function useDecksInfinite() {
           created_at: null,
           updated_at: deck.last_updated_at,
           visibility: null,
+          owner_profile_id: deck.owner_profile_id,
         } as unknown as EnhancedDeck
       })
 
@@ -245,7 +246,7 @@ export function useDeckInfo(id: string) {
       const supabase = createClient()
       const { data, error } = await supabase
         .from('moxfield_decks')
-        .select('id, moxfield_id, public_id, public_url, name, format, visibility, mainboard_count, sideboard_count, commanders_count, like_count, view_count, comment_count, is_legal, created_at, fetched_at, cards_fetched_at, last_updated_at, author_username, author_name, raw_data')
+        .select('id, moxfield_id, public_id, public_url, name, format, visibility, mainboard_count, sideboard_count, commanders_count, like_count, view_count, comment_count, is_legal, created_at, fetched_at, cards_fetched_at, last_updated_at, author_username, author_name, raw_data, owner_profile_id')
         .eq('moxfield_id', id)
         .limit(1)
 
@@ -292,6 +293,7 @@ export function useDeckInfo(id: string) {
         main_card_id: typeof rawData?.mainCardId === 'string' ? rawData.mainCardId : null,
         event_date: null,
         total_cards: deck.mainboard_count,
+        owner_profile_id: deck.owner_profile_id,
       } as EnhancedDeck
     },
     enabled: !!id,

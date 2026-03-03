@@ -9,18 +9,20 @@ import Link from '@/components/auth/ProtectedLink'
 import { memo, useEffect, useMemo, useState } from 'react'
 import { ManaSymbols } from '@/components/decks/ManaSymbols'
 import { useDecksInfinite } from '@/lib/hooks/useDecks'
+import { useAuth } from '@/lib/auth/client'
 import { cn } from '@/lib/utils'
 import { ColorIdentity } from '@/types/colors'
 import { bracketOptions } from '@/types/core'
 import type { EnhancedDeck } from '@/types'
 
 // Memoized deck row component
-const DeckRow = memo(function DeckRow({ deck }: { deck: EnhancedDeck }) {
+const DeckRow = memo(function DeckRow({ deck, isOwned }: { deck: EnhancedDeck; isOwned: boolean }) {
   return (
     <tr className="border-b border-tinted hover:bg-accent-tinted transition-all">
       <td className="py-4 px-4">
         <Link
           href={`/decks/${deck.moxfield_id}`}
+          bypass={isOwned}
           className="block hover:text-[var(--mana-color)] transition-colors"
         >
           <div className="font-medium">{deck.deck_title}</div>
@@ -55,6 +57,8 @@ const DeckRow = memo(function DeckRow({ deck }: { deck: EnhancedDeck }) {
 
 export default function DesktopDecksPage() {
   const { data, isLoading: loading, error, fetchNextPage, hasNextPage, isFetchingNextPage } = useDecksInfinite()
+  const { profile } = useAuth()
+  const userId = profile?.id
   const decks = useMemo(() => data?.pages?.flatMap(page => page.decks) ?? [], [data])
   const totalDecks = data?.pages?.[0]?.total ?? 0
   const [searchQuery, setSearchQuery] = useState('')
@@ -518,7 +522,7 @@ export default function DesktopDecksPage() {
                   </thead>
                   <tbody>
                     {filteredDecks.map((deck) => (
-                      <DeckRow key={deck.moxfield_id} deck={deck} />
+                      <DeckRow key={deck.moxfield_id} deck={deck} isOwned={!!userId && deck.owner_profile_id === userId} />
                     ))}
                   </tbody>
                 </table>

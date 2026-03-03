@@ -65,6 +65,7 @@ interface DeckCardProps {
   deck: Deck | LightweightDeck | MoxfieldDeck
   className?: string
   variant?: 'default' | 'compact' | 'featured'
+  isOwned?: boolean
 }
 
 // Helper to normalize deck properties across different types
@@ -134,13 +135,14 @@ export const DeckCard = memo(function DeckCard({
   deck,
   className,
   variant = 'default',
+  isOwned,
 }: DeckCardProps) {
   const normalized = normalizeDeck(deck)
   const formattedDate = new Date(normalized.updated_at || Date.now()).toISOString().split('T')[0]
 
   if (variant === 'compact') {
     return (
-      <Link href={`/decks/${normalized.id}`}>
+      <Link href={`/decks/${normalized.id}`} bypass={isOwned}>
         <div
           className={cn(
             'group card-tinted-glass hover-tinted rounded-xl p-4 transition-all duration-300',
